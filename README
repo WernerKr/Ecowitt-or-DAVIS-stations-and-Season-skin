@@ -1,0 +1,135 @@
+Based on the new structure of the Seasons skin (sensor management in array) I have the Seasons Skin
+extended accordingly so that all possible sensor data of the Ecowitt stations / devices are displayed.
+There is also the option of displaying the air quality index for AQI EPA (US) or AQI EEA (EU).
+It currently contains all database values from the weewx_extended database schema
+and now Ecowitt database schema weewx_ecowitt and loop values of
+Ecowitt (Interceptor: ecowitt-client) or GW1000 driver, VantagePro, Davis Weatherlink Live, Davis AirLink
+In order to get all data from the Ecowitt stations / devices, you have to use my modified interceptor driver
+or GW1000 driver.
+
+My array offers these possibilities:
+  at current.inc example for outside temperature:
+  ('outTemp', '#e85d0d', 'current', '1')
+  1: Value here outTemp = outside temperature
+  2: label color, if '' = black
+  3: which evaluation (e.g. day)
+  4: show if available, if 0 never show e.g. for indoor temperature
+
+at hilo.inc and statistics.inc
+  ('outTemp', '#e85d0d', '', '1'),
+  1: value
+  2: label color, if '' = black
+  3: which evaluation , '' (= empty = min and max), or sum, or only max
+  4: show if available, if 0 never show (e.g. for indoor temperature)
+
+In addition, the skin also takes into account that the Ecowitt stations / devices use the unit "%" for the soil moisture values
+  and not "cb" as specified centrally in Weewx
+  In general, a label color can be used with
+  #set $usefontcolor = 0
+  be switched off
+  The order in the array is also the display position. 
+
+Files for this
+  https://www.pc-wetterstation.de/weewx/skins_Seasons.zip
+ 
+Example for the skin:
+WeatherLinkLiveUDP: 	https://www.pc-wetterstation.de/wetter/weewx
+GW1000: 		https://www.pc-wetterstation.de/wetter/weewx1
+ecowitt-client: 	https://www.pc-wetterstation.de/wetter/weewx2
+
+Calculation of the sunshine duration:
+https://github.com/Jterrettaz/sunduration.py
+Which, however, was modified by me https://www.pc-wetterstation.de/weewx/user/sunduration.py
+and the configuration is done via the weewx.conf and this entry:
+
+Code:
+[RadiationDays]
+min_sunshine = 120 	# Entry of extension radiationhours.py, if is installed (= limit value)
+sunshine_log = 0 	# should not be logged when sunshine is recorded
+sunshine_coeff = 0.8 	# Factor from which value sunshine is counted - the higher the later
+sunshine_min = 18 	# below this value (W/m²), sunshine is not taken into account.
+
+... and if you want to rummage through the files, there are even more changes from me:
+https://www.pc-wetterstation.de/weewx
+
+################################################# ###############################################
+
+There is also a complete installation file for the Interceptor driver and GW1000 driver with the
+Ecowitt extension and the Seasons skin change
+https://www.pc-wetterstation.de/weewx/weewx-interceptor.zip
+https://www.pc-wetterstation.de/weewx/weewx-gw1000.zip
+
+Download the file, upload it to the RaspPi, change to the directory where uploaded to and with
+sudo wee_extension --install=weewx-interceptor.zip
+sudo wee_extension --install=weewx-gw1000.zip
+  or
+sudo wee_extension --install=/%path_where_file_located%/weewx-???.zip
+to install.
+
+Both use a new database schema: 
+wview_ecowitt.py
+
+An existing database can also be expanded with these shell scripts:
+  -> is very likely the easiest way
+ 
+https://www.pc-wetterstation.de/weewx/add_ecowitt_to_wview_database.zip
+https://www.pc-wetterstation.de/weewx/add_ecowitt_to_wview_extended_database.zip
+
+  The new data fields are added to the existing database and the old ones
+  Data are retained.
+  If you don't work with the standard configuration (/etc/weewx/weewx.conf), you have to
+  adjust the --config=/etc/weewx/weewx.conf entry accordingly.
+
+################################################# ################################################
+In weewx.conf you can / should use the existing entry (only useful with a completely new installation) for 
+Code:
+[DataBindings]
+     [[wx_binding]]
+        schema = schemas.wview.schema
+        "#schema" = schemas.wview_ecowitt.schema # -> is entered in this way by the installation!
+# Change to
+        #schema = schemas.wview.schema
+        schema = schemas.wview_ecowitt.schema
+
+Possibly also the database name from weewx.sdb to weewx_ecowitt.sdb
+to change.
+Code:
+[Databases]
+     # A SQLite database is simply a single file
+     [[archive_sqlite]]
+         database_name = weewx.sdb
+         database_type = SQLite
+         "#database_name" = weewx_ecowitt.sdb
+Since the installation routine does not change any existing entries, one must in weewx.conf
+adapt a few entries
+
+Signal assignment with GW1000 driver (the interceptor cannot evaluate the signals)
+The weewx-gw1000.zip installation routine adds these entries to weewx.conf:
+[StdCalibrate]
+    [[Corrections]]
+        #rxCheckPercent = ws80_sig * 25 if ws80_sig is not None else None
+        #rxCheckPercent = wh24_sig * 25 if wh24_sig is not None else None
+        #rxCheckPercent = wh25_sig * 25 if wh25_sig is not None else None
+        #rxCheckPercent = wh65_sig * 25 if wh65_sig is not None else None
+        #rxCheckPercent = wh68_sig * 25 if wh68_sig is not None else None
+        #signal1 = wh24_sig * 25 if wh24_sig is not None else None
+        #signal2 = wh31_ch1_sig * 25 if wh31_ch1_sig is not None else None
+        #signal3 = wh34_ch1_sig * 25 if wh34_ch1_sig is not None else None
+        #signal4 = wh40_sig * 25 if wh40_sig is not None else None
+        #signal5 = wh45_sig * 25 if wh45_sig is not None else None
+        #signal6 = wh57_sig * 25 if wh57_sig is not None else None
+        #signal7 = wh51_ch1_sig * 25 if wh51_ch1_sig is not None else None
+        #signal8 = wh35_ch1_sig * 25 if wh35_ch1_sig is not None else None
+
+So are not active and is an example:
+Here everyone can choose for themselves which signals should be assigned to which Ecowitt sensor sig.
+signal 1..8 belongs to the database values, with the assignment they are also recorded for evaluation.
+
+Code:
+[Station]
+
+# Set to type of station hardware. There must be a corresponding stanza
+# in this file with a 'driver' parameter indicating the driver to be used.
+  station_type = Interceptor		# with interceptor driver
+  station_type = gw1000			# with GW1000 driver
+
