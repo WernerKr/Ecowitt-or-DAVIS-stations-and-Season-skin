@@ -38,7 +38,7 @@ GW1000: 		https://www.pc-wetterstation.de/wetter/weewx1
 ecowitt-client: 	https://www.pc-wetterstation.de/wetter/weewx2
 
 Calculation of the sunshine duration:
-https://github.com/Jterrettaz/sunduration.py
+https://github.com/Jterrettaz/sunduration
 Which, however, was modified by me https://www.pc-wetterstation.de/weewx/user/sunduration.py
 and the configuration is done via the weewx.conf and this entry:
 
