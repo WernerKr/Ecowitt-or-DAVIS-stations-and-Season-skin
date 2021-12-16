@@ -1,5 +1,5 @@
 Based on the new structure of the Seasons skin (sensor management in array) I have the Seasons Skin
-extended accordingly so that all possible sensor data of the Ecowitt stations / devices are displayed.
+extended accordingly so that all possible sensor data of the Ecowitt stations/devices are displayed.
 There is also the option of displaying the air quality index for AQI EPA (US) or AQI EEA (EU).
 It currently contains all database values from the weewx_extended database schema
 and now Ecowitt database schema weewx_ecowitt and loop values of
@@ -81,7 +81,7 @@ https://www.pc-wetterstation.de/weewx/add_ecowitt_to_wview_extended_database.zip
   adjust the --config=/etc/weewx/weewx.conf entry accordingly.
 
 ################################################# ################################################
-In weewx.conf you can / should use the existing entry (only useful with a completely new installation) for 
+In weewx.conf you can/should use the existing entry (only useful with a completely new installation) for 
 Code:
 [DataBindings]
      [[wx_binding]]
