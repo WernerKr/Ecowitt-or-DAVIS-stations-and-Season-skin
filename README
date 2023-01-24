@@ -39,7 +39,7 @@ ecowitt-client: 	https://www.pc-wetterstation.de/wetter/weewx2
 
 Calculation of the sunshine duration:
 https://github.com/Jterrettaz/sunduration
-Which, however, was modified by me https://www.pc-wetterstation.de/weewx/user/sunduration.py
+Which, however, was modified by me https://www.pc-wetterstation.de/weewx/user/sunduration.zip
 and the configuration is done via the weewx.conf and this entry:
 
 Code:
@@ -54,14 +54,13 @@ https://www.pc-wetterstation.de/weewx
 
 ################################################# ###############################################
 
-There is also a complete installation file for the Interceptor driver and GW1000 driver with the
+There is also a complete installation file for the Interceptor driver and GW1000 driver (both) with the
 Ecowitt extension and the Seasons skin change
-https://www.pc-wetterstation.de/weewx/weewx-interceptor.zip
-https://www.pc-wetterstation.de/weewx/weewx-gw1000.zip
+https://www.pc-wetterstation.de/weewx/weewx-gw1000_interceptor.zip
 
 Download the file, upload it to the RaspPi, change to the directory where uploaded to and with
-sudo wee_extension --install=weewx-interceptor.zip
-sudo wee_extension --install=weewx-gw1000.zip
+sudo wee_extension --install=weewx-gw1000_interceptor.zip
+
   or
 sudo wee_extension --install=/%path_where_file_located%/weewx-???.zip
 to install.
@@ -131,5 +130,30 @@ Code:
 # Set to type of station hardware. There must be a corresponding stanza
 # in this file with a 'driver' parameter indicating the driver to be used.
   station_type = Interceptor		# with interceptor driver
-  station_type = gw1000			# with GW1000 driver
+  #station_type = gw1000			# with GW1000 driver
+
+[StdWXCalculate]
+  [[WXXTypes]]
+    [[[maxSolarRad]]]
+      algorithm = rs
+      atc = 0.9
+      
+  [[Calculations]]
+        GTS = software, archive
+        GTSdate = software, archive
+        utcoffsetLMT = software, archive
+        dayET = prefer_hardware, archive
+        ET24 = prefer_hardware, archive
+        yearGDD = software, archive
+        seasonGDD = software, archive
+ 
+[Engine]
+    # The following section specifies which services should be run and in what order.
+    # Using the GW1000 as data-service, 
+    # added user.sunduration.SunshineDuration for calculation sunshinehours
+    # addet user.GTS.GTSService for calculation dayET, ET24, GTS, GTSdate and other
+    [[Services]]
+        data_services = user.gw1000.Gw1000Service
+        process_services = weewx.engine.StdConvert, weewx.engine.StdCalibrate, weewx.engine.StdQC, weewx.wxservices.StdWXCalculate, user.sunduration.SunshineDuration
+        xtype_services = weewx.wxxtypes.StdWXXTypes, weewx.wxxtypes.StdPressureCooker, weewx.wxxtypes.StdRainRater, weewx.wxxtypes.StdDelta, user.GTS.GTSService
 
