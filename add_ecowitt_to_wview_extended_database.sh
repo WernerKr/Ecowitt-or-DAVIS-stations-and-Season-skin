@@ -59,3 +59,7 @@ sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=soilTem
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=soilTempBatt8 --type=REAL
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=sunshine_hours --type=REAL
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=sunshine_time --type=REAL
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=ws90cap_volt --type=REAL
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=sunshineDur --type=REAL
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=rainDur --type=REAL
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=hailDur --type=REAL
