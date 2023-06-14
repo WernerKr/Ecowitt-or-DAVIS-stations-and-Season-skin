@@ -22,6 +22,7 @@
 ##      WH32: 'get_battery_status'
 ##      WH40: 'get_battery_status'
 ##      WH65: 'get_battery_status'
+##      WH68: 'get_battery_status'
 
 ##      WH41/WH43 'get_multi_battery_status'
 ##      WH45: 'get_multi_battery_status'
@@ -191,6 +192,7 @@ never
 #set $conns = [ "rxCheckPercent", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala" ]
 ##
 #set $battery_statuses = [ "outTempBatteryStatus", "inTempBatteryStatus", "windBatteryStatus", "rainBatteryStatus", "hailBatteryStatus", "snowBatteryStatus", "uvBatteryStatus", "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
+#set $battery_statuses_ecowitt = [ "wh24_batt", "wh25_batt", "wh26_batt", "wh65_batt", "wh68_batt" ]
 ##set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
 #set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus2", "batteryStatus7", "batteryStatus8" ]
 ##
@@ -419,7 +421,9 @@ never
     #end if
  #for $x in $battery_statuses
   #if $getattr($recent, $x).has_data or $getattr($current, $x).has_data
-    #if ((($x != 'windBatteryStatus') and ($x != 'rainBatteryStatus') and ($x != 'hailBatteryStatus')) and $ecowitt == 1 ) or $ecowitt == 0
+    #if ( ( (($x != 'windBatteryStatus') and ($x != 'rainBatteryStatus') and ($x != 'hailBatteryStatus')) ) and $ecowitt == 1 ) or $ecowitt == 0
+    ##if ( ( (($x != 'windBatteryStatus') and ($x != 'rainBatteryStatus') and ($x != 'hailBatteryStatus')) or ($x == 'wh24_batt') or ($x == 'wh25_batt') or ($x == 'wh26_batt')) and $ecowitt == 1 ) or $ecowitt == 0
+    ##if ( (($x == 'wh24_batt') or ($x == 'wh25_batt') or ($x == 'wh26_batt')) and $ecowitt == 1 ) or $ecowitt == 0
     <tr>
       <td class="label">$obs.label[$x]</td>
       #set $xv = $getattr($current, $x) 
@@ -443,6 +447,16 @@ never
    #end if
 
   #end if
+ #end for
+
+ #for $x in $battery_statuses_ecowitt
+   #if ($getattr($recent, $x).has_data or $getattr($current, $x).has_data) and $ecowitt == 1 
+    <tr>
+      <td class="label">$obs.label[$x]</td>
+      #set $xv = $getattr($current, $x) 
+      <td class="data">$get_battery_status($xv.raw)</td>
+    </tr>
+   #end if
  #end for
 
  #for $battery in $sensor_batt_data
@@ -597,7 +611,7 @@ never
 #end if
 
 
-#if ($ecowitt == 1) and ($getattr($current, 'rain_source').has_data)
+#if ($ecowitt == 1) and (($getattr($current, 'rain_source').has_data) or ($getattr($current, 'gain0').has_data))
  #if $use_lang
    <tr><th>$gettext("Rain")</th><th></th></tr>
  #else
@@ -611,11 +625,23 @@ never
         #set $xv = $getattr($current, $test).raw
         ##set $xx = int($xv) 
         #if $xv == 2
-            #set $txt = "Piezoelectric"
+          #if $use_lang
+           #set $txt=$gettext("Piezoelectric")
+          #else
+           #set $txt = "Piezoelectric"
+          #end if
         #elif $xv == 1
-            #set $txt = "Tratitional"
+          #if $use_lang
+           #set $txt=$gettext("Tratitional")
+          #else
+           #set $txt = "Tratitional"
+          #end if
         #else
+          #if $use_lang
+           #set $txt=$gettext("No rain gauge")
+          #else
            #set $txt = "No rain gauge"
+          #end if
         #end if 
         <td class="label">$obs.label[$test]</td>
         <td class="data">$txt</td>
@@ -669,9 +695,17 @@ never
         <tr>
         #set $xv = $getattr($current, $test).raw
         #if $xv == 0
-            #set $txt = "Sunday"
+          #if $use_lang
+           #set $txt=$gettext("Sunday")
+          #else
+           #set $txt = "Sunday"
+          #end if
         #elif $xv == 1
-            #set $txt = "Monday"
+          #if $use_lang
+           #set $txt=$gettext("Monday")
+          #else
+           #set $txt = "Monday"
+          #end if
         #else
             #set $txt = "??????"
         #end if
@@ -691,21 +725,53 @@ never
         <tr>
         #set $xv = $getattr($current, $test).raw
         #if $xv == 0
-            #set $txt = "January"
+          #if $use_lang
+           #set $txt=$gettext("January")
+          #else
+           #set $txt = "January"
+          #end if
         #elif $xv == 1
-            #set $txt = "February"
+          #if $use_lang
+           #set $txt=$gettext("February")
+          #else
+           #set $txt = "February"
+          #end if
         #elif $xv == 2
-            #set $txt = "March"
+          #if $use_lang
+           #set $txt=$gettext("March")
+          #else
+           #set $txt = "March"
+          #end if
         #elif $xv == 3
-            #set $txt = "April"
+          #if $use_lang
+           #set $txt=$gettext("April")
+          #else
+           #set $txt = "April"
+          #end if
         #elif $xv == 4
-            #set $txt = "May"
+          #if $use_lang
+           #set $txt=$gettext("May")
+          #else
+           #set $txt = "May"
+          #end if
         #elif $xv == 5
-            #set $txt = "June"
+          #if $use_lang
+           #set $txt=$gettext("June")
+          #else
+           #set $txt = "June"
+          #end if
         #elif $xv == 6
-            #set $txt = "July"
+          #if $use_lang
+           #set $txt=$gettext("July")
+          #else
+           #set $txt = "July"
+          #end if
         #elif $xv == 11
-            #set $txt = "December"
+          #if $use_lang
+           #set $txt=$gettext("December")
+          #else
+           #set $txt = "December"
+          #end if
         #else
             #set $txt = "??????"
         #end if
@@ -736,7 +802,7 @@ never
       #if $getattr($current, $test).has_data
         <tr>
         #set $xv = $getattr($current, $test)
-        <td class="label">Gain1 Rain<4 mm/h</td>
+        <td class="label">$obs.label[$test]</td>
         <td class="data">$xv.format("%.2f")</td>
         </tr> 
       #end if
@@ -749,7 +815,7 @@ never
       #if $getattr($current, $test).has_data
         <tr>
         #set $xv = $getattr($current, $test)
-        <td class="label">Gain2 Rain<10 mm/h</td>
+        <td class="label">$obs.label[$test]</td>
         <td class="data">$xv.format("%.2f")</td>
         </tr> 
       #end if
@@ -762,7 +828,7 @@ never
       #if $getattr($current, $test).has_data
         <tr>
         #set $xv = $getattr($current, $test)
-        <td class="label">Gain3 Rain<30 mm/h</td>
+        <td class="label">$obs.label[$test]</td>
         <td class="data">$xv.format("%.2f")</td>
         </tr> 
       #end if
@@ -775,7 +841,7 @@ never
       #if $getattr($current, $test).has_data
         <tr>
         #set $xv = $getattr($current, $test)
-        <td class="label">Gain4 Rain<60 mm/h</td>
+        <td class="label">$obs.label[$test]</td>
         <td class="data">$xv.format("%.2f")</td>
         </tr> 
       #end if
@@ -788,7 +854,7 @@ never
       #if $getattr($current, $test).has_data
         <tr>
         #set $xv = $getattr($current, $test)
-        <td class="label">Gain5 Rain>60 mm/h</td>
+        <td class="label">$obs.label[$test]</td>
         <td class="data">$xv.format("%.2f")</td>
         </tr> 
       #end if

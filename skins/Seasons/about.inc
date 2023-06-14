@@ -14,6 +14,16 @@
  #pass
 #end try
 
+
+#set $xt = ''
+#if $current.stationtype.has_data
+ #if '_' in $current.stationtype.raw
+  #set $xt = $current.stationtype.raw
+ #elif $current.model.has_data
+  #set $xt = $current.model.raw 
+ #end if
+#end if
+
 #if not $use_lang
 <div id='about_widget' class="widget">
   <div class="widget_title">
@@ -25,7 +35,7 @@
   <table>
     <tr>
       <td class="label">Hardware</td>
-      <td class="data">$station.hardware</td>
+       <td class="data">$station.hardware $xt</td>
     </tr>
    #try
     #if $current.runtime.has_data
@@ -88,13 +98,13 @@
   <table>
     <tr>
       <td class="label">$gettext("Hardware")</td>
-      <td class="data">$station.hardware</td>
+       <td class="data">$station.hardware $xt</td>
     </tr>
    #try
     #if $current.runtime.has_data
     <tr> 
       <td class="label">$gettext("Station uptime")</td>
-      <td class="data">$current.runtime</td>
+      <td class="data">$current.runtime.long_form</td>
     </tr>
     #end if
     <tr> 
@@ -120,11 +130,11 @@
     </tr>
     <tr>
       <td class="label">$gettext("Server uptime")</td>
-      <td class="data">$station.os_uptime</td>
+      <td class="data">$station.os_uptime.long_form</td>
     </tr>
     <tr>
       <td class="label">$gettext("WeeWX uptime")</td>
-      <td class="data">$station.uptime</td>
+      <td class="data">$station.uptime.long_form</td>
     </tr>
     <tr>
       <td class="label">$gettext("WeeWX version")</td>

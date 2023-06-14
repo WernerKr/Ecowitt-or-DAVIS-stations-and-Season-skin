@@ -31,7 +31,13 @@
 
 ## The list of observations determines which database fields will be shown in
 ## the summary as well as the order in which they will be displayed.
+## observ-Array -> (1:value, 2:labelcolor, ''=black, 3:''=min&max or max or sum or wx_binding?, 4:don't show, although values are available = 0)
+## 3: ='wx_binding?' or 'sumwx_binding?' or 'maxwx_binding?' or 'minwx_binding?' or 'avgwx_binding?' or 'maxwx_binding?, Text' or ...  
+## -> example: 'wx_binding3, WS90' or 'maxwx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
+## labelcolor can be general disabled -> #set $usefontcolor = 0
+
 #set $observ = [('outTemp','#e85d0d','','1'),
+('outTemp','','wx_binding2, WH32','0'),
 ('heatindex','#b44242','','1'),
 ('windchill','#4282b4','','1'),
 ('dewpoint','#ea4c12','','1'),
@@ -54,13 +60,18 @@
 ('rain','#72b2c4','sum','1'),
 ('rainRate','#72b2c4','max','1'),
 ('UV','#E238EC','max','1'),
+('UV','','maxwx_binding3, Test','0'),
 ('ET','#42B4B4','sum','1'),
 ('hail','','sum','1'),
 ('hailRate','','max','1'),
 ('snow','','sum','1'),
 ('snowRate','','max','1'),
 ('radiation','#f2a265','max','1'),
+ ('maxSolarRad','#f2a265','max','1'),
+ ('sunshine_time','red','max','1'),
 ('luminosity','','max','0'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+('Luftqualitäts Sensoren','','','3'),
 ('co2','#32e5d9','','1'),
 ('co2_Temp','#f20e3c','','1'),
 ('co2_Hum','#0e25f2','','1'),
@@ -71,6 +82,8 @@
 ('pm25_2','#0e25f2','','1'),
 ('pm25_3','#0e25f2','','1'),
 ('pm25_4','#0e25f2','','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+('weitere Sensoren','','','3'),
 ('inTemp','#c95716','','1'),
 ('inHumidity','#17c4ef','','1'),
 ('extraTemp1','#e85d0d','','1'),
@@ -188,7 +201,49 @@
       </tr>
 
 #for $x in $observ
-  #if $x[3] == '1' and (($getattr($year, $x[0]).has_data) or ($year.wind.has_data and ($x[0] == 'windavg' or $x[0] == 'windrms' or $x[0] == 'windrms' or $x[0] == 'windvecavg')))
+  #set $ztx = '' 
+  #set $txt = ''
+  #set $atx = ''
+  #if 'wx_binding' in $x[2] and $x[3] == '1'
+     #set $txt = $x[2]
+     #if 'sumwx_binding' in $txt 
+      #set $atx = 'sum'
+      #set $txt = $txt[3:]
+     #end if
+     #if 'maxwx_binding' in $txt 
+      #set $atx = 'max'
+      #set $txt = $txt[3:]
+     #end if
+     #if 'minwx_binding' in $txt 
+      #set $atx = 'min'
+      #set $txt = $txt[3:]
+     #end if
+     #if 'avgwx_binding' in $txt 
+      #set $atx = 'avg'
+      #set $txt = $txt[3:]
+     #end if
+     #set $tx = $txt.find(',')
+     #if $tx > 0
+       #set $ztx = $txt[$tx+1:]
+       #set $txt = $txt[0:$tx]
+     #end if
+  #end if
+
+   #if $x[3] == '3'
+    #if $usefontcolor == 1
+      #set $color = $x[1]
+      #if $color == ''
+        #set $color = 'black'
+      #end if 
+    #else
+      #set $color = 'black'
+    #end if
+      <tr>
+        <td class="label"><font color=$color><b>$x[0]</b></font></td>
+        <td class="data"><font color=$color> </font></td>
+      </tr>
+
+  #elif $x[3] == '1' and (($getattr($year, $x[0]).has_data) or ('wx_binding' in $txt and $getattr($year(data_binding=$txt), $x[0]).has_data) or ($year.wind.has_data and ($x[0] == 'windavg' or $x[0] == 'windrms' or $x[0] == 'windrms' or $x[0] == 'windvecavg')))
     #if $usefontcolor == 1
       #set $color = $x[1]
       #if $color == ''
@@ -274,8 +329,31 @@
       </tr>
     #else
       <tr>
-        <td class="label"><font color=$color>$obs.label[$x[0]]</font></td>
-      #if $x[2] == 'sum'
+        <td class="label"><font color=$color>$obs.label[$x[0]]$ztx</font></td>
+      #if 'wx_binding' in $txt
+       #for $archive in $archive_data
+        <td class="data new_row hilo_$archive[0]">
+          #set $xv = $getattr($archive[1](data_binding=$txt), $x[0]) 
+          #if $atx == 'sum'
+            $xv.sum.format(add_label=False)</td>
+          #elif $atx == 'max'
+            <span class="timestamp">$xv.maxtime</span>
+           <span>$xv.max.format(add_label=False)</span>
+          #elif $atx == 'min'
+            <span class="timestamp">$xv.mintime</span>
+           <span>$xv.min.format(add_label=False)</span>
+          #elif $atx == 'avg'
+           <span class="timestamp">&oslash;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+           <span>$xv.avg.format(add_label=False)</span>
+          #else
+           <span class="timestamp">$xv.maxtime</span>
+            <span>$xv.max.format(add_label=False)</span><br/>
+           <span class="timestamp">$xv.mintime</span>
+            <span>$xv.min.format(add_label=False)</span>
+          #end if
+        </td>
+        #end for
+      #elif $x[2] == 'sum'
         #for $archive in $archive_data
         <td class="data new_row hilo_$archive[0]">
           #set $xv = $getattr($archive[1], $x[0])
@@ -287,6 +365,22 @@
           #set $xv = $getattr($archive[1], $x[0])
           <span class="timestamp">$xv.maxtime</span>
           <span>$xv.max.format(add_label=False)</span>
+        </td>
+        #end for
+      #elif $x[2] == 'min'
+        #for $archive in $archive_data
+        <td class="data new_row hilo_$archive[0]">
+          #set $xv = $getattr($archive[1], $x[0])
+          <span class="timestamp">$xv.mintime</span>
+          <span>$xv.min.format(add_label=False)</span>
+        </td>
+        #end for
+      #elif $x[2] == 'avg'
+        #for $archive in $archive_data
+        <td class="data new_row hilo_$archive[0]">
+          #set $xv = $getattr($archive[1], $x[0])
+          <span class="timestamp">&oslash;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span>$xv.avg.format(add_label=False)</span>
         </td>
         #end for
       #elif 'leak_' in $x[0]
