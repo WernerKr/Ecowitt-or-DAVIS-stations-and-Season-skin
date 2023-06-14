@@ -101,7 +101,7 @@
         
 """
 
-VERSION = "0.8b1"
+VERSION = "0.9a2"
 
 # deal with differences between python 2 and python 3
 try:
@@ -123,6 +123,7 @@ except ImportError:
 import time
 import datetime
 import threading
+import math
 
 import weedb
 import weewx
@@ -206,7 +207,24 @@ def genDaySpansWithoutDST(start_ts, stop_ts):
     if None in (start_ts, stop_ts): return
     for time_ts in range(int(start_ts),int(stop_ts),86400):
         yield TimeSpan(int(time_ts),int(time_ts+86400))
+
     
+def boilingTemperatureCC(pressure, temp1=99.9743, deltaH=40.657):
+    """ boiling temperature of water
+    
+        https://de.wikipedia.org/wiki/Clausius-Clapeyron-Gleichung
+        
+        The equation is valid for a invariable enthalpy of
+        vaporization, which applies to small temperature
+        ranges only.
+    """
+    p1 = 1013.25 # hPa           Normaldruck
+    T1 = temp1+273.15 # K        Siedetemperatur bei Normaldruck
+    deltaH *= 1000.0 # J/mol     molare Verdampfungsenthalpie bei 100°C
+    R = 8.314462 # J mol^-1 K^-1 universelle Gaskonstante
+    temp = 1.0/(1.0/T1 - math.log(pressure/p1)*R/deltaH)-273.15
+    return temp
+
 
 # unit g/m^2 and mg/m^2 for 'group_concentration'
 weewx.units.conversionDict.setdefault('microgram_per_meter_cubed',{})
@@ -218,7 +236,7 @@ weewx.units.conversionDict['microgram_per_meter_cubed']['gram_per_meter_cubed'] 
 weewx.units.conversionDict['microgram_per_meter_cubed']['milligram_per_meter_cubed'] = lambda x : x*0.001
 weewx.units.conversionDict['milligram_per_meter_cubed']['gram_per_meter_cubed'] = lambda x : x*0.001
 weewx.units.conversionDict['gram_per_meter_cubed']['milligram_per_meter_cubed'] = lambda x : x*1000
-weewx.units.default_unit_format_dict.setdefault('gram_per_meter_cubed',"%.1f")
+weewx.units.default_unit_format_dict.setdefault('gram_per_meter_cubed',"%.3f")
 weewx.units.default_unit_label_dict.setdefault('gram_per_meter_cubed',u" g/m³")
 weewx.units.default_unit_format_dict.setdefault('milligram_per_meter_cubed',"%.1f")
 weewx.units.default_unit_label_dict.setdefault('milligram_per_meter_cubed',u" mg/m³")
@@ -300,6 +318,8 @@ class GTSType(weewx.xtypes.XType):
         # equivalent temperature, equivalent potential temperature
         weewx.units.obs_group_dict.setdefault('outEquiTemp','group_temperature')
         weewx.units.obs_group_dict.setdefault('outThetaE','group_temperature')
+        # boiling point
+        weewx.units.obs_group_dict.setdefault('boilingTemp','group_temperature')
         
         # lock that makes calculation atomic
         self.lock=threading.Lock()
@@ -537,7 +557,20 @@ class GTSType(weewx.xtypes.XType):
             if record is None: return __x
             # see https://github.com/weewx/weewx/issues/781
             return weewx.units.convertStd(__x,record['usUnits'])
-            
+        
+        if obs_type=='boilingTemp':
+            try:
+                _result = weewx.units.as_value_tuple(record,'pressure')
+                pressure_mbar = weewx.units.convert(_result,'hPa')[0]
+                method = option_dict.get('algorithm','CC')
+                btemp_C = boilingTemperatureCC(pressure_mbar)
+                usunits = record['usUnits']
+            except (LookupError,TypeError,ValueError,ArithmeticError):
+                btemp_C = None
+                usunits = 0x10
+            __x = weewx.units.ValueTuple(btemp_C,'degree_C','group_temperature')
+            return weewx.units.convertStd(__x,usunits)
+                
         # This functions handles 'GTS' and 'GTSdate'.
         if obs_type not in ['GTS','GTSdate','dayET','ET24','yearGDD','seasonGDD']:
             raise weewx.UnknownType(obs_type)
@@ -1059,7 +1092,7 @@ class GTSType(weewx.xtypes.XType):
         
         # aggregation types that are defined for those values
         if aggregate_type not in ['avg','max','min','last','maxtime','mintime','lasttime']:
-            raise weewx.UnknownAggregation("%s undefinded aggregation %s" % (obs_type,aggregation_type))
+            raise weewx.UnknownAggregation("%s undefinded aggregation %s" % (obs_type,aggregate_type))
 
         if timespan is None:
             raise weewx.CannotCalculate("%s %s no timespan" % (obs_type,aggregate_type))

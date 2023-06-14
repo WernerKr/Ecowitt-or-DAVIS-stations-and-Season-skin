@@ -631,6 +631,8 @@ class Gateway(object):
         #'gain7': 'gain7',
         #'gain8': 'gain8',
         #'gain9': 'gain9',
+        'radcompensation': 'radcompensation',
+
     }
     # Rain related fields default field map, merged into default_field_map to
     # give the overall default field map. Kept separate to make it easier to
@@ -939,6 +941,7 @@ class Gateway(object):
                                           debug_wind=self.debug_wind,
                                           debug_sensors=self.debug_sensors)
         # initialise last lightning count and last rain properties
+
         self.last_lightning = None
         self.last_rain = None
         self.piezo_last_rain = None
@@ -2016,7 +2019,8 @@ class Gw1000ConfEditor(weewx.drivers.AbstractConfEditor):
             extractor = last
         [[gain9]]
             extractor = last
-
+        [[radcompensation]]
+            extractor = last
 
         # End GW1000 driver extractors
     """
@@ -2362,7 +2366,10 @@ class GatewayDriver(weewx.drivers.AbstractDevice, Gateway):
         """
 
         if self.collector.station.model is not None:
-            return self.collector.station.model
+            if self.collector.firmware_version is not None:
+              return self.collector.firmware_version
+            else:
+              return self.collector.station.model
         else:
             return DRIVER_NAME
 
@@ -3660,6 +3667,8 @@ class GatewayCollector(Collector):
                     # check the response is valid
                     try:
                         self.check_response(response, self.commands[cmd])
+                    except IndexError as e:
+                       logdbg("Index Error")
                     except InvalidChecksum as e:
                         # the response was not valid, log it and attempt again
                         # if we haven't had too many attempts already
@@ -3803,6 +3812,7 @@ class GatewayCollector(Collector):
 
             # first check the checksum is valid
             calc_checksum = self.calc_checksum(response[2:-1])
+
             resp_checksum = six.indexbytes(response, -1)
             if calc_checksum == resp_checksum:
                 # checksum check passed, now check the response command code by
@@ -3964,6 +3974,7 @@ class GatewayCollector(Collector):
         #   size:       the size of field data in bytes
         #   field name: the name of the device field to be used for the decoded
         #               data
+
         live_data_struct = {
             b'\x01': ('decode_temp', 2, 'intemp'),
             b'\x02': ('decode_temp', 2, 'outtemp'),
@@ -4079,7 +4090,9 @@ class GatewayCollector(Collector):
             b'\x76': ('decode_wet', 1, 'leafwet5'),
             b'\x77': ('decode_wet', 1, 'leafwet6'),
             b'\x78': ('decode_wet', 1, 'leafwet7'),
-            b'\x79': ('decode_wet', 1, 'leafwet8')
+            b'\x79': ('decode_wet', 1, 'leafwet8'),
+            # b'\x7A': (None, None, None),
+            #b'\x7B': ('decode_int', 1, 'radcompensation'),
         }
         rain_data_struct = {
             b'\x0D': ('decode_rain', 2, 't_rainevent'),
@@ -4092,6 +4105,7 @@ class GatewayCollector(Collector):
             # undocumented field 0x7A, believed to be rain source selection
             # b'\x7A': ('decode_int', 1, 'rain_priority'),
             b'\x7A': ('decode_int', 1, 'rain_source'),
+            b'\x7B': ('decode_int', 1, 'radcompensation'),
             b'\x80': ('decode_rainrate', 2, 'p_rainrate'),
             b'\x81': ('decode_rain', 2, 'p_rainevent'),
             # b'\x82': ('decode_reserved', 2, 'p_rainhour'),
@@ -5189,6 +5203,7 @@ class GatewayCollector(Collector):
         decode_wet = decode_humid
         decode_int = decode_humid
 
+
         def decode_wn34(self, data, field=None):
             """Decode WN34 sensor data.
 
@@ -6033,6 +6048,7 @@ class DirectGateway(object):
         'ws90_sig': 'group_count',
         'raingain': 'group_uv',
         'rain_source': 'group_count',
+        'radcompensation' : 'group_count',
     }
     gateway_us_units = weeutil.weeutil.ListOfDicts({
         "group_altitude": "foot",

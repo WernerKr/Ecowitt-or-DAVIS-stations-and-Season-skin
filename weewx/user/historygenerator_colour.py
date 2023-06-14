@@ -1,11 +1,11 @@
 #
 # Copyright (c) 2013-2016  Nick Dajda <nick.dajda@gmail.com>
-# Modified 2023 Werner Krenn
+#
 # Distributed under the terms of the GNU GENERAL PUBLIC LICENSE
 #
 """Extends the Cheetah generator search list to add html historic data tables in a nice colour scheme.
 
-Tested on Weewx release 4.5.1./4.10.2
+Tested on Weewx release 4.5.1.
 Works with all databases.
 Observes the units of measure and display formats specified in skin.conf.
 
