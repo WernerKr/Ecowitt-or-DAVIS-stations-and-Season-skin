@@ -10,17 +10,32 @@ or GW1000 driver.
 My array offers these possibilities:
   at current.inc example for outside temperature:
   ('outTemp', '#e85d0d', 'current', '1')
-  1: Value here outTemp = outside temperature
-  2: label color, if '' = black
-  3: which evaluation (e.g. day)
-  4: show if available, if 0 never show e.g. for indoor temperature
+  or
+  ('outTemp','#e85d0d','day','1')
+  (1:value, 2:labelcolor, ''=black, 3:current or day or yesterday or aqiepa or aqieea or trend or deltatime or wx_binding?, 4:'1')
+  3: = current -> default
+  3: = day -> show avages of the day
+  3: = yesterday -> show avages of the last day
+  3: = 3:yesterday -> at 1:radiation  -> radiation.energy_integral.kilowatt_hour_per_meter_squared for yesterday and day
+  3: = trend -> show additonal to value the 24hr trend or 3 hr trend (barometer)
+  3: = deltatime -> for sunShineDur or rainDur or hailDur
+  3: = 'wx_binding?' -> example: 'wx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
+  3: = 'daywx_bindig?' or 'trendwx_bindging?' are also allowed. example: 'daywx_binding3, Ultrasonic'
+  3: = aqiepa -> computes pm2_5 Air quality Index EPA
+  3: = aqieea -> computes pm2_5 Air quality Index EEA
+  4: = 1 show, 4: = 0 don't show, although values are available, 4: = 3 Textinformation or Separation
 
 at hilo.inc and statistics.inc
+  observ-Array -> (1:value, 2:labelcolor, ''=black, 3:''=min&max or max or sum or wx_binding?, 4:don't show, although values are available = 0)
   ('outTemp', '#e85d0d', '', '1'),
   1: value
   2: label color, if '' = black
   3: which evaluation , '' (= empty = min and max), or sum, or only max
+  3: ='wx_binding?' or 'sumwx_binding?' or 'maxwx_binding?' or 'minwx_binding?' or 'avgwx_binding?' or 'maxwx_binding?, Text' or ...
+  -> example: 'wx_binding3, WS90' or 'maxwx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
   4: show if available, if 0 never show (e.g. for indoor temperature)
+  labelcolor can be general disabled -> #set $usefontcolor = 0
+
 
 In addition, the skin also takes into account that the Ecowitt stations / devices use the unit "%" for the soil moisture values
   and not "cb" as specified centrally in Weewx
@@ -61,7 +76,12 @@ https://www.pc-wetterstation.de/weewx/weewx-gw1000_interceptor.zip
 Download the file, upload it to the RaspPi, change to the directory where uploaded to and with
 sudo wee_extension --install=weewx-gw1000_interceptor.zip
 
-  or
+
+Only Interceptor: 
+https://www.pc-wetterstation.de/weewx/weewx-interceptor.zip
+sudo wee_extension --install=weewx-interceptor.zip
+
+ or
 sudo wee_extension --install=/%path_where_file_located%/weewx-???.zip
 to install.
 
