@@ -43,12 +43,13 @@
 ## 4: = 1 show, 4: = 0 don't show, although values are available, 4: = 3 Textinformation or Separation
 
 
-## labelcolor can be general disabled -> #set $usefontcolor = 0
 
 #set $observ = [('outTemp','#e85d0d','trend','1'),
 ('outTemp','#e85d0d','day','1'),
-('outTemp','#e85d0d','yesterday','1'),
-('outTemp','','wx_binding3','0'),
+('outTemp','#e85d0d','wx_binding3, WS80','1'),
+('outTemp','#e85d0d','daywx_binding3, WS80','1'),
+('outTemp','#e85d0d','wx_binding2, WH32','1'),
+('outTemp','#e85d0d','daywx_binding2, WH32','1'),
 ('heatindex','#b44242','current','1'),
 ('windchill','#4282b4','current','1'),
 ('dewpoint','#0000ff','current','1'),
@@ -66,9 +67,11 @@
 ('cloudbase','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('windSpeed','#0000ff','current','1'),
-('windSpeed','#0000ff','day','1'),
+('windSpeed','#0000ff','wx_binding3, WS80','1'),
 ('windGust','#4282b4','current','1'),
 ('windGust','#4282b4','day','1'),
+('windGust','#4282b4','wx_binding3, WS80','1'),
+('windGust','#4282b4','daywx_binding3, WS80','1'),
  ('windspdmph_avg10m','','current','1'),
  ('maxdailygust','','current','1'),
  ('windSpeed1','','current','1'),
@@ -78,6 +81,7 @@
  ('windGustSpeed10','','current','1'),
  ('windGustDir10','','current','1'),
 ('windrun','','day','1'),
+('windrun','','wx_binding3, WS80','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('rain','#72b2c4','current','1'),
 ('rainRate','#72b2c4','current','1'),
@@ -114,8 +118,8 @@
 ('snowMoisture','','current','1'),
 ('snowDepth','','current','1'),
 ('ET','#42B4B4','current','1'),
-('ET24','#42B4B4','current','1'),
  ('dayET','#42B4B4','current','1'),
+('ET24','#42B4B4','current','1'),
  ('monthET','','current','1'),
  ('yearET','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
@@ -203,14 +207,13 @@
 ('UV','#E238EC','current','1'),
 ('radcompensation','','current','1'),
 ('radiation','#f2a265','current','1'),
-('radiation','brown','day','1'),
  ('maxSolarRad','#f2a265','current','1'),
  ('sunshine_time','red','current','1'),
- ('sunshine_time','brown','day','1'),
 ('luminosity','','current','0'),
-('radiation','','yesterday','1'),
+('radiation','','yesterday','2'),
 ('sunshine_hours','#f2a265','day','1'),
 ('sunshineDur','#f2a265','deltatime','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('GTS','#25ea2f','current','1'),
 ('GTSdate','#25ea2f','day','2'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
@@ -604,15 +607,23 @@
           $decHourToHMstr($xv)
 	   ##<td class="data">$day.sunshine_hours.sum.format("%.3f", add_label=False) Std.</td>
       </tr>
-    #elif $x[0] == 'radiation' and $x[2] == 'yesterday'
+    #elif $x[0] == 'radiation' and $x[3] == '2'
       <tr>
         <td class="label"><span><font color=$color>$obs.label.energy_integral $obs.label.yesterday</font></span></td>
+        #try
           <td class="data">$yesterday.radiation.energy_integral.kilowatt_hour_per_meter_squared</td>
+        #except 
+          <td class="data">No GTS-ext</td>
+        #end try
       </tr>
       <tr>
-          <td class="label"><span><font color=$color>$obs.label.energy_integral $obs.label.today</font></span></td>
+        <td class="label"><span><font color=$color>$obs.label.energy_integral $obs.label.today</font></span></td>
+        #try
           <td class="data">$day.radiation.energy_integral.kilowatt_hour_per_meter_squared</td>
-      </tr>
+        #except 
+          <td class="data">No GTS-ext</td>
+        #end try
+     </tr>
     #elif $x[2] == 'aqiepa'
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]</font></span></td>
