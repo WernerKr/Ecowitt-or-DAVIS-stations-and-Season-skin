@@ -54,17 +54,22 @@ ecowitt-client: 	https://www.pc-wetterstation.de/wetter/weewx2
 VantagePro: https://www.pc-wetterstation.de/wetter/weewx3
 Interceptor&GW1000:  https://www.pc-wetterstation.de/wetter/weewx4
 
-Calculation of the sunshine duration:
-https://github.com/Jterrettaz/sunduration
-Which, however, was modified by me https://www.pc-wetterstation.de/weewx/user/sunduration.zip
+Calculation of the sunshine duration and now too rain duration:
+
+Which, however, was modified by me https://www.pc-wetterstation.de/weewx/user/sunrainduration.zip
 and the configuration is done via the weewx.conf and this entry:
 
 Code:
 [RadiationDays]
-min_sunshine = 120 	# Entry of extension radiationhours.py, if is installed (= limit value)
-sunshine_log = 0 	# should not be logged when sunshine is recorded
-sunshine_coeff = 0.8 	# Factor from which value sunshine is counted - the higher the later
-sunshine_min = 18 	# below this value (W/m²), sunshine is not taken into account.
+    min_sunshine = 120     	# Entry of extension radiationhours.py, if is installed (= limit value)
+    sunshine_coeff = 0.8   	# Factor from which value sunshine is counted - the higher the later
+    sunshine_min = 18     	# below this value (W/m²), sunshine is not taken into account.
+    sunshine_loop = 1      # use for sunshine loop packet (or archive: sunshine_loop = 0)
+    rainDur_loop = 0       # use for rain duration loop packet - default is not       
+    hailDur_loop = 0       # use for piezo-rain duration loop packet - default is not
+    sunshine_log = 0       # should not be logged when sunshine is recorded
+    rainDur_log = 0        # no logging for rain duration
+    hailDur_log = 0        # no logging for piezo-rain duration
 
 ... and if you want to rummage through the files, there are even more changes from me:
 https://www.pc-wetterstation.de/weewx
