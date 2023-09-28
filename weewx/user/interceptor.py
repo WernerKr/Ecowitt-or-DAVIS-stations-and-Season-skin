@@ -301,15 +301,140 @@ except ImportError:
 
 import weewx.drivers
 import weeutil.weeutil
+import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.56'
+DRIVER_VERSION = '0.6'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
 DEFAULT_IFACE = 'eth0'
 DEFAULT_FILTER = 'dst port 80'
-DEFAULT_DEVICE_TYPE = 'acurite-bridge'
+DEFAULT_DEVICE_TYPE = 'ecowitt-client'
+
+weewx.units.obs_group_dict['co2'] = 'group_fraction'
+weewx.units.obs_group_dict['co2_Temp'] = 'group_temperature'
+weewx.units.obs_group_dict['co2_Hum'] = 'group_percent'
+
+weewx.units.obs_group_dict['pm2_5'] = 'group_concentration'
+weewx.units.obs_group_dict['pm10_0'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_1'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_3'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_4'] = 'group_concentration'
+
+weewx.units.obs_group_dict['pm25_24h_co2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm10_24h_co2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_avg_24h_ch1'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_avg_24h_ch2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_avg_24h_ch3'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_avg_24h_ch4'] = 'group_concentration'
+
+weewx.units.obs_group_dict['soilTemp1'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp2'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp3'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp4'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp5'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp6'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp7'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp8'] = 'group_temperature'
+
+#weewx.units.obs_group_dict['leafWet1'] = 'group_percent'
+#weewx.units.obs_group_dict['leafWet2'] = 'group_percent'
+weewx.units.obs_group_dict['leafWet3'] = 'group_percent'
+weewx.units.obs_group_dict['leafWet4'] = 'group_percent'
+weewx.units.obs_group_dict['leafWet5'] = 'group_percent'
+weewx.units.obs_group_dict['leafWet6'] = 'group_percent'
+weewx.units.obs_group_dict['leafWet7'] = 'group_percent'
+weewx.units.obs_group_dict['leafWet8'] = 'group_percent'
+#weewx.units.obs_group_dict['soilMoist1'] = 'group_percent'
+#weewx.units.obs_group_dict['soilMoist2'] = 'group_percent'
+#weewx.units.obs_group_dict['soilMoist3'] = 'group_percent'
+#weewx.units.obs_group_dict['soilMoist4'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist5'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist6'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist7'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist8'] = 'group_percent'
+weewx.units.obs_group_dict['lightning_distance'] = 'group_count'
+weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
+weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
+weewx.units.obs_group_dict['runtime'] = 'group_deltatime'
+
+weewx.units.obs_group_dict['rainrate'] = 'group_rainrate'
+weewx.units.obs_group_dict['eventRain'] = 'group_rain'
+weewx.units.obs_group_dict['weekRain'] = 'group_rain'
+weewx.units.obs_group_dict['raintotal'] = 'group_rain'
+weewx.units.obs_group_dict['rainBatteryStatus'] = 'group_volt'
+weewx.units.obs_group_dict['hailBatteryStatus'] = 'group_volt'
+weewx.units.obs_group_dict['windBatteryStatus'] = 'group_volt'
+weewx.units.obs_group_dict['ws80_batt'] = 'group_volt'
+weewx.units.obs_group_dict['ws90_batt'] = 'group_volt'
+weewx.units.obs_group_dict['ws1900batt'] = 'group_volt'
+
+weewx.units.obs_group_dict['rrain_piezo'] = 'group_rainrate'
+weewx.units.obs_group_dict['erain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['hrain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['drain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['wrain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['mrain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['yrain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['rain_piezo'] = 'group_rain'
+
+weewx.units.obs_group_dict['ws90cap_volt'] = 'group_volt'
+weewx.units.obs_group_dict['ws90_ver'] = 'group_count'
+
+weewx.units.obs_group_dict['soilMoistBatt1'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt2'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt3'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt4'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt5'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt6'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt7'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt8'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt1'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt2'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt3'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt4'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt5'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt6'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt7'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt8'] = 'group_volt'
+weewx.units.obs_group_dict['leafWetBatt1'] = 'group_volt'
+weewx.units.obs_group_dict['leafWetBatt2'] = 'group_volt'
+weewx.units.obs_group_dict['leafWetBatt3'] = 'group_volt'
+weewx.units.obs_group_dict['leafWetBatt4'] = 'group_volt'
+weewx.units.obs_group_dict['leafWetBatt5'] = 'group_volt'
+weewx.units.obs_group_dict['leafWetBatt6'] = 'group_volt'
+weewx.units.obs_group_dict['leafWetBatt7'] = 'group_volt'
+weewx.units.obs_group_dict['leafWetBatt8'] = 'group_volt'
+
+weewx.units.obs_group_dict['maxdailygust'] = 'group_speed2'
+weewx.units.obs_group_dict['winddir_avg10m'] = 'group_direction'
+weewx.units.obs_group_dict['windspdmph_avg10m'] = 'group_speed2'
+
+weewx.units.obs_group_dict['co2_Batt'] = 'group_count'
+weewx.units.obs_group_dict['pm25_Batt1'] = 'group_count'
+weewx.units.obs_group_dict['pm25_Batt2'] = 'group_count'
+weewx.units.obs_group_dict['pm25_Batt3'] = 'group_count'
+weewx.units.obs_group_dict['pm25_Batt4'] = 'group_count'
+#weewx.units.obs_group_dict['leak_1'] = 'group_count'
+#weewx.units.obs_group_dict['leak_2'] = 'group_count'
+#weewx.units.obs_group_dict['leak_3'] = 'group_count'
+#weewx.units.obs_group_dict['leak_4'] = 'group_count'
+weewx.units.obs_group_dict['leak_Batt1'] = 'group_count'
+weewx.units.obs_group_dict['leak_Batt2'] = 'group_count'
+weewx.units.obs_group_dict['leak_Batt3'] = 'group_count'
+weewx.units.obs_group_dict['leak_Batt4'] = 'group_count'
+weewx.units.obs_group_dict['lightning_Batt'] = 'group_count'
+
+weewx.units.obs_group_dict['soilad1'] = 'group_count'
+weewx.units.obs_group_dict['soilad2'] = 'group_count'
+weewx.units.obs_group_dict['soilad3'] = 'group_count'
+weewx.units.obs_group_dict['soilad4'] = 'group_count'
+weewx.units.obs_group_dict['soilad5'] = 'group_count'
+weewx.units.obs_group_dict['soilad6'] = 'group_count'
+weewx.units.obs_group_dict['soilad7'] = 'group_count'
+weewx.units.obs_group_dict['soilad8'] = 'group_count'
 
 def loader(config_dict, _):
     return InterceptorDriver(**config_dict[DRIVER_NAME])
@@ -386,31 +511,156 @@ class Consumer(object):
         'extraTemp1': 'temperature_1',
         'extraTemp2': 'temperature_2',
         'extraTemp3': 'temperature_3',
-        'extraHumid1': 'humidity_1',
-        'extraHumid2': 'humidity_2',
-        'soilTemp1': 'soil_temperature_1',
-        'soilTemp2': 'soil_temperature_2',
-        'soilMoist1': 'soil_moisture_1',
-        'soilMoist2': 'soil_moisture_2',
-        'soilMoist3': 'soil_moisture_3',
-        'soilMoist4': 'soil_moisture_4',
-        'leafWet1': 'leafwetness_1',
-        'leafWet2': 'leafwetness_2',
-        # these are not in the wview schema
-        'pm2_5': 'pm2_5',
         'extraTemp4': 'temperature_4',
         'extraTemp5': 'temperature_5',
         'extraTemp6': 'temperature_6',
         'extraTemp7': 'temperature_7',
         'extraTemp8': 'temperature_8',
+        'extraHumid1': 'humidity_1',
+        'extraHumid2': 'humidity_2',
         'extraHumid3': 'humidity_3',
         'extraHumid4': 'humidity_4',
         'extraHumid5': 'humidity_5',
         'extraHumid6': 'humidity_6',
         'extraHumid7': 'humidity_7',
         'extraHumid8': 'humidity_8',
-        'soilTemp3': 'soil_temperature_3',
-        'soilTemp4': 'soil_temperature_4',
+        #'soilTemp1': 'soil_temperature_1',
+        #'soilTemp2': 'soil_temperature_2',
+        #'soilTemp3': 'soil_temperature_3',
+        #'soilTemp4': 'soil_temperature_4',
+        'soilTemp1': 'tf_ch1',
+        'soilTemp2': 'tf_ch2',
+        'soilTemp3': 'tf_ch3',
+        'soilTemp4': 'tf_ch4',
+        'soilTemp5': 'tf_ch5',
+        'soilTemp6': 'tf_ch6',
+        'soilTemp7': 'tf_ch7',
+        'soilTemp8': 'tf_ch8',
+        'soilMoist1': 'soil_moisture_1',
+        'soilMoist2': 'soil_moisture_2',
+        'soilMoist3': 'soil_moisture_3',
+        'soilMoist4': 'soil_moisture_4',
+        'soilMoist5': 'soil_moisture_5',
+        'soilMoist6': 'soil_moisture_6',
+        'soilMoist7': 'soil_moisture_7',
+        'soilMoist8': 'soil_moisture_8',
+        #these are ecowitt client schema
+        'co2': 'co2',
+        'co2_Temp': 'tf_co2',
+        'co2_Hum': 'humi_co2',
+        'co2_Batt': 'co2_batt',
+        'pm10_0': 'pm10_co2',
+        'pm2_5': 'pm25_co2',
+        'pm25_1': 'pm25_ch1',
+        'pm25_2': 'pm25_ch2',
+        'pm25_3': 'pm25_ch3',
+        'pm25_4': 'pm25_ch4',
+        'pm25_Batt1': 'pm25batt1',
+        'pm25_Batt2': 'pm25batt2',
+        'pm25_Batt3': 'pm25batt3',
+        'pm25_Batt4': 'pm25batt4',
+        'batteryStatus1': 'battery_1',
+        'batteryStatus2': 'battery_2',
+        'batteryStatus3': 'battery_3',
+        'batteryStatus4': 'battery_4',
+        'batteryStatus5': 'battery_5',
+        'batteryStatus6': 'battery_6',
+        'batteryStatus7': 'battery_7',
+        'batteryStatus8': 'battery_8',
+        'soilMoistBatt1': 'soilbatt1',
+        'soilMoistBatt2': 'soilbatt2',
+        'soilMoistBatt3': 'soilbatt3',
+        'soilMoistBatt4': 'soilbatt4',
+        'soilMoistBatt5': 'soilbatt5',
+        'soilMoistBatt6': 'soilbatt6',
+        'soilMoistBatt7': 'soilbatt7',
+        'soilMoistBatt8': 'soilbatt8',
+        'soilTempBatt1': 'tf_batt1',
+        'soilTempBatt2': 'tf_batt2',
+        'soilTempBatt3': 'tf_batt3',
+        'soilTempBatt4': 'tf_batt4',
+        'soilTempBatt5': 'tf_batt5',
+        'soilTempBatt6': 'tf_batt6',
+        'soilTempBatt7': 'tf_batt7',
+        'soilTempBatt8': 'tf_batt8',
+        'leafWetBatt1': 'leaf_batt1',
+        'leafWetBatt2': 'leaf_batt2',
+        'leafWetBatt3': 'leaf_batt3',
+        'leafWetBatt4': 'leaf_batt4',
+        'leafWetBatt5': 'leaf_batt5',
+        'leafWetBatt6': 'leaf_batt6',
+        'leafWetBatt7': 'leaf_batt7',
+        'leafWetBatt8': 'leaf_batt8',
+        'leak_Batt1': 'leakbatt1',
+        'leak_Batt2': 'leakbatt2',
+        'leak_Batt3': 'leakbatt3',
+        'leak_Batt4': 'leakbatt4',
+        'lightning_distance': 'lightning',
+        'lightning_disturber_count': 'lightning_time',
+        'lightning_strike_count': 'lightning_num',
+        'lightning_Batt': 'wh57batt',
+        'maxdailygust': 'maxdailygust',
+        'winddir_avg10m': 'winddir_avg10m',
+        'windspdmph_avg10m': 'windspdmph_avg10m',
+        'pm25_24h_co2': 'pm25_24h_co2',
+        'pm10_24h_co2': 'pm10_24h_co2',
+        'pm25_avg_24h_ch1': 'pm25_avg_24h_ch1',
+        'pm25_avg_24h_ch2': 'pm25_avg_24h_ch2',
+        'pm25_avg_24h_ch3': 'pm25_avg_24h_ch3',
+        'pm25_avg_24h_ch4': 'pm25_avg_24h_ch4',
+        'consBatteryVoltage': 'ws1900batt',
+        'rainBatteryStatus': 'wh40batt',
+        'hailBatteryStatus': 'wh90batt',
+        'windBatteryStatus': 'wh80batt',
+        'ws90_batt': 'wh90batt',
+        'ws80_batt': 'wh80batt',
+        'wh24_batt': 'wh24batt',
+        'wh25_batt': 'wh25batt',
+        'wh26_batt': 'wh26batt',
+        'wh65_batt': 'wh65batt',
+        'wh68_batt': 'wh68batt',
+        'outTempBatteryStatus': 'wh65batt',
+        'inTempBatteryStatus': 'wh25batt',
+        'rainrate': 'rainratein',
+        'totalRain': 'rain_total',
+        'eventRain': 'rainevent',
+        'hourRain': 'hourlyrainin',
+        'dayRain': 'dailyrainin',
+        'weekRain': 'weeklyrainin',
+        'monthRain': 'monthlyrainin',
+        'yearRain': 'rainyear',
+        'rain_piezo': 'rain_piezo',
+        'rrain_piezo': 'rrain_piezo',
+        'erain_piezo': 'erain_piezo',
+        'hrain_piezo': 'hrain_piezo',
+        'drain_piezo': 'drain_piezo',
+        'wrain_piezo': 'wrain_piezo',
+        'mrain_piezo': 'mrain_piezo',
+        'yrain_piezo': 'yrain_piezo',
+        'ws90cap_volt': 'ws90cap_volt',
+        'ws90_ver': 'ws90_ver',
+        'runtime': 'runtime',
+        'ws_interval': 'interval',
+        'model': 'model',
+        'stationtype': 'stationtype',
+        'gain0': 'gain0',
+        'gain1': 'gain1',
+        'gain2': 'gain2',
+        'gain3': 'gain3',
+        'gain4': 'gain4',
+        'gain5': 'gain5',
+        'gain6': 'gain6',
+        'gain7': 'gain7',
+        'gain8': 'gain8',
+        'gain9': 'gain9',
+        'soilad1': 'soilad1',
+        'soilad2': 'soilad2',
+        'soilad3': 'soilad3',
+        'soilad4': 'soilad4',
+        'soilad5': 'soilad5',
+        'soilad6': 'soilad6',
+        'soilad7': 'soilad7',
+        'soilad8': 'soilad8',
     }
 
     def default_sensor_map(self):
@@ -2475,7 +2725,15 @@ class EcowittClient(Consumer):
             'runtime' : 'runtime',
             'interval' : 'interval',
             'stationtype' :  'stationtype',
-            'model': 'model',  
+            'model': 'model',
+            'soilad1': 'soilad1',
+            'soilad2': 'soilad2',
+            'soilad3': 'soilad3',
+            'soilad4': 'soilad4',
+            'soilad5': 'soilad5',
+            'soilad6': 'soilad6',
+            'soilad7': 'soilad7',
+            'soilad8': 'soilad8',
        }
 
         IGNORED_LABELS = [
