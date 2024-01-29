@@ -34,7 +34,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.5.0b6                                    Date: ?? August 2022
+Version: 0.5.1kw                                    Date: 29 Januar 2024
 
 Revision History
     ?? June 2022           v0.5.0
@@ -391,7 +391,7 @@ except ImportError:
         log_traceback(prefix=prefix, loglevel=syslog.LOG_DEBUG)
 
 DRIVER_NAME = 'GW1000'
-DRIVER_VERSION = '0.5.0b6'
+DRIVER_VERSION = '0.5.0b7kw'
 
 # various defaults used throughout
 # default port used by device
@@ -632,6 +632,7 @@ class Gateway(object):
         #'gain8': 'gain8',
         #'gain9': 'gain9',
         'radcompensation': 'radcompensation',
+        'heap': 'heap',
 
     }
     # Rain related fields default field map, merged into default_field_map to
@@ -2020,6 +2021,8 @@ class Gw1000ConfEditor(weewx.drivers.AbstractConfEditor):
         [[gain9]]
             extractor = last
         [[radcompensation]]
+            extractor = last
+        [[heap]]
             extractor = last
 
         # End GW1000 driver extractors
@@ -4076,6 +4079,7 @@ class GatewayCollector(Collector):
             b'\x68': ('decode_wn34', 3, 'temp14'),
             b'\x69': ('decode_wn34', 3, 'temp15'),
             b'\x6A': ('decode_wn34', 3, 'temp16'),
+            b'\x6C': ('decode_heap', 4, 'heap'),
             # WH45 battery data is not obtained from live data rather it is
             # obtained from sensor ID data
             b'\x70': ('decode_wh45', 16, ('temp17', 'humid17', 'pm10',
@@ -5156,6 +5160,24 @@ class GatewayCollector(Collector):
         @staticmethod
         def decode_count(data, field=None):
             """Decode lightning count.
+
+            Count is an integer stored in a four byte big endian integer. If
+            field is not None return the result as a dict in the format
+            {field: decoded value} otherwise return just the decoded value.
+            """
+
+            if len(data) == 4:
+                value = struct.unpack(">L", data)[0]
+            else:
+                value = None
+            if field is not None:
+                return {field: value}
+            else:
+                return value
+
+        @staticmethod
+        def decode_heap(data, field=None):
+            """Decode heap free.
 
             Count is an integer stored in a four byte big endian integer. If
             field is not None return the result as a dict in the format

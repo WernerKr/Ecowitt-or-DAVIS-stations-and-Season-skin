@@ -101,7 +101,7 @@
         
 """
 
-VERSION = "0.9a2"
+VERSION = "1.0"
 
 # deal with differences between python 2 and python 3
 try:
@@ -236,7 +236,7 @@ weewx.units.conversionDict['microgram_per_meter_cubed']['gram_per_meter_cubed'] 
 weewx.units.conversionDict['microgram_per_meter_cubed']['milligram_per_meter_cubed'] = lambda x : x*0.001
 weewx.units.conversionDict['milligram_per_meter_cubed']['gram_per_meter_cubed'] = lambda x : x*0.001
 weewx.units.conversionDict['gram_per_meter_cubed']['milligram_per_meter_cubed'] = lambda x : x*1000
-weewx.units.default_unit_format_dict.setdefault('gram_per_meter_cubed',"%.3f")
+weewx.units.default_unit_format_dict.setdefault('gram_per_meter_cubed',"%.1f")
 weewx.units.default_unit_label_dict.setdefault('gram_per_meter_cubed',u" g/m³")
 weewx.units.default_unit_format_dict.setdefault('milligram_per_meter_cubed',"%.1f")
 weewx.units.default_unit_label_dict.setdefault('milligram_per_meter_cubed',u" mg/m³")
@@ -490,7 +490,7 @@ class GTSType(weewx.xtypes.XType):
 
         if obs_type is None:
             raise weewx.UnknownType("obs_type is None")
-            
+        
         # time offset of local mean time (LMT)
         if obs_type=='utcoffsetLMT':
             return weewx.units.ValueTuple(self.lmt_tz.utcoffset(None).total_seconds(),'second','group_deltatime')
@@ -511,7 +511,10 @@ class GTSType(weewx.xtypes.XType):
                         'outEquiTemp','outThetaE'):
             #_result = weewx.xtypes.get_scalar('outTemp',record,db_manager)
             try:
+                # If record is None or `outTemp` not in record, then
+                # a ValueTuple with the value of None is returned
                 _result = weewx.units.as_value_tuple(record,'outTemp')
+                # If _result represents a value of None, temp_C is None, too.
                 temp_C = weewx.units.convert(_result,'degree_C')[0]
                 method = option_dict.get('method',self.svp_method)
                 if obs_type=='outSVP':
@@ -959,11 +962,11 @@ class GTSType(weewx.xtypes.XType):
                         valtime = _result[0]
                     else:
                         raise weewx.UnknownType("%s.%s: unknown aggregation type" % (obs_type,aggregate_type))
-            if aggregate_type=='avg': 
-                if n>0:
-                    val /= n
-                else:
-                    val = None
+            if n==0:
+                _x = self.get_scalar(obs_type, None, None, **option_dict)
+                val = _x[0]
+            elif aggregate_type=='avg': 
+                val /= n
             if 'time' in aggregate_type:
                 return weewx.units.ValueTuple(valtime,'unix_epoch','group_time')
             if aggregate_type=='count':
@@ -1237,6 +1240,11 @@ class GTSType(weewx.xtypes.XType):
         raise weewx.CannotCalculate("%s %s" % (obs_type,aggregate_type))
 
 
+try:
+    import user.barometer
+    has_baro = True
+except ImportError:
+    has_baro = False
 
 # This is a WeeWX service, whose only job is to register and unregister the extension
 class GTSService(StdService):
@@ -1246,8 +1254,9 @@ class GTSService(StdService):
         
         # the station's location
         # (needed for calculation of the local mean time (LMT))
-        __lat=engine.stn_info.latitude_f
-        __lon=engine.stn_info.longitude_f
+        __lat = engine.stn_info.latitude_f
+        __lon = engine.stn_info.longitude_f
+        __alt_vt = engine.stn_info.altitude_vt
 
         # saturation vapor pressure calculation method
         __svp_method = config_dict.get('StdWXCalculate',{}).get('WXXTypes',{}).get('VaporPressure',{})
@@ -1262,6 +1271,17 @@ class GTSService(StdService):
         # Note: This can be overwritten by the 'search_list' entry in skin_dict
         weewx.cheetahgenerator.default_search_list.append('user.dayboundarystats.DayboundaryStats')
         
+        # Register barometer workaround
+        loginf('PressureCooker %s' % has_baro)
+        if has_baro:
+            pc_dict =  config_dict.get('StdWXCalculate',{}).get('PressureCooker',{})
+            self.barometer = user.barometer.PressureCooker(__alt_vt,
+                max_delta_12h=weeutil.weeutil.to_float(pc_dict.get('max_delta_12h',1800)),
+                altimeter_algorithm=pc_dict.get('altimeter',{}).get('algorithm','aaASOS'),
+                barometer_algorithm=pc_dict.get('barometer',{}).get('algorithm','paWView'))
+            loginf('PressureCooker %s ' % self.barometer)
+            weewx.xtypes.xtypes.append(self.barometer)
+        
     def shutDown(self):
     
         # Engine is shutting down. Remove the registration
@@ -1269,5 +1289,9 @@ class GTSService(StdService):
         
         # Remove tag registration
         weewx.cheetahgenerator.default_search_list.remove('user.dayboundarystats.DayboundaryStats')
+        
+        # Remove barometer workaround
+        if has_baro:
+            weewx.xtypes.xtypes.remove(self.barometer)
 
 

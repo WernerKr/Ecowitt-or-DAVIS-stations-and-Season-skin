@@ -339,18 +339,18 @@ weewx.units.obs_group_dict['soilTemp6'] = 'group_temperature'
 weewx.units.obs_group_dict['soilTemp7'] = 'group_temperature'
 weewx.units.obs_group_dict['soilTemp8'] = 'group_temperature'
 
-#weewx.units.obs_group_dict['leafWet1'] = 'group_percent'
-#weewx.units.obs_group_dict['leafWet2'] = 'group_percent'
+weewx.units.obs_group_dict['leafWet1'] = 'group_percent'
+weewx.units.obs_group_dict['leafWet2'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet3'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet4'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet5'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet6'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet7'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet8'] = 'group_percent'
-#weewx.units.obs_group_dict['soilMoist1'] = 'group_percent'
-#weewx.units.obs_group_dict['soilMoist2'] = 'group_percent'
-#weewx.units.obs_group_dict['soilMoist3'] = 'group_percent'
-#weewx.units.obs_group_dict['soilMoist4'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist1'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist2'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist3'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist4'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist5'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist6'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist7'] = 'group_percent'
@@ -417,10 +417,10 @@ weewx.units.obs_group_dict['pm25_Batt1'] = 'group_count'
 weewx.units.obs_group_dict['pm25_Batt2'] = 'group_count'
 weewx.units.obs_group_dict['pm25_Batt3'] = 'group_count'
 weewx.units.obs_group_dict['pm25_Batt4'] = 'group_count'
-#weewx.units.obs_group_dict['leak_1'] = 'group_count'
-#weewx.units.obs_group_dict['leak_2'] = 'group_count'
-#weewx.units.obs_group_dict['leak_3'] = 'group_count'
-#weewx.units.obs_group_dict['leak_4'] = 'group_count'
+weewx.units.obs_group_dict['leak_1'] = 'group_count'
+weewx.units.obs_group_dict['leak_2'] = 'group_count'
+weewx.units.obs_group_dict['leak_3'] = 'group_count'
+weewx.units.obs_group_dict['leak_4'] = 'group_count'
 weewx.units.obs_group_dict['leak_Batt1'] = 'group_count'
 weewx.units.obs_group_dict['leak_Batt2'] = 'group_count'
 weewx.units.obs_group_dict['leak_Batt3'] = 'group_count'
@@ -435,6 +435,9 @@ weewx.units.obs_group_dict['soilad5'] = 'group_count'
 weewx.units.obs_group_dict['soilad6'] = 'group_count'
 weewx.units.obs_group_dict['soilad7'] = 'group_count'
 weewx.units.obs_group_dict['soilad8'] = 'group_count'
+
+weewx.units.obs_group_dict['heap'] = 'group_data'
+
 
 def loader(config_dict, _):
     return InterceptorDriver(**config_dict[DRIVER_NAME])
@@ -583,6 +586,14 @@ class Consumer(object):
         'soilTempBatt6': 'tf_batt6',
         'soilTempBatt7': 'tf_batt7',
         'soilTempBatt8': 'tf_batt8',
+        'leafWet1': 'leafwetness_ch1',
+        'leafWet2': 'leafwetness_ch2',
+        'leafWet3': 'leafwetness_ch3',
+        'leafWet4': 'leafwetness_ch4',
+        'leafWet5': 'leafwetness_ch5',
+        'leafWet6': 'leafwetness_ch6',
+        'leafWet7': 'leafwetness_ch7',
+        'leafWet8': 'leafwetness_ch8',
         'leafWetBatt1': 'leaf_batt1',
         'leafWetBatt2': 'leaf_batt2',
         'leafWetBatt3': 'leaf_batt3',
@@ -591,6 +602,10 @@ class Consumer(object):
         'leafWetBatt6': 'leaf_batt6',
         'leafWetBatt7': 'leaf_batt7',
         'leafWetBatt8': 'leaf_batt8',
+        'leak_1': 'leak_ch1',
+        'leak_2': 'leak_ch2',
+        'leak_3': 'leak_ch3',
+        'leak_4': 'leak_ch4',
         'leak_Batt1': 'leakbatt1',
         'leak_Batt2': 'leakbatt2',
         'leak_Batt3': 'leakbatt3',
@@ -661,6 +676,7 @@ class Consumer(object):
         'soilad6': 'soilad6',
         'soilad7': 'soilad7',
         'soilad8': 'soilad8',
+        'heap': 'heap',
     }
 
     def default_sensor_map(self):
@@ -2734,6 +2750,7 @@ class EcowittClient(Consumer):
             'soilad6': 'soilad6',
             'soilad7': 'soilad7',
             'soilad8': 'soilad8',
+            'heap': 'heap',
        }
 
         IGNORED_LABELS = [
