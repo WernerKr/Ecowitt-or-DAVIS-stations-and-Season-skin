@@ -34,7 +34,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.5.1kw                                    Date: 29 Januar 2024
+Version: 0.5.2kw                                    Date: 01 Februar 2024
 
 Revision History
     ?? June 2022           v0.5.0
@@ -3025,8 +3025,8 @@ class GatewayCollector(Collector):
         # header used in each API command and response packet
         header = b'\xff\xff'
         # known device models
-        known_models = ('GW1000', 'GW1100', 'GW2000',
-                        'WH2650', 'WH2680', 'WS1900', 'WN1980')
+        known_models = ('GW1000', 'GW1100', 'GW1200', 'GW2000',
+                        'WH2650', 'WH2680', 'WS1900', 'WS3800', 'WS3900', 'WN1980')
 
         def __init__(self, ip_address=None, port=None,
                      broadcast_address=None, broadcast_port=None,

@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.6'
+DRIVER_VERSION = '0.6.1'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -315,7 +315,10 @@ DEFAULT_DEVICE_TYPE = 'ecowitt-client'
 weewx.units.obs_group_dict['co2'] = 'group_fraction'
 weewx.units.obs_group_dict['co2_Temp'] = 'group_temperature'
 weewx.units.obs_group_dict['co2_Hum'] = 'group_percent'
+weewx.units.obs_group_dict['co2_24h'] = 'group_fraction'
 
+weewx.units.obs_group_dict['pm1_0'] = 'group_concentration'
+weewx.units.obs_group_dict['pm4_0'] = 'group_concentration'
 weewx.units.obs_group_dict['pm2_5'] = 'group_concentration'
 weewx.units.obs_group_dict['pm10_0'] = 'group_concentration'
 weewx.units.obs_group_dict['pm25_1'] = 'group_concentration'
@@ -323,6 +326,8 @@ weewx.units.obs_group_dict['pm25_2'] = 'group_concentration'
 weewx.units.obs_group_dict['pm25_3'] = 'group_concentration'
 weewx.units.obs_group_dict['pm25_4'] = 'group_concentration'
 
+weewx.units.obs_group_dict['pm1_24h_co2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm4_24h_co2'] = 'group_concentration'
 weewx.units.obs_group_dict['pm25_24h_co2'] = 'group_concentration'
 weewx.units.obs_group_dict['pm10_24h_co2'] = 'group_concentration'
 weewx.units.obs_group_dict['pm25_avg_24h_ch1'] = 'group_concentration'
@@ -552,6 +557,8 @@ class Consumer(object):
         'co2_Temp': 'tf_co2',
         'co2_Hum': 'humi_co2',
         'co2_Batt': 'co2_batt',
+        'pm1_0': 'pm1_co2',
+        'pm4_0': 'pm4_co2',
         'pm10_0': 'pm10_co2',
         'pm2_5': 'pm25_co2',
         'pm25_1': 'pm25_ch1',
@@ -617,6 +624,8 @@ class Consumer(object):
         'maxdailygust': 'maxdailygust',
         'winddir_avg10m': 'winddir_avg10m',
         'windspdmph_avg10m': 'windspdmph_avg10m',
+        'pm1_24h_co2': 'pm1_24h_co2',
+        'pm4_24h_co2': 'pm4_24h_co2',
         'pm25_24h_co2': 'pm25_24h_co2',
         'pm10_24h_co2': 'pm10_24h_co2',
         'pm25_avg_24h_ch1': 'pm25_avg_24h_ch1',
@@ -2670,6 +2679,10 @@ class EcowittClient(Consumer):
             'co2_batt': 'co2_batt',
             'tf_co2': 'tf_co2',
             'humi_co2': 'humi_co2',
+            'pm1_co2': 'pm1_co2',
+            'pm1_24h_co2': 'pm1_24h_co2',
+            'pm4_co2': 'pm4_co2',
+            'pm4_24h_co2': 'pm4_24h_co2',
             'pm25_co2': 'pm25_co2',
             'pm25_24h_co2': 'pm25_24h_co2',
             'pm10_co2': 'pm10_co2',
