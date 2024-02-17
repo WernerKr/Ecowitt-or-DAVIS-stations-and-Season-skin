@@ -15,39 +15,74 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-if sunduration.py is former used: 
-sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --rename-column=sunshine_time --to-name=sunshineDur
-sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=sunshine_time --type=REAL
-sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=rainDur --type=REAL
-sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=hailDur --type=REAL
 
-if sunrainduration.py new used:
+#sunshine_time 	= Value when sunshine duration is recorded in W/m²
+#sunshineDur	 	= Sunshine duration value in the archive interval in seconds
+#rainDur 		= rain duration value in the archive interval in seconds
+#hailDur 		= rain duration value (Ecowitt-Piezo) in the archive interval in seconds
+#sunshineDur_2 	= Sunshine duration value in the archive interval in seconds for 2. DAVIS station (e.g. live or console)
+#rainDur_2 		= Rain duration value in the archive interval in seconds for 2. DAVIS station (e.g. live or console)
+
+weewx.conf:
+[StdReport]
+ [[Defaults]]
+   [[[Units]]]
+      [[[[Groups]]]]
+          group_deltatime = hour
+
+[RadiationDays]
+    min_sunshine = 120     	# Entry of extension radiationhours.py, if is installed (= limit value)
+    sunshine_coeff = 0.8   	# Factor from which value sunshine is counted - the higher the later
+    sunshine_min = 18     	# below this value (W/m²), sunshine is not taken into account.
+    sunshine_loop = 1      	# use for sunshine loop packet (or archive: sunshine_loop = 0)
+    rainDur_loop = 0       	# use for rain duration loop packet - default is not       
+    hailDur_loop = 0       	# use for piezo-rain duration loop packet - default is not
+    sunshine_log = 0       	# should not be logged when sunshine is recorded
+    rainDur_log = 0       	# no logging for rain duration
+    hailDur_log = 0       	# no logging for piezo-rain duration
+
+    rain2 = 0             	# no rain2 available (Davis Live, Davis Console)
+    sunshine2 = 0           # no shunhine2 available (Davis Live, Davis Console)    
+    sunshine2_loop = 1
+    rainDur2_loop = 0
+    sunshine2_log = 0
+    rainDur2_log = 0
+
+
+add_sunrain.sh:
+#!/bin/bash
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=sunshine_time --type=REAL
+
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=sunshineDur --type=REAL
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=rainDur --type=REAL
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=hailDur --type=REAL
 
-weewx.conf:
-[RadiationDays]			# this are the default settings
-    min_sunshine = 120
-    sunshine_coeff = 0.95
-    sunshine_min = 18
-    sunshine_loop = 1
-    rainDur_loop = 0
-    hailDur_loop = 0
-    sunshine_log = 0
-    rainDur_log = 0
-    hailDur_log = 0
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=sunshineDur_2 --type=REAL
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=rainDur_2 --type=REAL
 
-[Engine]
-    [[Services]]
-        process_services = weewx.engine.StdConvert, weewx.engine.StdCalibrate, weewx.engine.StdQC, weewx.wxservices.StdWXCalculate, user.sunrainduration.SunshineDuration
 
-schema:
+
+extension.py:
+import weewx.units
+
+weewx.units.obs_group_dict['sunshine_time'] = 'group_radiation'
+
+#weewx.units.obs_group_dict['sunshineDur'] = 'group_deltatime'
+#weewx.units.obs_group_dict['rainDur'] = 'group_deltatime'
+weewx.units.obs_group_dict['hailDur'] = 'group_deltatime'
+
+weewx.units.obs_group_dict['sunshineDur_2'] = 'group_deltatime'
+weewx.units.obs_group_dict['rainDur_2'] = 'group_deltatime'
+
+
 #schema_with_sunshine = schemas.wview_extendedmy.schema + [('sunshine_time', 'REAL')]
 #schema_with_sunshine = schemas.wview_extendedmy.schema + [('sunshineDur', 'REAL')]
 #schema_with_sunshine = schemas.wview_extendedmy.schema + [('rainDur', 'REAL')]
 #schema_with_sunshine = schemas.wview_extendedmy.schema + [('hailDur', 'REAL')]
+
+#schema_with_sunshine = schemas.wview_extendedmy.schema + [('sunshineDur_2', 'REAL')]
+#schema_with_sunshine = schemas.wview_extendedmy.schema + [('rainDur_2', 'REAL')]
+
 
 """
 
@@ -59,11 +94,6 @@ import weewx
 import weewx.units
 from weewx.wxengine import StdService
 #import schemas.wview_extendedmy
-
-weewx.units.obs_group_dict['sunshine_time'] = 'group_radiation'
-weewx.units.obs_group_dict['sunshineDur'] = 'group_deltatime'
-weewx.units.obs_group_dict['rainDur'] = 'group_deltatime'
-weewx.units.obs_group_dict['hailDur'] = 'group_deltatime'
 
 try:
     # Test for new-style weewx logging by trying to import weeutil.logger
@@ -90,7 +120,7 @@ except ImportError:
 
 
     def logmsg(level, msg):
-        syslog.syslog(level, 'meteotemplate: %s' % msg)
+        syslog.syslog(level, 'sunrainduration: %s' % msg)
 
 
     def logdbg(msg):
@@ -104,6 +134,17 @@ except ImportError:
     def logerr(msg):
         logmsg(syslog.LOG_ERR, msg)
 
+DRIVER_NAME = "SunRainDuration"
+DRIVER_VERSION = "0.6"
+
+weewx.units.obs_group_dict['sunshine_time'] = 'group_radiation'
+
+#weewx.units.obs_group_dict['sunshineDur'] = 'group_deltatime'
+#weewx.units.obs_group_dict['rainDur'] = 'group_deltatime'
+weewx.units.obs_group_dict['hailDur'] = 'group_deltatime'
+
+weewx.units.obs_group_dict['sunshineDur_2'] = 'group_deltatime'
+weewx.units.obs_group_dict['rainDur_2'] = 'group_deltatime'
 
 class SunshineDuration(StdService):
     def __init__(self, engine, config_dict):
@@ -125,6 +166,16 @@ class SunshineDuration(StdService):
         self.rainDur_loop = 0
         self.hailDur_loop = 0
 
+        self.sunshine2 = 0
+        self.rain2 = 0
+
+        self.sunshine2_loop = 1
+        self.rainDur2_loop = 0
+
+        self.sunshine2_log = 0
+        self.rainDur2_log = 0
+
+
         if 'RadiationDays' in config_dict:
             self.sunshine_coeff = float(config_dict['RadiationDays'].get('sunshine_coeff', self.sunshine_coeff))
             self.sunshine_log = int(config_dict['RadiationDays'].get('sunshine_log', self.sunshine_log))
@@ -134,6 +185,15 @@ class SunshineDuration(StdService):
             self.hailDur_loop = int(config_dict['RadiationDays'].get('hailDur_loop', self.hailDur_loop))
             self.rainDur_log = int(config_dict['RadiationDays'].get('rainDur_log', self.rainDur_log))
             self.hailDur_log = int(config_dict['RadiationDays'].get('hailDur_log', self.hailDur_log))
+
+            self.sunshine2 = int(config_dict['RadiationDays'].get('sunshine2', self.sunshine2))
+            self.rain2 = int(config_dict['RadiationDays'].get('rain2', self.rain2))
+
+            self.sunshine2_loop = int(config_dict['RadiationDays'].get('sunshine2_loop', self.sunshine2_loop))
+            self.rainDur2_loop = int(config_dict['RadiationDays'].get('rainDur2_loop', self.rainDur2_loop))
+            self.sunshine2_log = int(config_dict['RadiationDays'].get('sunshine2_log', self.sunshine2_log))
+            self.rainDur2_log = int(config_dict['RadiationDays'].get('rainDur2_log', self.rainDur2_log))
+
 
         # Start intercepting events:
         self.bind(weewx.NEW_LOOP_PACKET, self.newLoopPacket)
@@ -157,7 +217,21 @@ class SunshineDuration(StdService):
         self.lastHail = 0
         self.firstArchiveHail = True
 
+        self.lastdateTime2 = 0
+        self.LoopDuration2 = 0
+        self.sunshineSeconds2 = 0
+        self.lastSeuil2 = 0
+        self.firstArchive2 = True
+
+        self.lastdateTimeRain2 = 0
+        self.LoopDurationRain2 = 0
+        self.rainSeconds2 = 0
+        self.lastRain2 = 0
+        self.firstArchiveRain2 = True
+
         self.Archive = False
+
+
 
     def newLoopPacket(self, event):
         """Gets called on a new loop packet event."""
@@ -176,6 +250,22 @@ class SunshineDuration(StdService):
                loginf("LOOP time=%.0f sec, sum sunshineSeconds=%.0f, radiation=%.2f, threshold=%.4f, %.3f" % (
                 self.LoopDuration, self.sunshineSeconds, radiation, seuil, self.sunshine_coeff))
 
+        if self.sunshine2 == 1:
+          radiation_2 = event.packet.get('radiation_2')
+          if radiation_2 is not None:
+            if self.lastdateTime2 == 0:
+                self.lastdateTime2 = event.packet.get('dateTime')
+            self.LoopDuration2 = event.packet.get('dateTime') - self.lastdateTime2
+            self.lastdateTime2 = event.packet.get('dateTime')
+            seuil = self.sunshineThreshold(event.packet.get('dateTime'))
+            
+            if radiation_2 > seuil and radiation_2 > self.sunshine_min and seuil > 0:
+                self.sunshineSeconds2 += self.LoopDuration2
+            self.lastSeuil2 = seuil
+            if radiation_2 > 0 and self.sunshine2_log == 1:
+               loginf("LOOP time=%.0f sec, sum sunshineSeconds2=%.0f, radiation_2=%.2f, threshold=%.4f, %.3f" % (
+                self.LoopDuration2, self.sunshineSeconds2, radiation_2, seuil, self.sunshine_coeff))
+
         rain = event.packet.get('rain')
         if rain is not None:
             if self.lastdateTimeRain == 0:
@@ -189,6 +279,21 @@ class SunshineDuration(StdService):
             if rain > 0 and self.rainDur_log == 1:
                loginf("LOOP time=%.0f sec, sum rainSeconds=%.0f, rain=%.3f" % (
                 self.LoopDurationRain, self.rainSeconds, rain))
+
+        if self.rain2 == 1:
+          rain_2 = event.packet.get('rain_2')
+          if rain_2 is not None:
+            if self.lastdateTimeRain2 == 0:
+                self.lastdateTimeRain2 = event.packet.get('dateTime')
+            self.LoopDurationRain2 = event.packet.get('dateTime') - self.lastdateTimeRain2
+            self.lastdateTimeRain2 = event.packet.get('dateTime')
+            
+            if rain_2 > 0:
+                self.rainSeconds2 += self.LoopDurationRain2
+            #self.lastRain2 = rainDur_2
+            if rain_2 > 0 and self.rainDur2_log == 1:
+               loginf("LOOP time=%.0f sec, sum rainSeconds2=%.0f, rain_2=%.3f" % (
+                self.LoopDurationRain2, self.rainSeconds2, rain_2))
 
         hail = event.packet.get('hail')
         if hail is not None:
@@ -242,6 +347,41 @@ class SunshineDuration(StdService):
                 event.record['sunshineDur'], event.record['radiation'], event.record['sunshineThreshold']))
         self.sunshineSeconds = 0
 
+        if self.sunshine2 == 1:
+          radiation_2 = event.record.get('radiation_2')
+          if self.lastdateTime == 0 or self.firstArchive:  # LOOP packets not yet captured : missing archive record extracted from datalogger at start OR first archive record after weewx start
+            event.record['sunshineDur_2'] = 0.0
+            event.record['sunshineThreshold2'] = 0.0
+            if radiation_2 is not None:
+                seuil = self.sunshineThreshold(event.record.get('dateTime'))
+                self.lastSeuil2 = seuil
+                #event.record['sunshine_time'] = seuil
+                if radiation_2 > seuil and radiation_2 > self.sunshine_min and seuil > 0:
+                    event.record['sunshineDur_2'] = self.secondsInterval
+                if self.lastdateTime != 0:  # LOOP already started, this is the first regular archive after weewx start
+                    self.firstArchive = False
+                event.record['sunshineThreshold2'] = self.lastSeuil
+                if radiation_2 > 0 and self.sunshine2_log == 1:
+                   loginf("Sunshine2 - archive record=%.0f sec, radiation_2=%.2f, threshold=%.4f" % (
+                      event.record['sunshineDur_2'], event.record['radiation_2'], event.record['sunshineThreshold2']))
+ 
+          else:
+            event.record['sunshineThreshold2'] = self.lastSeuil
+            #event.record['sunshine_time'] = self.lastSeuil
+            if self.sunshineSeconds2 > self.secondsInterval * 2:
+              event.record['sunshineDur_2'] = self.secondsInterval
+            else:
+              if self.sunshine2_loop != 1:
+               event.record['sunshineDur_2'] = self.secondsInterval
+              else: 
+               event.record['sunshineDur_2'] = self.sunshineSeconds
+            if radiation_2 is not None:
+             if radiation_2 > 0 and self.sunshine2_log == 1:
+               loginf("Sunshine2 - loop packets=%.0f sec, radiation_2=%.2f, threshold=%.4f" % (
+                event.record['sunshineDur_2'], event.record['radiation_2'], event.record['sunshineThreshold2']))
+          self.sunshineSeconds2 = 0
+
+
         rain = event.record.get('rain')
         # maxtime = self.secondsInterval
         if self.Archive == False:
@@ -276,6 +416,40 @@ class SunshineDuration(StdService):
                loginf("RainDur - loop packets=%.0f sec, rain=%.3f" % (
                 event.record['rainDur'], event.record['rain']))
         self.rainSeconds = 0
+
+        if self.rain2 == 1:
+          rain_2 = event.record.get('rain_2')
+          if self.Archive == False:
+            loginf("Archiv-Record-Interval=%.0f sec" % (self.secondsInterval))		# 5 minutes default
+            self.Archive = True
+          if self.lastdateTimeRain2 == 0 or self.firstArchiveRain2:  # LOOP packets not yet captured : missing archive record extracted from datalogger at start OR first archive record after weewx start
+            event.record['rainDur_2'] = 0.0
+            if rain_2 is not None:
+                self.lastRain2 = rain_2 
+                if rain_2 > 0:
+                    event.record['rainDur_2'] = self.secondsInterval
+                if self.lastdateTimeRain2 != 0:  # LOOP already started, this is the first regular archive after weewx start
+                    self.firstArchiveRain2 = False
+                if rain_2 > 0 and self.rainDur2_log == 1:
+                   loginf("RainDur_2 - archive record=%.0f sec, rain_2=%.3f" % (
+                      event.record['rainDur_2'], event.record['rain_2']))
+ 
+          else:
+            if self.rainSeconds2 > self.secondsInterval * 2:
+              event.record['rainDur_2'] = self.secondsInterval
+            else:
+              if self.rainDur2_loop == 1:
+                 event.record['rainDur_2'] = self.rainSeconds2
+              else: 
+                if self.rainSeconds2 > 0:
+                   event.record['rainDur_2'] = self.secondsInterval
+                else: 
+                   event.record['rainDur_2'] = 0
+            if rain_2 is not None:
+             if rain_2 > 0 and self.rainDur2_log == 1:
+               loginf("RainDur_2 - loop packets=%.0f sec, rain_2=%.3f" % (
+                event.record['rainDur_2'], event.record['rain_2']))
+          self.rainSeconds2 = 0
 
         hail = event.record.get('hail')
         # maxtime = self.secondsInterval
