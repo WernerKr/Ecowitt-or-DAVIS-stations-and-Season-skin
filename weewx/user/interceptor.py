@@ -317,6 +317,9 @@ weewx.units.obs_group_dict['co2_Temp'] = 'group_temperature'
 weewx.units.obs_group_dict['co2_Hum'] = 'group_percent'
 weewx.units.obs_group_dict['co2_24h'] = 'group_fraction'
 
+weewx.units.obs_group_dict['co2in'] = 'group_fraction'
+weewx.units.obs_group_dict['co2in_24h'] = 'group_fraction'
+
 weewx.units.obs_group_dict['pm1_0'] = 'group_concentration'
 weewx.units.obs_group_dict['pm4_0'] = 'group_concentration'
 weewx.units.obs_group_dict['pm2_5'] = 'group_concentration'
@@ -375,6 +378,7 @@ weewx.units.obs_group_dict['windBatteryStatus'] = 'group_volt'
 weewx.units.obs_group_dict['ws80_batt'] = 'group_volt'
 weewx.units.obs_group_dict['ws90_batt'] = 'group_volt'
 weewx.units.obs_group_dict['ws1900batt'] = 'group_volt'
+weewx.units.obs_group_dict['console_batt'] = 'group_volt'
 
 weewx.units.obs_group_dict['rrain_piezo'] = 'group_rainrate'
 weewx.units.obs_group_dict['erain_piezo'] = 'group_rain'
@@ -441,8 +445,11 @@ weewx.units.obs_group_dict['soilad6'] = 'group_count'
 weewx.units.obs_group_dict['soilad7'] = 'group_count'
 weewx.units.obs_group_dict['soilad8'] = 'group_count'
 
+weewx.units.obs_group_dict['wh25_sig'] = 'group_count'
+
 weewx.units.obs_group_dict['heap'] = 'group_data'
 
+weewx.units.default_unit_format_dict["microgram_per_meter_cubed"] = "%.1f"
 
 def loader(config_dict, _):
     return InterceptorDriver(**config_dict[DRIVER_NAME])
@@ -554,6 +561,9 @@ class Consumer(object):
         'soilMoist8': 'soil_moisture_8',
         #these are ecowitt client schema
         'co2': 'co2',
+        'co2_24h': 'co2_24h',
+        'co2in': 'co2in',
+        'co2in_24h': 'co2in_24h',
         'co2_Temp': 'tf_co2',
         'co2_Hum': 'humi_co2',
         'co2_Batt': 'co2_batt',
@@ -632,7 +642,7 @@ class Consumer(object):
         'pm25_avg_24h_ch2': 'pm25_avg_24h_ch2',
         'pm25_avg_24h_ch3': 'pm25_avg_24h_ch3',
         'pm25_avg_24h_ch4': 'pm25_avg_24h_ch4',
-        'consBatteryVoltage': 'ws1900batt',
+        'consBatteryVoltage': 'console_batt',
         'rainBatteryStatus': 'wh40batt',
         'hailBatteryStatus': 'wh90batt',
         'windBatteryStatus': 'wh80batt',
@@ -686,6 +696,56 @@ class Consumer(object):
         'soilad7': 'soilad7',
         'soilad8': 'soilad8',
         'heap': 'heap',
+        'wh24_sig': 'wh24sig',
+        'wh25_sig': 'wh25sig',
+        'wh26_sig': 'wh26sig',
+        'wh31_ch1_sig': 'wh31sig1',
+        'wh31_ch2_sig': 'wh31sig2',
+        'wh31_ch3_sig': 'wh31sig3',
+        'wh31_ch4_sig': 'wh31sig4',
+        'wh31_ch5_sig': 'wh31sig5',
+        'wh31_ch6_sig': 'wh31sig6',
+        'wh31_ch7_sig': 'wh31sig7',
+        'wh31_ch8_sig': 'wh31sig8',
+        'wn34_ch1_sig': 'wh34sig1',
+        'wn34_ch2_sig': 'wh34sig2',
+        'wn34_ch3_sig': 'wh34sig3',
+        'wn34_ch4_sig': 'wh34sig4',
+        'wn34_ch5_sig': 'wh34sig5',
+        'wn34_ch6_sig': 'wh34sig6',
+        'wn34_ch7_sig': 'wh34sig7',
+        'wn34_ch8_sig': 'wh34sig8',
+        'wn35_ch1_sig': 'wh35sig1',
+        'wn35_ch2_sig': 'wh35sig2',
+        'wn35_ch3_sig': 'wh35sig3',
+        'wn35_ch4_sig': 'wh35sig4',
+        'wn35_ch5_sig': 'wh35sig5',
+        'wn35_ch6_sig': 'wh35sig6',
+        'wn35_ch7_sig': 'wh35sig7',
+        'wn35_ch8_sig': 'wh35sig8',
+        'wh40_sig': 'wh40sig',
+        'wh41_ch1_sig': 'wh41sig1',
+        'wh41_ch2_sig': 'wh41sig2',
+        'wh41_ch3_sig': 'wh41sig3',
+        'wh41_ch4_sig': 'wh41sig4',
+        'wh45_sig': 'wh45sig',
+        'wh51_ch1_sig': 'wh51sig1',
+        'wh51_ch2_sig': 'wh51sig2',
+        'wh51_ch3_sig': 'wh51sig3',
+        'wh51_ch4_sig': 'wh51sig4',
+        'wh51_ch5_sig': 'wh51sig5',
+        'wh51_ch6_sig': 'wh51sig6',
+        'wh51_ch7_sig': 'wh51sig7',
+        'wh51_ch8_sig': 'wh51sig8',
+        'wh55_ch1_sig': 'wh55sig1',
+        'wh55_ch2_sig': 'wh55sig2',
+        'wh55_ch3_sig': 'wh55sig3',
+        'wh55_ch4_sig': 'wh55sig4',
+        'wh57_sig': 'wh57sig',
+        'wh65_sig': 'wh65sig',
+        'wh68_sig': 'wh68sig',
+        'ws80_sig': 'ws80sig',
+        'ws90_sig': 'ws90sig',
     }
 
     def default_sensor_map(self):
@@ -2676,6 +2736,10 @@ class EcowittClient(Consumer):
             'leakbatt2': 'leakbatt2',
             'leakbatt3': 'leakbatt3',
             'leakbatt4': 'leakbatt4',
+            'co2': 'co2',
+            'co2_24h': 'co2_24h',
+            'co2in': 'co2in',
+            'co2in_24h': 'co2in_24h',
             'co2_batt': 'co2_batt',
             'tf_co2': 'tf_co2',
             'humi_co2': 'humi_co2',
@@ -2687,8 +2751,6 @@ class EcowittClient(Consumer):
             'pm25_24h_co2': 'pm25_24h_co2',
             'pm10_co2': 'pm10_co2',
             'pm10_24h_co2': 'pm10_24h_co2',
-            'co2': 'co2',
-            'co2_24h': 'co2_24h',
             'tf_ch1': 'tf_ch1',
             'tf_ch2': 'tf_ch2',
             'tf_ch3': 'tf_ch3',
@@ -2743,8 +2805,8 @@ class EcowittClient(Consumer):
             'mrain_piezo' : 'mrain_piezo',
             'yrain_piezo' : 'yrain_piezo',
             'ws90_ver' : 'ws90_ver',
-            'ws1900batt' : 'ws1900batt',
-            'console_batt' : 'ws1900batt',
+            'ws1900batt' : 'console_batt',
+            'console_batt' : 'console_batt',
             'ws90cap_volt' : 'ws90cap_volt',
             'gain10_piezo' : 'gain0',
             'gain20_piezo' : 'gain1',
@@ -2764,6 +2826,56 @@ class EcowittClient(Consumer):
             'soilad7': 'soilad7',
             'soilad8': 'soilad8',
             'heap': 'heap',
+            'wh24sig': 'wh24_sig',
+            'wh25sig': 'wh25_sig',
+            'wh26sig': 'wh26_sig',
+            'wh31sig1': 'wh31_ch1_sig',
+            'wh31sig2': 'wh31_ch2_sig',
+            'wh31sig3': 'wh31_ch3_sig',
+            'wh31sig4': 'wh31_ch4_sig',
+            'wh31sig5': 'wh31_ch5_sig',
+            'wh31sig6': 'wh31_ch6_sig',
+            'wh31sig7': 'wh31_ch7_sig',
+            'wh31sig8': 'wh31_ch8_sig',
+            'wh34sig1': 'wn34_ch1_sig',
+            'wh34sig2': 'wn34_ch2_sig',
+            'wh34sig3': 'wn34_ch3_sig',
+            'wh34sig4': 'wn34_ch4_sig',
+            'wh34sig5': 'wn34_ch5_sig',
+            'wh34sig6': 'wn34_ch6_sig',
+            'wh34sig7': 'wn34_ch7_sig',
+            'wh34sig8': 'wn34_ch8_sig',
+            'wh35sig1': 'wn35_ch1_sig',
+            'wh35sig2': 'wn35_ch2_sig',
+            'wh35sig3': 'wn35_ch3_sig',
+            'wh35sig4': 'wn35_ch4_sig',
+            'wh35sig5': 'wn35_ch5_sig',
+            'wh35sig6': 'wn35_ch6_sig',
+            'wh35sig7': 'wn35_ch7_sig',
+            'wh35sig8': 'wn35_ch8_sig',
+            'wh40sig': 'wh40_sig',
+            'wh41sig1': 'wh41_ch1_sig',
+            'wh41sig2': 'wh41_ch2_sig',
+            'wh41sig3': 'wh41_ch3_sig',
+            'wh41sig4': 'wh41_ch4_sig',
+            'wh45sig': 'wh45_sig',
+            'wh51sig1': 'wh51_ch1_sig',
+            'wh51sig2': 'wh51_ch2_sig',
+            'wh51sig3': 'wh51_ch3_sig',
+            'wh51sig4': 'wh51_ch4_sig',
+            'wh51sig5': 'wh51_ch5_sig',
+            'wh51sig6': 'wh51_ch6_sig',
+            'wh51sig7': 'wh51_ch7_sig',
+            'wh51sig8': 'wh51_ch8_sig',
+            'wh55sig1': 'wh55_ch1_sig',
+            'wh55sig2': 'wh55_ch2_sig',
+            'wh55sig3': 'wh55_ch3_sig',
+            'wh55sig4': 'wh55_ch4_sig',
+            'wh57sig': 'wh57_sig',
+            'wh65sig': 'wh65_sig',
+            'wh68sig': 'wh68_sig',
+            'ws80sig': 'ws80_sig',
+            'ws90sig': 'ws90_sig',
        }
 
         IGNORED_LABELS = [

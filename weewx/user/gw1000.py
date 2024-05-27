@@ -34,7 +34,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.5.2kw                                    Date: 01 Februar 2024
+Version: 0.6kw                                    Date: 26 May 2024
 
 Revision History
     ?? June 2022           v0.5.0
@@ -391,7 +391,7 @@ except ImportError:
         log_traceback(prefix=prefix, loglevel=syslog.LOG_DEBUG)
 
 DRIVER_NAME = 'GW1000'
-DRIVER_VERSION = '0.5.0b7kw'
+DRIVER_VERSION = '0.6kw'
 
 # various defaults used throughout
 # default port used by device
@@ -448,6 +448,10 @@ default_groups = {'extraTemp9': 'group_temperature',
                   'gain8': 'group_uv',
                   'gain9': 'group_uv',
                   'heap': 'group_data',
+                  'pm4_0': 'group_concentration',
+                  'pm1_0': 'group_concentration',
+                  'pm1_24h_co2': 'group_concentration',
+                  'pm4_24h_co2': 'group_concentration',
                   'rain_annual_reset': 'group_count',
                   'rain_day_reset': 'group_count',
                   'rain_week_reset': 'group_count',
@@ -562,6 +566,8 @@ class Gateway(object):
         'pm2_54': 'pm254',
         'pm2_55': 'pm255',
         'pm10': 'pm10',
+        'pm4_0': 'pm4',
+        'pm1_0': 'pm1',
         'co2': 'co2',
         'soilTemp1': 'soiltemp1',
         'soilMoist1': 'soilmoist1',
@@ -601,6 +607,10 @@ class Gateway(object):
         'pm2_54_24h_avg': 'pm254_24h_avg',
         'pm2_55_24h_avg': 'pm255_24h_avg',
         'pm10_24h_avg': 'pm10_24h_avg',
+        'pm4_24h_avg': 'pm4_24h_avg',
+        'pm1_24h_avg': 'pm1_24h_avg',
+        'pm1_24h_co2': 'pm1_24h_avg',
+        'pm4_24h_co2': 'pm4_24h_avg',
         'co2_24h_avg': 'co2_24h_avg',
         'leak1': 'leak1',
         'leak2': 'leak2',
@@ -1755,6 +1765,14 @@ class Gw1000ConfEditor(weewx.drivers.AbstractConfEditor):
         [[pm2_55_24h_avg]]
             extractor = last
         [[pm10_24h_avg]]
+            extractor = last
+        [[pm1_24h_avg]]
+            extractor = last
+        [[pm4_24h_avg]]
+            extractor = last
+        [[pm1_24h_co2]]
+            extractor = last
+        [[pm4_24h_co2]]
             extractor = last
         [[co2_24h_avg]]
             extractor = last
@@ -3026,7 +3044,7 @@ class GatewayCollector(Collector):
         header = b'\xff\xff'
         # known device models
         known_models = ('GW1000', 'GW1100', 'GW1200', 'GW2000',
-                        'WH2650', 'WH2680', 'WS1900', 'WS3800', 'WS3900', 'WN1980')
+                        'WH2650', 'WH2680', 'WS1900', 'WS3800', 'WS3900', 'WS3910', 'WN1980')
 
         def __init__(self, ip_address=None, port=None,
                      broadcast_address=None, broadcast_port=None,
@@ -4080,6 +4098,12 @@ class GatewayCollector(Collector):
             b'\x68': ('decode_wn34', 3, 'temp14'),
             b'\x69': ('decode_wn34', 3, 'temp15'),
             b'\x6A': ('decode_wn34', 3, 'temp16'),
+            #b'\x6B': ('decode_reserved', 24, None),
+            b'\x6B': ('decode_wh46', 24, ('temp17', 'humid17', 'pm10',
+                                          'pm10_24h_avg', 'pm255', 'pm255_24h_avg',
+                                          'co2', 'co2_24h_avg', 'pm1', 'pm1_24h_avg',
+                                          'pm4', 'pm4_24h_avg')),
+
             b'\x6C': ('decode_heap', 4, 'heap'),
             # WH45 battery data is not obtained from live data rather it is
             # obtained from sensor ID data
@@ -5222,6 +5246,8 @@ class GatewayCollector(Collector):
         decode_pm25 = decode_press
         decode_leak = decode_humid
         decode_pm10 = decode_press
+        decode_pm4 = decode_press
+        decode_pm1 = decode_press
         decode_co2 = decode_dir
         decode_wet = decode_humid
         decode_int = decode_humid
@@ -5290,6 +5316,53 @@ class GatewayCollector(Collector):
                 results[fields[5]] = self.decode_pm25(data[9:11])
                 results[fields[6]] = self.decode_co2(data[11:13])
                 results[fields[7]] = self.decode_co2(data[13:15])
+                # we could decode the battery state but we will be obtaining
+                # battery state data from the sensor IDs in a later step so
+                # we can skip it here
+                return results
+            return {}
+
+        def decode_wh46(self, data, fields=None):
+            """Decode WH46 sensor data.
+
+            WH45 sensor data includes TH sensor values, CO2/PM2.5/PM10 sensor
+            values and 24 hour aggregates and battery state data in 16 bytes.
+
+            The 24 bytes of WH46 sensor data is allocated as follows:
+            Byte(s) #      Data               Format          Comments
+            bytes   1-2    temperature        short           C x10
+                    3      humidity           unsigned byte   percent
+                    4-5    PM10               unsigned short  ug/m3 x10
+                    6-7    PM10 24hour avg    unsigned short  ug/m3 x10
+                    8-9    PM2.5              unsigned short  ug/m3 x10
+                    10-11  PM2.5 24 hour avg  unsigned short  ug/m3 x10
+                    12-13  CO2                unsigned short  ppm
+                    14-15  CO2 24 our avg     unsigned short  ppm
+                    16     battery state      unsigned byte   0-5 <=1 is low
+
+            WH45 battery state data is included in the WH45 sensor data (along
+            with temperature) as well as in the complete sensor ID data. In
+            keeping with other sensors we do not use the sensor data battery
+            state, rather we obtain it from the sensor ID data.
+            """
+
+            if len(data) == 24 and fields is not None:
+                results = dict()
+                results[fields[0]] = self.decode_temp(data[0:2])
+                results[fields[1]] = self.decode_humid(data[2:3])
+                results[fields[2]] = self.decode_pm10(data[3:5])
+                results[fields[3]] = self.decode_pm10(data[5:7])
+                results[fields[4]] = self.decode_pm25(data[7:9])
+                results[fields[5]] = self.decode_pm25(data[9:11])
+                results[fields[6]] = self.decode_co2(data[11:13])
+
+                results[fields[7]] = self.decode_co2(data[13:15])
+
+                results[fields[8]] = self.decode_pm1(data[15:17])
+                results[fields[9]] = self.decode_pm1(data[17:19])
+                results[fields[10]] = self.decode_pm4(data[19:21])
+                results[fields[11]] = self.decode_pm4(data[21:23])
+
                 # we could decode the battery state but we will be obtaining
                 # battery state data from the sensor IDs in a later step so
                 # we can skip it here
@@ -5873,6 +5946,10 @@ class DirectGateway(object):
         'pm254': 'group_concentration',
         'pm255': 'group_concentration',
         'pm10': 'group_concentration',
+        'pm4_0': 'group_concentration',
+        'pm1_0': 'group_concentration',
+        'pm4': 'group_concentration',
+        'pm1': 'group_concentration',
         'co2': 'group_fraction',
         'soiltemp1': 'group_temperature',
         'soilmoist1': 'group_percent',
@@ -5912,6 +5989,8 @@ class DirectGateway(object):
         'pm254_24h_avg': 'group_concentration',
         'pm255_24h_avg': 'group_concentration',
         'pm10_24h_avg': 'group_concentration',
+        'pm4_24h_avg': 'group_concentration',
+        'pm1_24h_avg': 'group_concentration',
         'co2_24h_avg': 'group_fraction',
         'leak1': 'group_count',
         'leak2': 'group_count',
