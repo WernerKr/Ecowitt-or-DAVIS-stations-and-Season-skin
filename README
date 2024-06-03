@@ -85,13 +85,17 @@ sudo wee_extension --install=weewx-gw1000_interceptor.zip
 
 
 Only Interceptor: 
-New Jan 2024
+Jan 2024:
 supports soilad1 - soilad8 and heap
 If you will track the heap values - I use the unused value "pb" from the extended database for this
 So add this in the weeewx.conf file to
 [StdCalibrate]
     [[Corrections]]
       pb = heap if heap is not None else None 
+
+May/June 2024:
+Support Co2in, PM1, PM4
+WS85
 
 https://www.pc-wetterstation.de/weewx/weewx-interceptor.zip
 sudo wee_extension --install=weewx-interceptor.zip
