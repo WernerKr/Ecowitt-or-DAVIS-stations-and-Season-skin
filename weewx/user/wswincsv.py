@@ -289,22 +289,6 @@ class WswinCSV(StdService):
 #          fields.append("%.0f," % float(data['extraHumid8']))
 #        else:
 #          fields.append(",")
-        if testkey('soilMoist1', packet) is True:
-          fields.append("%.0f," % float(data['soilMoist1']))
-        else:
-          fields.append(",")        
-        if testkey('soilMoist2', packet) is True:
-          fields.append("%.0f," % float(data['soilMoist2']))
-        else:
-          fields.append(",")
-        if testkey('soilMoist3', packet) is True:
-          fields.append("%.0f," % float(data['soilMoist3']))
-        else:
-          fields.append(",")
-        if testkey('soilMoist4', packet) is True:
-          fields.append("%.0f," % float(data['soilMoist4']))
-        else:
-          fields.append(",")
         if testkey('leafWet1', packet) is True:
           fields.append("%.0f," % float(data['leafWet1']/self.leafcorr))
         else:
@@ -319,6 +303,23 @@ class WswinCSV(StdService):
           fields.append(",")
         if testkey('leafWet4', packet) is True:
           fields.append("%.0f," % float(data['leafWet4']/self.leafcorr))
+        else:
+          fields.append(",")
+
+        if testkey('soilMoist1', packet) is True:
+          fields.append("%.0f," % float(data['soilMoist1']))
+        else:
+          fields.append(",")        
+        if testkey('soilMoist2', packet) is True:
+          fields.append("%.0f," % float(data['soilMoist2']))
+        else:
+          fields.append(",")
+        if testkey('soilMoist3', packet) is True:
+          fields.append("%.0f," % float(data['soilMoist3']))
+        else:
+          fields.append(",")
+        if testkey('soilMoist4', packet) is True:
+          fields.append("%.0f," % float(data['soilMoist4']))
         else:
           fields.append(",")
 
@@ -431,14 +432,14 @@ class WswinCSV(StdService):
            hfields.append('extraHumid6')
         #  hfields.append('extraHumid7')
         #  hfields.append('extraHumid8')
-           hfields.append('soilMoist1')
-           hfields.append('soilMoist2')
-           hfields.append('soilMoist3')
-           hfields.append('soilMoist4')
            hfields.append('leafWet1')
            hfields.append('leafWet2')
            hfields.append('leafWet3')
            hfields.append('leafWet4')
+           hfields.append('soilMoist1')
+           hfields.append('soilMoist2')
+           hfields.append('soilMoist3')
+           hfields.append('soilMoist4')
            hfields.append('barometer')
            hfields.append('rain')
            hfields.append('windSpeed')
