@@ -68,7 +68,7 @@ except ImportError:
     def log_traceback_error(prefix=''):
         log_traceback(prefix=prefix, loglevel=syslog.LOG_ERR)
 
-VERSION = "0.5"
+VERSION = "0.6"
 
 if weewx.__version__ < "3":
     raise weewx.UnsupportedFeature("WeeWX 3 is required, found %s" %
@@ -207,27 +207,6 @@ class WswinCSV(StdService):
 #       else:
 #           fields.append(",")
 
-        if testkey('soilTemp1', packet) is True:
-          data['soilTemp1'] = convert(data['soilTemp1'], 'soilTemp1', 'group_temperature', pu, 'degree_C')
-          fields.append("%.1f," % float(data['soilTemp1']))
-        else:
-          fields.append(",")
-        if testkey('soilTemp2', packet) is True:
-          data['soilTemp2'] = convert(data['soilTemp2'], 'soilTemp2', 'group_temperature', pu, 'degree_C')
-          fields.append("%.1f," % float(data['soilTemp2']))
-        else:
-          fields.append(",")
-        if testkey('soilTemp3', packet) is True:
-          data['soilTemp3'] = convert(data['soilTemp3'], 'soilTemp3', 'group_temperature', pu, 'degree_C')
-          fields.append("%.1f," % float(data['soilTemp3']))
-        else:
-          fields.append(",")
-        if testkey('soilTemp4', packet) is True:
-          data['soilTemp4'] = convert(data['soilTemp4'], 'soilTemp4', 'group_temperature', pu, 'degree_C')
-          fields.append("%.1f," % float(data['soilTemp4']))
-        else:
-          fields.append(",")
-
         if testkey('leafTemp1', packet) is True:
           data['leafTemp1'] = convert(data['leafTemp1'], 'leafTemp1', 'group_temperature', pu, 'degree_C')
           fields.append("%.1f," % float(data['leafTemp1']))
@@ -246,6 +225,27 @@ class WswinCSV(StdService):
         if testkey('leafTemp4', packet) is True:
           data['leafTemp4'] = convert(data['leafTemp4'], 'leafTemp4', 'group_temperature', pu, 'degree_C')
           fields.append("%.1f," % float(data['leafTemp4']))
+        else:
+          fields.append(",")
+
+        if testkey('soilTemp1', packet) is True:
+          data['soilTemp1'] = convert(data['soilTemp1'], 'soilTemp1', 'group_temperature', pu, 'degree_C')
+          fields.append("%.1f," % float(data['soilTemp1']))
+        else:
+          fields.append(",")
+        if testkey('soilTemp2', packet) is True:
+          data['soilTemp2'] = convert(data['soilTemp2'], 'soilTemp2', 'group_temperature', pu, 'degree_C')
+          fields.append("%.1f," % float(data['soilTemp2']))
+        else:
+          fields.append(",")
+        if testkey('soilTemp3', packet) is True:
+          data['soilTemp3'] = convert(data['soilTemp3'], 'soilTemp3', 'group_temperature', pu, 'degree_C')
+          fields.append("%.1f," % float(data['soilTemp3']))
+        else:
+          fields.append(",")
+        if testkey('soilTemp4', packet) is True:
+          data['soilTemp4'] = convert(data['soilTemp4'], 'soilTemp4', 'group_temperature', pu, 'degree_C')
+          fields.append("%.1f," % float(data['soilTemp4']))
         else:
           fields.append(",")
 
@@ -413,14 +413,14 @@ class WswinCSV(StdService):
            hfields.append('extraTemp6')
         #  hfields.append('extraTemp7')
         #  hfields.append('extraTemp8')
-           hfields.append('soilTemp1')
-           hfields.append('soilTemp2')
-           hfields.append('soilTemp3')
-           hfields.append('soilTemp4')
            hfields.append('leafTemp1')
            hfields.append('leafTemp2')
            hfields.append('leafTemp3')
            hfields.append('leafTemp4')
+           hfields.append('soilTemp1')
+           hfields.append('soilTemp2')
+           hfields.append('soilTemp3')
+           hfields.append('soilTemp4')
            hfields.append('inHumidity')
            hfields.append('outHumidity')
            hfields.append('extraHumid1')
