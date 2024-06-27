@@ -379,7 +379,8 @@ weewx.units.obs_group_dict['ws80_batt'] = 'group_volt'
 weewx.units.obs_group_dict['ws90_batt'] = 'group_volt'
 weewx.units.obs_group_dict['ws1900batt'] = 'group_volt'
 weewx.units.obs_group_dict['console_batt'] = 'group_volt'
-weewx.units.obs_group_dict['wh85batt'] = 'group_volt'
+weewx.units.obs_group_dict['ws85_batt'] = 'group_volt'
+weewx.units.obs_group_dict['wh85_batt'] = 'group_volt'
 
 weewx.units.obs_group_dict['rrain_piezo'] = 'group_rainrate'
 weewx.units.obs_group_dict['erain_piezo'] = 'group_rain'
@@ -504,7 +505,7 @@ weewx.units.obs_group_dict['wh65_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh68_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws80_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws90_sig'] = 'group_count'
-weewx.units.obs_group_dict['ws85_sig'] = 'group_count'
+weewx.units.obs_group_dict['ws85_sig'] = 'group_percent'
 weewx.units.obs_group_dict['wh85_sig'] = 'group_count'
 
 weewx.units.obs_group_dict['heap'] = 'group_data'
@@ -709,7 +710,7 @@ class Consumer(object):
         'windBatteryStatus': 'wh80batt',
         'ws90_batt': 'wh90batt',
         'ws80_batt': 'wh80batt',
-        'wh85_batt': 'wh85batt',
+        'ws85_batt': 'wh85batt',
         'wh24_batt': 'wh24batt',
         'wh25_batt': 'wh25batt',
         'wh26_batt': 'wh26batt',
@@ -808,9 +809,9 @@ class Consumer(object):
         'wh57_sig': 'wh57sig',
         'wh65_sig': 'wh65sig',
         'wh68_sig': 'wh68sig',
-        'ws80_sig': 'ws80sig',
-        'ws90_sig': 'ws90sig',
-        'wh85_sig': 'wh85sig',
+        'ws80_sig': 'wh80sig',
+        'ws90_sig': 'wh90sig',
+        'ws85_sig': 'wh85sig',
     }
 
     def default_sensor_map(self):
@@ -2942,9 +2943,9 @@ class EcowittClient(Consumer):
             'wh57sig': 'wh57_sig',
             'wh65sig': 'wh65_sig',
             'wh68sig': 'wh68_sig',
-            'ws80sig': 'ws80_sig',
-            'ws90sig': 'ws90_sig',
-            'wh85sig': 'wh85_sig',
+            'wh80sig': 'ws80_sig',
+            'wh90sig': 'ws90_sig',
+            'wh85sig': 'ws85_sig',
        }
 
         IGNORED_LABELS = [

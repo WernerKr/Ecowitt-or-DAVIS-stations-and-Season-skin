@@ -34,7 +34,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.6kw                                    Date: 26 May 2024
+Version: 0.6.2kw                                    Date: 19 June 2024
 
 Revision History
     ?? June 2022           v0.5.0
@@ -391,7 +391,7 @@ except ImportError:
         log_traceback(prefix=prefix, loglevel=syslog.LOG_DEBUG)
 
 DRIVER_NAME = 'GW1000'
-DRIVER_VERSION = '0.6kw'
+DRIVER_VERSION = '0.6.2kw'
 
 # various defaults used throughout
 # default port used by device
@@ -739,7 +739,8 @@ class Gateway(object):
         'wh57_batt': 'wh57_batt',
         'wh68_batt': 'wh68_batt',
         'ws80_batt': 'ws80_batt',
-        'ws90_batt': 'ws90_batt'
+        'ws90_batt': 'ws90_batt',
+        'ws85_batt': 'ws85_batt',
     }
     # sensor signal level default field map, merged into default_field_map to
     # give the overall default field map
@@ -802,7 +803,8 @@ class Gateway(object):
         'wh57_sig': 'wh57_sig',
         'wh68_sig': 'wh68_sig',
         'ws80_sig': 'ws80_sig',
-        'ws90_sig': 'ws90_sig'
+        'ws90_sig': 'ws90_sig',
+        'ws85_sig': 'ws85_sig',
     }
 
     def __init__(self, **gw_config):
@@ -1892,6 +1894,9 @@ class Gw1000ConfEditor(weewx.drivers.AbstractConfEditor):
             extractor = last
         [[ws90_batt]]
             extractor = last
+        [[ws85_batt]]
+            extractor = last
+
         [[wh40_sig]]
             extractor = last
         [[wh26_sig]]
@@ -2008,6 +2013,9 @@ class Gw1000ConfEditor(weewx.drivers.AbstractConfEditor):
             extractor = last
         [[ws90_sig]]
             extractor = last
+        [[ws85_sig]]
+            extractor = last
+
 
         [[rain_source]]
             extractor = last
@@ -2521,11 +2529,12 @@ class GatewayCollector(Collector):
         b'\x2d': {'name': 'wn35_ch6', 'long_name': 'WN35 ch6', 'batt_fn': 'batt_volt'},
         b'\x2e': {'name': 'wn35_ch7', 'long_name': 'WN35 ch7', 'batt_fn': 'batt_volt'},
         b'\x2f': {'name': 'wn35_ch8', 'long_name': 'WN35 ch8', 'batt_fn': 'batt_volt'},
-        b'\x30': {'name': 'ws90', 'long_name': 'WS90', 'batt_fn': 'batt_volt'}
-        #b'\x30': {'name': 'ws90', 'long_name': 'WS90', 'batt_fn': 'batt_volt', 'low_batt': 3}
+        b'\x30': {'name': 'ws90', 'long_name': 'WS90', 'batt_fn': 'batt_volt'},
+        #b'\x30': {'name': 'ws90', 'long_name': 'WS90', 'batt_fn': 'batt_volt', 'low_batt': 3},
+        b'\x31': {'name': 'ws85', 'long_name': 'WS85', 'batt_fn': 'batt_volt'},
     }
     # sensors for which there is no low battery state
-    no_low = ['ws80', 'ws90']
+    no_low = ['ws80', 'ws90', 'ws85']
     # list of dicts of weather services that I know about
     services = [{'name': 'ecowitt_net',
                  'long_name': 'Ecowitt.net'
