@@ -1,0 +1,55 @@
+Using configuration file /etc/weewx/weewx.conf
+
+Interrogating WS3910 (Device WS3910A_V1.3.0) at 192.168.0.95:45000
+
+Sensor     Status
+WH24       sensor ID: 12  signal: 4  battery: 0 (OK)
+WH68       sensor is registering...
+WS80       sensor ID: a0025  signal: 4  battery: 3.28
+WH40       sensor ID: e724  signal: 4  battery: 1.6 (OK)
+WH25       sensor is disabled
+WH32       sensor is disabled
+WH31 ch1   sensor ID: 7e  signal: 4  battery: 0 (OK)
+WH31 ch2   sensor ID: 1d  signal: 4  battery: 0 (OK)
+WH31 ch3   sensor ID: 49  signal: 4  battery: 0 (OK)
+WH31 ch4   sensor ID: 3b  signal: 1  battery: 0 (OK)
+WH31 ch5   sensor ID: 68  signal: 4  battery: 0 (OK)
+WH31 ch6   sensor ID: 56  signal: 4  battery: 0 (OK)
+WH31 ch7   sensor ID: e3  signal: 4  battery: 0 (OK)
+WH31 ch8   sensor ID: c0  signal: 4  battery: 0 (OK)
+WH51 ch1   sensor ID: c54a  signal: 4  battery: 1.6 (OK)
+WH51 ch2   sensor ID: c94e  signal: 4  battery: 1.8 (OK)
+WH51 ch3   sensor ID: c4db  signal: 4  battery: 1.5 (OK)
+WH51 ch4   sensor ID: d175  signal: 4  battery: 1.7 (OK)
+WH51 ch5   sensor ID: d36d  signal: 4  battery: 1.7 (OK)
+WH51 ch6   sensor ID: d2f6  signal: 4  battery: 1.5 (OK)
+WH51 ch7   sensor ID: d2ba  signal: 4  battery: 1.7 (OK)
+WH51 ch8   sensor ID: ec89  signal: 4  battery: 1.4 (OK)
+WH41 ch1   sensor ID: c864  signal: 4  battery: 6 (DC)
+WH41 ch2   sensor ID: 29  signal: 4  battery: 5 (OK)
+WH41 ch3   sensor ID: 3ec9e  signal: 4  battery: 6 (DC)
+WH41 ch4   sensor ID: 2  signal: 4  battery: 5 (OK)
+WH57       sensor ID: d127  signal: 3  battery: 5 (OK)
+WH55 ch1   sensor ID: cd9e  signal: 4  battery: 3 (OK)
+WH55 ch2   sensor ID: 10cdf8  signal: 4  battery: 5 (OK)
+WH55 ch3   sensor ID: 20ccf3  signal: 4  battery: 5 (OK)
+WH55 ch4   sensor ID: 30cd16  signal: 4  battery: 5 (OK)
+WN34 ch1   sensor ID: 27ad  signal: 4  battery: 1.56 (OK)
+WN34 ch2   sensor ID: 27b3  signal: 4  battery: 1.56 (OK)
+WN34 ch3   sensor ID: 2b7a  signal: 4  battery: 1.56 (OK)
+WN34 ch4   sensor ID: 2bf1  signal: 4  battery: 1.56 (OK)
+WN34 ch5   sensor ID: 2bfb  signal: 4  battery: 1.54 (OK)
+WN34 ch6   sensor ID: 2beb  signal: 4  battery: 1.56 (OK)
+WN34 ch7   sensor ID: 2bd2  signal: 4  battery: 1.58 (OK)
+WN34 ch8   sensor ID: 51b7  signal: 4  battery: 1.76 (OK)
+WH45       sensor ID: 28fc  signal: 4  battery: 6 (DC)
+WN35 ch1   sensor ID: 2908  signal: 4  battery: 1.74 (OK)
+WN35 ch2   sensor is registering...
+WN35 ch3   sensor is registering...
+WN35 ch4   sensor is registering...
+WN35 ch5   sensor is registering...
+WN35 ch6   sensor is registering...
+WN35 ch7   sensor is registering...
+WN35 ch8   sensor is registering...
+WS90       sensor ID: 2d89  signal: 4  battery: 3.28
+WS85       sensor ID: 2848  signal: 4  battery: 3.28

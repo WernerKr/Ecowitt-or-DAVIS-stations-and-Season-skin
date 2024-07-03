@@ -1,0 +1,33 @@
+Using configuration file /etc/weewx/weewx.conf
+
+Interrogating WS3910 (Device WS3910A_V1.3.0) at 192.168.0.95:45000
+
+    Rainfall data priority: Piezoelectric rain gauge
+
+    Traditional rain data:
+                     Rain rate: 0.0mm/hr (0.0in/hr))
+                    Event rain: 0.0mm (0.0in)
+                    Daily rain: 0.3mm (0.0in)
+                   Weekly rain: 0.8mm (0.0in)
+                  Monthly rain: 125.2mm (4.9in)
+                   Yearly rain: 721.7mm (28.4in)
+                     Rain gain: 1.0 
+
+    Piezo rain data:
+                     Rain rate: 0.0mm/hr (0.0in/hr))
+                    Event rain: 0.0mm (0.0in)
+                   Hourly rain: ---mm (---in)
+                    Daily rain: 0.6mm (0.0in)
+                   Weekly rain: 2.3mm (0.1in)
+                  Monthly rain: 116.8mm (4.6in)
+                   Yearly rain: 594.8mm (23.4in)
+                    Rain1 gain: 1.05 (< 4mm/h)
+                    Rain2 gain: 1.04 (< 10mm/h)
+                    Rain3 gain: 1.04 (< 30mm/h)
+                    Rain4 gain: 1.00 (< 60mm/h)
+                    Rain5 gain: 1.00 (> 60mm/h)
+
+    Rainfall reset time data:
+     Daily rainfall reset time: 00:00
+    Weekly rainfall reset time: Monday
+    Annual rainfall reset time: January
