@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.6.2'
+DRIVER_VERSION = '0.6.3'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -363,9 +363,19 @@ weewx.units.obs_group_dict['soilMoist5'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist6'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist7'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist8'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist9'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist10'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist11'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist12'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist13'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist14'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist15'] = 'group_percent'
+weewx.units.obs_group_dict['soilMoist16'] = 'group_percent'
+
 weewx.units.obs_group_dict['lightning_distance'] = 'group_count'
 weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
 weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
+weewx.units.obs_group_dict['lightning_num'] = 'group_count'
 weewx.units.obs_group_dict['runtime'] = 'group_deltatime'
 
 weewx.units.obs_group_dict['rainrate'] = 'group_rainrate'
@@ -404,6 +414,15 @@ weewx.units.obs_group_dict['soilMoistBatt5'] = 'group_volt'
 weewx.units.obs_group_dict['soilMoistBatt6'] = 'group_volt'
 weewx.units.obs_group_dict['soilMoistBatt7'] = 'group_volt'
 weewx.units.obs_group_dict['soilMoistBatt8'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt9'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt10'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt11'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt12'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt13'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt14'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt15'] = 'group_volt'
+weewx.units.obs_group_dict['soilMoistBatt16'] = 'group_volt'
+
 weewx.units.obs_group_dict['soilTempBatt1'] = 'group_volt'
 weewx.units.obs_group_dict['soilTempBatt2'] = 'group_volt'
 weewx.units.obs_group_dict['soilTempBatt3'] = 'group_volt'
@@ -412,6 +431,14 @@ weewx.units.obs_group_dict['soilTempBatt5'] = 'group_volt'
 weewx.units.obs_group_dict['soilTempBatt6'] = 'group_volt'
 weewx.units.obs_group_dict['soilTempBatt7'] = 'group_volt'
 weewx.units.obs_group_dict['soilTempBatt8'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt9'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt10'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt11'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt12'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt13'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt14'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt15'] = 'group_volt'
+weewx.units.obs_group_dict['soilTempBatt16'] = 'group_volt'
 weewx.units.obs_group_dict['leafWetBatt1'] = 'group_volt'
 weewx.units.obs_group_dict['leafWetBatt2'] = 'group_volt'
 weewx.units.obs_group_dict['leafWetBatt3'] = 'group_volt'
@@ -445,7 +472,6 @@ weewx.units.obs_group_dict['wh26_batt'] = 'group_count'
 weewx.units.obs_group_dict['wh65_batt'] = 'group_count'
 weewx.units.obs_group_dict['wh68_batt'] = 'group_count'
 
-
 weewx.units.obs_group_dict['soilad1'] = 'group_count'
 weewx.units.obs_group_dict['soilad2'] = 'group_count'
 weewx.units.obs_group_dict['soilad3'] = 'group_count'
@@ -454,6 +480,14 @@ weewx.units.obs_group_dict['soilad5'] = 'group_count'
 weewx.units.obs_group_dict['soilad6'] = 'group_count'
 weewx.units.obs_group_dict['soilad7'] = 'group_count'
 weewx.units.obs_group_dict['soilad8'] = 'group_count'
+weewx.units.obs_group_dict['soilad9'] = 'group_count'
+weewx.units.obs_group_dict['soilad10'] = 'group_count'
+weewx.units.obs_group_dict['soilad11'] = 'group_count'
+weewx.units.obs_group_dict['soilad12'] = 'group_count'
+weewx.units.obs_group_dict['soilad13'] = 'group_count'
+weewx.units.obs_group_dict['soilad14'] = 'group_count'
+weewx.units.obs_group_dict['soilad15'] = 'group_count'
+weewx.units.obs_group_dict['soilad16'] = 'group_count'
 
 weewx.units.obs_group_dict['wh24_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh25_sig'] = 'group_count'
@@ -474,6 +508,14 @@ weewx.units.obs_group_dict['wn34_ch5_sig'] = 'group_count'
 weewx.units.obs_group_dict['wn34_ch6_sig'] = 'group_count'
 weewx.units.obs_group_dict['wn34_ch7_sig'] = 'group_count'
 weewx.units.obs_group_dict['wn34_ch8_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch9_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch10_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch11_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch12_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch13_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch14_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch15_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch16_sig'] = 'group_count'
 weewx.units.obs_group_dict['wn35_ch1_sig'] = 'group_count'
 weewx.units.obs_group_dict['wn35_ch2_sig'] = 'group_count'
 weewx.units.obs_group_dict['wn35_ch3_sig'] = 'group_count'
@@ -496,6 +538,15 @@ weewx.units.obs_group_dict['wh51_ch5_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh51_ch6_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh51_ch7_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh51_ch8_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch9_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch10_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch11_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch12_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch13_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch14_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch15_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch16_sig'] = 'group_count'
+
 weewx.units.obs_group_dict['wh55_ch1_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh55_ch2_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh55_ch3_sig'] = 'group_count'
@@ -507,6 +558,8 @@ weewx.units.obs_group_dict['ws80_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws90_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws85_sig'] = 'group_percent'
 weewx.units.obs_group_dict['wh85_sig'] = 'group_count'
+
+weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['heap'] = 'group_data'
 
@@ -621,6 +674,14 @@ class Consumer(object):
         'soilMoist6': 'soil_moisture_6',
         'soilMoist7': 'soil_moisture_7',
         'soilMoist8': 'soil_moisture_8',
+        'soilMoist9': 'soil_moisture_9',
+        'soilMoist10': 'soil_moisture_10',
+        'soilMoist11': 'soil_moisture_11',
+        'soilMoist12': 'soil_moisture_12',
+        'soilMoist13': 'soil_moisture_13',
+        'soilMoist14': 'soil_moisture_14',
+        'soilMoist15': 'soil_moisture_15',
+        'soilMoist16': 'soil_moisture_16',
         #these are ecowitt client schema
         'co2': 'co2',
         'co2_24h': 'co2_24h',
@@ -657,6 +718,14 @@ class Consumer(object):
         'soilMoistBatt6': 'soilbatt6',
         'soilMoistBatt7': 'soilbatt7',
         'soilMoistBatt8': 'soilbatt8',
+        'soilMoistBatt9': 'soilbatt9',
+        'soilMoistBatt10': 'soilbatt10',
+        'soilMoistBatt11': 'soilbatt11',
+        'soilMoistBatt12': 'soilbatt12',
+        'soilMoistBatt13': 'soilbatt13',
+        'soilMoistBatt14': 'soilbatt14',
+        'soilMoistBatt15': 'soilbatt15',
+        'soilMoistBatt16': 'soilbatt16',
         'soilTempBatt1': 'tf_batt1',
         'soilTempBatt2': 'tf_batt2',
         'soilTempBatt3': 'tf_batt3',
@@ -665,6 +734,14 @@ class Consumer(object):
         'soilTempBatt6': 'tf_batt6',
         'soilTempBatt7': 'tf_batt7',
         'soilTempBatt8': 'tf_batt8',
+        'soilTempBatt9': 'tf_batt9',
+        'soilTempBatt10': 'tf_batt10',
+        'soilTempBatt11': 'tf_batt11',
+        'soilTempBatt12': 'tf_batt12',
+        'soilTempBatt13': 'tf_batt13',
+        'soilTempBatt14': 'tf_batt14',
+        'soilTempBatt15': 'tf_batt15',
+        'soilTempBatt16': 'tf_batt16',
         'leafWet1': 'leafwetness_ch1',
         'leafWet2': 'leafwetness_ch2',
         'leafWet3': 'leafwetness_ch3',
@@ -691,7 +768,8 @@ class Consumer(object):
         'leak_Batt4': 'leakbatt4',
         'lightning_distance': 'lightning',
         'lightning_disturber_count': 'lightning_time',
-        'lightning_strike_count': 'lightning_num',
+        'lightning_num': 'lightning_num',
+        'lightning_strike_count': 'lightning_strike_count',
         'lightning_Batt': 'wh57batt',
         'maxdailygust': 'maxdailygust',
         'winddir_avg10m': 'winddir_avg10m',
@@ -734,6 +812,7 @@ class Consumer(object):
         'wrain_piezo': 'wrain_piezo',
         'mrain_piezo': 'mrain_piezo',
         'yrain_piezo': 'yrain_piezo',
+        'srain_piezo': 'srain_piezo',
         'ws90cap_volt': 'ws90cap_volt',
         'ws85cap_volt': 'ws85cap_volt',
         'ws90_ver': 'ws90_ver',
@@ -760,6 +839,14 @@ class Consumer(object):
         'soilad6': 'soilad6',
         'soilad7': 'soilad7',
         'soilad8': 'soilad8',
+        'soilad9': 'soilad9',
+        'soilad10': 'soilad10',
+        'soilad11': 'soilad11',
+        'soilad12': 'soilad12',
+        'soilad13': 'soilad13',
+        'soilad14': 'soilad14',
+        'soilad15': 'soilad15',
+        'soilad16': 'soilad16',
         'heap': 'heap',
         'wh24_sig': 'wh24sig',
         'wh25_sig': 'wh25sig',
@@ -780,6 +867,14 @@ class Consumer(object):
         'wn34_ch6_sig': 'wh34sig6',
         'wn34_ch7_sig': 'wh34sig7',
         'wn34_ch8_sig': 'wh34sig8',
+        'wn34_ch9_sig': 'wh34sig9',
+        'wn34_ch10_sig': 'wh34sig10',
+        'wn34_ch11_sig': 'wh34sig11',
+        'wn34_ch12_sig': 'wh34sig12',
+        'wn34_ch13_sig': 'wh34sig13',
+        'wn34_ch14_sig': 'wh34sig14',
+        'wn34_ch15_sig': 'wh34sig15',
+        'wn34_ch16_sig': 'wh34sig16',
         'wn35_ch1_sig': 'wh35sig1',
         'wn35_ch2_sig': 'wh35sig2',
         'wn35_ch3_sig': 'wh35sig3',
@@ -802,6 +897,14 @@ class Consumer(object):
         'wh51_ch6_sig': 'wh51sig6',
         'wh51_ch7_sig': 'wh51sig7',
         'wh51_ch8_sig': 'wh51sig8',
+        'wh51_ch9_sig': 'wh51sig9',
+        'wh51_ch10_sig': 'wh51sig10',
+        'wh51_ch11_sig': 'wh51sig11',
+        'wh51_ch12_sig': 'wh51sig12',
+        'wh51_ch13_sig': 'wh51sig13',
+        'wh51_ch14_sig': 'wh51sig14',
+        'wh51_ch15_sig': 'wh51sig15',
+        'wh51_ch16_sig': 'wh51sig16',
         'wh55_ch1_sig': 'wh55sig1',
         'wh55_ch2_sig': 'wh55sig2',
         'wh55_ch3_sig': 'wh55sig3',
@@ -809,8 +912,8 @@ class Consumer(object):
         'wh57_sig': 'wh57sig',
         'wh65_sig': 'wh65sig',
         'wh68_sig': 'wh68sig',
-        'ws80_sig': 'wh80sig',
-        'ws90_sig': 'wh90sig',
+        'ws80_sig': 'ws80sig',
+        'ws90_sig': 'ws90sig',
         'ws85_sig': 'wh85sig',
     }
 
@@ -1108,6 +1211,22 @@ class Consumer(object):
                        (rain_piezo, rain_piezo*25.4, last_rain_piezo, last_rain_piezo*25.4))
                 return rain_piezo
             return rain_piezo - last_rain_piezo
+
+        @staticmethod
+        #def _delta_lightning_num(lightning_num, last_lightning_num):
+        def _delta_lightning_num(lightning_num, last_lightning_num, lightning_time, last_lightning_time):
+            if last_lightning_num is None:
+                loginf("skipping lightning_strike_count measurement of %s: no last lightning_strike_count" % last_lightning_num)
+                return None
+            if lightning_num < last_lightning_num:
+                loginf("lightning_strike_count counter wraparound detected: new=%s last=%s" %
+                       (lightning_num, last_lightning_num))
+                return lightning_num
+            if lightning_time != last_lightning_time:
+                return lightning_num - last_lightning_num
+            else:
+                return 0
+
 
         @staticmethod
         def decode_float(x):
@@ -2759,6 +2878,14 @@ class EcowittClient(Consumer):
             'soilmoisture6': 'soil_moisture_6',
             'soilmoisture7': 'soil_moisture_7',
             'soilmoisture8': 'soil_moisture_8',
+            'soilmoisture9': 'soil_moisture_9',
+            'soilmoisture10': 'soil_moisture_10',
+            'soilmoisture11': 'soil_moisture_11',
+            'soilmoisture12': 'soil_moisture_12',
+            'soilmoisture13': 'soil_moisture_13',
+            'soilmoisture14': 'soil_moisture_14',
+            'soilmoisture15': 'soil_moisture_15',
+            'soilmoisture16': 'soil_moisture_16',
             'soilbatt1': 'soilbatt1',
             'soilbatt2': 'soilbatt2',
             'soilbatt3': 'soilbatt3',
@@ -2767,6 +2894,14 @@ class EcowittClient(Consumer):
             'soilbatt6': 'soilbatt6',
             'soilbatt7': 'soilbatt7',
             'soilbatt8': 'soilbatt8',
+            'soilbatt9': 'soilbatt9',
+            'soilbatt10': 'soilbatt10',
+            'soilbatt11': 'soilbatt11',
+            'soilbatt12': 'soilbatt12',
+            'soilbatt13': 'soilbatt13',
+            'soilbatt14': 'soilbatt14',
+            'soilbatt15': 'soilbatt15',
+            'soilbatt16': 'soilbatt16',
             'windspeedmph': 'wind_speed',
             'windgustmph': 'wind_gust',
             'winddir': 'wind_dir',
@@ -2826,6 +2961,14 @@ class EcowittClient(Consumer):
             'tf_ch6': 'tf_ch6',
             'tf_ch7': 'tf_ch7',
             'tf_ch8': 'tf_ch8',
+            'tf_ch9': 'tf_ch9',
+            'tf_ch10': 'tf_ch10',
+            'tf_ch11': 'tf_ch11',
+            'tf_ch12': 'tf_ch12',
+            'tf_ch13': 'tf_ch13',
+            'tf_ch14': 'tf_ch14',
+            'tf_ch15': 'tf_ch15',
+            'tf_ch16': 'tf_ch16',
             'tf_batt1': 'tf_batt1',
             'tf_batt2': 'tf_batt2',
             'tf_batt3': 'tf_batt3',
@@ -2834,6 +2977,14 @@ class EcowittClient(Consumer):
             'tf_batt6': 'tf_batt6',
             'tf_batt7': 'tf_batt7',
             'tf_batt8': 'tf_batt8',
+            'tf_batt9': 'tf_batt9',
+            'tf_batt10': 'tf_batt10',
+            'tf_batt11': 'tf_batt11',
+            'tf_batt12': 'tf_batt12',
+            'tf_batt13': 'tf_batt13',
+            'tf_batt14': 'tf_batt14',
+            'tf_batt15': 'tf_batt15',
+            'tf_batt16': 'tf_batt16',
             'leafwetness_ch1': 'leafwetness_ch1',
             'leafwetness_ch2': 'leafwetness_ch2',
             'leafwetness_ch3': 'leafwetness_ch3',
@@ -2871,6 +3022,7 @@ class EcowittClient(Consumer):
             'wrain_piezo' : 'wrain_piezo',
             'mrain_piezo' : 'mrain_piezo',
             'yrain_piezo' : 'yrain_piezo',
+            'srain_piezo': 'srain_piezo',
             'ws90_ver' : 'ws90_ver',
             'ws85_ver' : 'ws85_ver',
             'ws1900batt' : 'console_batt',
@@ -2894,6 +3046,14 @@ class EcowittClient(Consumer):
             'soilad6': 'soilad6',
             'soilad7': 'soilad7',
             'soilad8': 'soilad8',
+            'soilad9': 'soilad9',
+            'soilad10': 'soilad10',
+            'soilad11': 'soilad11',
+            'soilad12': 'soilad12',
+            'soilad13': 'soilad13',
+            'soilad14': 'soilad14',
+            'soilad15': 'soilad15',
+            'soilad16': 'soilad16',
             'heap': 'heap',
             'wh24sig': 'wh24_sig',
             'wh25sig': 'wh25_sig',
@@ -2914,6 +3074,14 @@ class EcowittClient(Consumer):
             'wh34sig6': 'wn34_ch6_sig',
             'wh34sig7': 'wn34_ch7_sig',
             'wh34sig8': 'wn34_ch8_sig',
+            'wh34sig9': 'wn34_ch9_sig',
+            'wh34sig10': 'wn34_ch10_sig',
+            'wh34sig11': 'wn34_ch11_sig',
+            'wh34sig12': 'wn34_ch12_sig',
+            'wh34sig13': 'wn34_ch13_sig',
+            'wh34sig14': 'wn34_ch14_sig',
+            'wh34sig15': 'wn34_ch15_sig',
+            'wh34sig16': 'wn34_ch16_sig',
             'wh35sig1': 'wn35_ch1_sig',
             'wh35sig2': 'wn35_ch2_sig',
             'wh35sig3': 'wn35_ch3_sig',
@@ -2936,6 +3104,14 @@ class EcowittClient(Consumer):
             'wh51sig6': 'wh51_ch6_sig',
             'wh51sig7': 'wh51_ch7_sig',
             'wh51sig8': 'wh51_ch8_sig',
+            'wh51sig9': 'wh51_ch9_sig',
+            'wh51sig10': 'wh51_ch10_sig',
+            'wh51sig11': 'wh51_ch11_sig',
+            'wh51sig12': 'wh51_ch12_sig',
+            'wh51sig13': 'wh51_ch13_sig',
+            'wh51sig14': 'wh51_ch14_sig',
+            'wh51sig15': 'wh51_ch15_sig',
+            'wh51sig16': 'wh51_ch16_sig',
             'wh55sig1': 'wh55_ch1_sig',
             'wh55sig2': 'wh55_ch2_sig',
             'wh55sig3': 'wh55_ch3_sig',
@@ -2943,9 +3119,9 @@ class EcowittClient(Consumer):
             'wh57sig': 'wh57_sig',
             'wh65sig': 'wh65_sig',
             'wh68sig': 'wh68_sig',
-            'wh80sig': 'ws80_sig',
-            'wh90sig': 'ws90_sig',
-            'wh85sig': 'ws85_sig',
+            'ws80sig': 'ws80_sig',
+            'ws90sig': 'ws90_sig',
+            'wh85sig': 'wh85_sig',
        }
 
         IGNORED_LABELS = [
@@ -2957,6 +3133,9 @@ class EcowittClient(Consumer):
             self._rain_mapping_confirmed = False
             self._last_rain_piezo = None
             self._rain_piezo_mapping_confirmed = False
+            self._last_lightning_num = None
+            self._last_lightning_time = None
+            self._last_lightning_confirmed = False
             self._model = None
             self._stationtype = None
 
@@ -3011,6 +3190,13 @@ class EcowittClient(Consumer):
                         self._rain_piezo_mapping_confirmed = True
                         loginf("using 'yrain_piezo' for rain_total_piezo")
 
+                #if not self._last_lightning_confirmed:
+                #    if 'lightning_num' in data:
+                #        #self.LABEL_MAP.pop('lightning_strike_count')
+                #        self.LABEL_MAP['lightning_strike_count'] = 'lightning_num'
+                #        #self._last_lightning_num = data['lightning_num']
+                #        self._last_lightning_confirmed = True
+
 
                 # get all of the other parameters
                 for n in data:
@@ -3037,6 +3223,18 @@ class EcowittClient(Consumer):
                     newtot = pkt['rain_total_piezo']
                     pkt['rain_piezo'] = self._delta_rain_piezo(newtot, self._last_rain_piezo)
                     self._last_rain_piezo = newtot
+                if 'lightning_num' and 'lightning_time'in pkt:
+                    if not self._last_lightning_confirmed:                        
+                       self._last_lightning_num = pkt['lightning_num']
+                       self._last_lightning_time = pkt['lightning_time']
+                       self._last_lightning_confirmed = True
+                    newtot = pkt['lightning_num']
+                    newtime = pkt['lightning_time']
+                    #pkt['lightning_strike_count'] = self._delta_lightning_num(newtot, self._last_lightning_num)
+                    pkt['lightning_strike_count'] = self._delta_lightning_num(newtot, self._last_lightning_num, newtime, self._last_lightning_time)
+                    self._last_lightning_num = newtot
+                    self._last_lightning_time = newtime
+
 
             except ValueError as e:
                 logerr("parse failed for %s: %s" % (s, e))
