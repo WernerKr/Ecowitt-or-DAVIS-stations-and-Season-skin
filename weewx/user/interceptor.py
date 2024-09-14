@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.6.3'
+DRIVER_VERSION = '0.6.4'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -346,6 +346,14 @@ weewx.units.obs_group_dict['soilTemp5'] = 'group_temperature'
 weewx.units.obs_group_dict['soilTemp6'] = 'group_temperature'
 weewx.units.obs_group_dict['soilTemp7'] = 'group_temperature'
 weewx.units.obs_group_dict['soilTemp8'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp9'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp10'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp11'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp12'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp13'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp14'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp15'] = 'group_temperature'
+weewx.units.obs_group_dict['soilTemp16'] = 'group_temperature'
 
 weewx.units.obs_group_dict['leafWet1'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet2'] = 'group_percent'
@@ -554,6 +562,7 @@ weewx.units.obs_group_dict['wh55_ch4_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh57_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh65_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh68_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh69_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws80_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws90_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws85_sig'] = 'group_percent'
@@ -794,6 +803,7 @@ class Consumer(object):
         'wh26_batt': 'wh26batt',
         'wh65_batt': 'wh65batt',
         'wh68_batt': 'wh68batt',
+        'wh69_batt': 'wh69batt',
         'outTempBatteryStatus': 'wh65batt',
         'inTempBatteryStatus': 'wh25batt',
         'rainrate': 'rainratein',
@@ -912,9 +922,18 @@ class Consumer(object):
         'wh57_sig': 'wh57sig',
         'wh65_sig': 'wh65sig',
         'wh68_sig': 'wh68sig',
+        'wh69_sig': 'wh69sig',
         'ws80_sig': 'ws80sig',
         'ws90_sig': 'ws90sig',
         'ws85_sig': 'wh85sig',
+        #'dewptf': 'dewptf',
+        #'windchillf': 'windchillf',
+        #'feelslikef': 'feelslikef',
+        #'heatindexf': 'heatindexf',
+        #'windspdmph_avg10m': 'windspdmph_avg10m',
+        #'winddir_avg10m': 'winddir_avg10m',
+        #'windgustmph_max10m': 'windgustmph_max10m'.
+        #'windrun': 'windrun',
     }
 
     def default_sensor_map(self):
@@ -3055,77 +3074,91 @@ class EcowittClient(Consumer):
             'soilad15': 'soilad15',
             'soilad16': 'soilad16',
             'heap': 'heap',
-            'wh24sig': 'wh24_sig',
-            'wh25sig': 'wh25_sig',
-            'wh26sig': 'wh26_sig',
-            'wh31sig1': 'wh31_ch1_sig',
-            'wh31sig2': 'wh31_ch2_sig',
-            'wh31sig3': 'wh31_ch3_sig',
-            'wh31sig4': 'wh31_ch4_sig',
-            'wh31sig5': 'wh31_ch5_sig',
-            'wh31sig6': 'wh31_ch6_sig',
-            'wh31sig7': 'wh31_ch7_sig',
-            'wh31sig8': 'wh31_ch8_sig',
-            'wh34sig1': 'wn34_ch1_sig',
-            'wh34sig2': 'wn34_ch2_sig',
-            'wh34sig3': 'wn34_ch3_sig',
-            'wh34sig4': 'wn34_ch4_sig',
-            'wh34sig5': 'wn34_ch5_sig',
-            'wh34sig6': 'wn34_ch6_sig',
-            'wh34sig7': 'wn34_ch7_sig',
-            'wh34sig8': 'wn34_ch8_sig',
-            'wh34sig9': 'wn34_ch9_sig',
-            'wh34sig10': 'wn34_ch10_sig',
-            'wh34sig11': 'wn34_ch11_sig',
-            'wh34sig12': 'wn34_ch12_sig',
-            'wh34sig13': 'wn34_ch13_sig',
-            'wh34sig14': 'wn34_ch14_sig',
-            'wh34sig15': 'wn34_ch15_sig',
-            'wh34sig16': 'wn34_ch16_sig',
-            'wh35sig1': 'wn35_ch1_sig',
-            'wh35sig2': 'wn35_ch2_sig',
-            'wh35sig3': 'wn35_ch3_sig',
-            'wh35sig4': 'wn35_ch4_sig',
-            'wh35sig5': 'wn35_ch5_sig',
-            'wh35sig6': 'wn35_ch6_sig',
-            'wh35sig7': 'wn35_ch7_sig',
-            'wh35sig8': 'wn35_ch8_sig',
-            'wh40sig': 'wh40_sig',
-            'wh41sig1': 'wh41_ch1_sig',
-            'wh41sig2': 'wh41_ch2_sig',
-            'wh41sig3': 'wh41_ch3_sig',
-            'wh41sig4': 'wh41_ch4_sig',
-            'wh45sig': 'wh45_sig',
-            'wh51sig1': 'wh51_ch1_sig',
-            'wh51sig2': 'wh51_ch2_sig',
-            'wh51sig3': 'wh51_ch3_sig',
-            'wh51sig4': 'wh51_ch4_sig',
-            'wh51sig5': 'wh51_ch5_sig',
-            'wh51sig6': 'wh51_ch6_sig',
-            'wh51sig7': 'wh51_ch7_sig',
-            'wh51sig8': 'wh51_ch8_sig',
-            'wh51sig9': 'wh51_ch9_sig',
-            'wh51sig10': 'wh51_ch10_sig',
-            'wh51sig11': 'wh51_ch11_sig',
-            'wh51sig12': 'wh51_ch12_sig',
-            'wh51sig13': 'wh51_ch13_sig',
-            'wh51sig14': 'wh51_ch14_sig',
-            'wh51sig15': 'wh51_ch15_sig',
-            'wh51sig16': 'wh51_ch16_sig',
-            'wh55sig1': 'wh55_ch1_sig',
-            'wh55sig2': 'wh55_ch2_sig',
-            'wh55sig3': 'wh55_ch3_sig',
-            'wh55sig4': 'wh55_ch4_sig',
-            'wh57sig': 'wh57_sig',
-            'wh65sig': 'wh65_sig',
-            'wh68sig': 'wh68_sig',
-            'ws80sig': 'ws80_sig',
-            'ws90sig': 'ws90_sig',
-            'wh85sig': 'wh85_sig',
+            'wh24sig': 'wh24sig',
+            'wh25sig': 'wh25sig',
+            'wh26sig': 'wh26sig',
+            'wh31sig1': 'wh31sig1',
+            'wh31sig2': 'wh31sig2',
+            'wh31sig3': 'wh31sig3',
+            'wh31sig4': 'wh31sig4',
+            'wh31sig5': 'wh31sig5',
+            'wh31sig6': 'wh31sig6',
+            'wh31sig7': 'wh31sig7',
+            'wh31sig8': 'wh31sig8',
+            'wh34sig1': 'wh34sig1',
+            'wh34sig2': 'wh34sig2',
+            'wh34sig3': 'wh34sig3',
+            'wh34sig4': 'wh34sig4',
+            'wh34sig5': 'wh34sig5',
+            'wh34sig6': 'wh34sig6',
+            'wh34sig7': 'wh34sig7',
+            'wh34sig8': 'wh34sig8',
+            'wh34sig9': 'wh34sig9',
+            'wh34sig10': 'wh34sig10',
+            'wh34sig11': 'wh34sig10',
+            'wh34sig12': 'wh34sig11',
+            'wh34sig13': 'wh34sig13',
+            'wh34sig14': 'wh34sig14',
+            'wh34sig15': 'wh34sig15',
+            'wh34sig16': 'wh34sig16',
+            'wh35sig1': 'wh35sig1',
+            'wh35sig2': 'wh35sig2',
+            'wh35sig3': 'wh35sig3',
+            'wh35sig4': 'wh35sig4',
+            'wh35sig5': 'wh35sig5',
+            'wh35sig6': 'wh35sig6',
+            'wh35sig7': 'wh35sig7',
+            'wh35sig8': 'wh35sig8',
+            'wh40sig': 'wh40sig',
+            'wh41sig1': 'wh41sig1',
+            'wh41sig2': 'wh41sig2',
+            'wh41sig3': 'wh41sig3',
+            'wh41sig4': 'wh41sig4',
+            'wh45sig': 'wh45sig',
+            'wh51sig1': 'wh51sig1',
+            'wh51sig2': 'wh51sig2',
+            'wh51sig3': 'wh51sig3',
+            'wh51sig4': 'wh51sig4',
+            'wh51sig5': 'wh51sig5',
+            'wh51sig6': 'wh51sig6',
+            'wh51sig7': 'wh51sig7',
+            'wh51sig8': 'wh51sig8',
+            'wh51sig9': 'wh51sig9',
+            'wh51sig10': 'wh51sig10',
+            'wh51sig11': 'wh51sig11',
+            'wh51sig12': 'wh51sig12',
+            'wh51sig13': 'wh51sig13',
+            'wh51sig14': 'wh51sig14',
+            'wh51sig15': 'wh51sig15',
+            'wh51sig16': 'wh51sig16',
+            'wh55sig1': 'wh55sig1',
+            'wh55sig2': 'wh55sig2',
+            'wh55sig3': 'wh55sig3',
+            'wh55sig4': 'wh55sig4',
+            'wh57sig': 'wh57sig',
+            'wh65sig': 'wh65sig',
+            'wh68sig': 'wh68sig',
+            'wh69sig': 'wh69sig',
+            'wh80sig': 'wh80sig',
+            'wh90sig': 'wh90sig',
+            'wh85sig': 'wh85sig',
        }
 
         IGNORED_LABELS = [
-            'PASSKEY', 'dateutc', 'freq', 'rfdata', 
+            'PASSKEY', 'dateutc', 'freq', 'rfdata', 'isintvl','isintvl10',
+            'dewptf','windchillf','feelslikef','heatindexf',
+            'pm25_AQI_ch1','pm25_AQIlvl_ch1','pm25_AQIlvl_ch1','pm25_AQI_avg_24h_ch1','pm25_AQIlvl_avg_24h_ch1',
+            'pm25_AQI_ch2','pm25_AQIlvl_ch2','pm25_AQI_avg_24h_ch2','pm25_AQIlvl_avg_24h_ch2',
+            'pm25_AQI_ch3','pm25_AQIlvl_ch3','pm25_AQI_avg_24h_ch3','pm25_AQIlvl_avg_24h_ch3',
+            'pm25_AQI_ch4','pm25_AQIlvl_ch4','pm25_AQI_avg_24h_ch4','pm25_AQIlvl_avg_24h_ch4',
+            'co2lvl',
+            'pm25_AQI_co2','pm25_AQIlvl_co2','pm25_AQI_24h_co2','pm25_AQIlvl_24h_co2',
+            'pm10_AQI_co2','pm10_AQIlvl_co2','pm10_AQI_24h_co2','pm10_AQIlvl_24h_co2',
+            'windspdmph_avg10m','winddir_avg10m','windgustmph_max10m','windrun',
+            'brightness','cloudf','sunhours','sunshine',
+            'srsum',
+            'ptrend1','pchange1','ptrend3','pchange3',
+            'running','wswarning','sensorwarning','batterywarning','stormwarning','tswarning','updatewarning','leakwarning','co2warning','intvlwarning','time',
         ]
 
         def __init__(self):
