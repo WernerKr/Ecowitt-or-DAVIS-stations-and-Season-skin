@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.6.4'
+DRIVER_VERSION = '0.6.5'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -571,6 +571,36 @@ weewx.units.obs_group_dict['wh85_sig'] = 'group_count'
 weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['heap'] = 'group_data'
+
+weewx.units.obs_group_dict['fdewptf'] = 'group_temperature'
+weewx.units.obs_group_dict['fwindchillf'] = 'group_temperature'
+weewx.units.obs_group_dict['ffeelslikef'] = 'group_temperature'
+weewx.units.obs_group_dict['fheatindexf'] = 'group_temperature'
+weewx.units.obs_group_dict['fwindspdmph_avg10m'] = 'group_speed2'
+weewx.units.obs_group_dict['fwinddir_avg10m'] = 'group_direction'
+weewx.units.obs_group_dict['fwindgustmph_max10m'] = 'group_speed2'
+weewx.units.obs_group_dict['fwindrun'] = 'group_distance'
+weewx.units.obs_group_dict['fpm25_AQI_ch1'] = 'group_count'
+weewx.units.obs_group_dict['fpm25_AQI_ch2'] = 'group_count'
+weewx.units.obs_group_dict['fpm25_AQI_ch3'] = 'group_count'
+weewx.units.obs_group_dict['fpm25_AQI_ch4'] = 'group_count'
+weewx.units.obs_group_dict['fpm25_AQI_co2'] = 'group_count'
+weewx.units.obs_group_dict['fpm10_AQI_co2'] = 'group_count'
+weewx.units.obs_group_dict['fpm25_AQI_avg_24h_ch1'] = 'group_count'
+weewx.units.obs_group_dict['fpm25_AQI_avg_24h_ch2'] = 'group_count'
+weewx.units.obs_group_dict['fpm25_AQI_avg_24h_ch3'] = 'group_count'
+weewx.units.obs_group_dict['fpm25_AQI_avg_24h_ch4'] = 'group_count'
+weewx.units.obs_group_dict['fpm25_AQI_24h_co2'] = 'group_count'
+weewx.units.obs_group_dict['fpm10_AQI_24h_co2'] = 'group_count'
+weewx.units.obs_group_dict['fsunshine'] = 'group_count'
+
+weewx.units.USUnits["group_sunhours"] = "sunhours"
+weewx.units.MetricUnits["group_sunhours"] = "sunhours"
+weewx.units.MetricWXUnits["group_sunhours"] = "sunhours"
+weewx.units.default_unit_format_dict["sunhours"] = "%.2f"
+weewx.units.default_unit_label_dict["sunhours"] = " h"
+weewx.units.obs_group_dict['fsunhours'] = 'group_sunhours'
+
 
 weewx.units.default_unit_format_dict["microgram_per_meter_cubed"] = "%.1f"
 weewx.units.default_unit_format_dict["volt"] = "%.2f"
@@ -926,14 +956,29 @@ class Consumer(object):
         'ws80_sig': 'ws80sig',
         'ws90_sig': 'ws90sig',
         'ws85_sig': 'wh85sig',
-        #'dewptf': 'dewptf',
-        #'windchillf': 'windchillf',
-        #'feelslikef': 'feelslikef',
-        #'heatindexf': 'heatindexf',
-        #'windspdmph_avg10m': 'windspdmph_avg10m',
-        #'winddir_avg10m': 'winddir_avg10m',
-        #'windgustmph_max10m': 'windgustmph_max10m'.
-        #'windrun': 'windrun',
+        'fdewptf': 'dewptf',
+        'fwindchillf': 'windchillf',
+        'ffeelslikef': 'feelslikef',
+        'fheatindexf': 'heatindexf',
+        'fwindspdmph_avg10m': 'windspdmph_avg10m',
+        'fwinddir_avg10m': 'winddir_avg10m',
+        'fwindgustmph_max10m': 'windgustmph_max10m',
+        'fwindrun': 'windrun',
+        'fpm25_AQI_ch1': 'pm25_AQI_ch1',
+        'fpm25_AQI_ch2': 'pm25_AQI_ch2',
+        'fpm25_AQI_ch3': 'pm25_AQI_ch3',
+        'fpm25_AQI_ch4': 'pm25_AQI_ch4',
+        'fpm25_AQI_co2': 'pm25_AQI_co2',
+        'fpm10_AQI_co2': 'pm10_AQI_co2',
+        'fpm25_AQI_avg_24h_ch1': 'pm25_AQI_avg_24h_ch1',
+        'fpm25_AQI_avg_24h_ch2': 'pm25_AQI_avg_24h_ch2',
+        'fpm25_AQI_avg_24h_ch3': 'pm25_AQI_avg_24h_ch3',
+        'fpm25_AQI_avg_24h_ch4': 'pm25_AQI_avg_24h_ch4',
+        'fpm25_AQI_24h_co2': 'pm25_AQI_24h_co2',
+        'fpm10_AQI_24h_co2': 'pm10_AQI_24h_co2',
+        'fsunhours': 'sunhours',
+        'fsunshine': 'sunshine',
+
     }
 
     def default_sensor_map(self):
@@ -3142,21 +3187,43 @@ class EcowittClient(Consumer):
             'wh80sig': 'wh80sig',
             'wh90sig': 'wh90sig',
             'wh85sig': 'wh85sig',
+            'dewptf': 'dewptf',
+            'windchillf': 'windchillf',
+            'feelslikef': 'feelslikef',
+            'heatindexf': 'heatindexf',
+            'windspdmph_avg10m': 'windspdmph_avg10m',
+            'winddir_avg10m': 'winddir_avg10m',
+            'windgustmph_max10m': 'windgustmph_max10m',
+            'windrun': 'windrun',
+            'pm25_AQI_ch1': 'pm25_AQI_ch1',
+            'pm25_AQI_ch2': 'pm25_AQI_ch2',
+            'pm25_AQI_ch3': 'pm25_AQI_ch3',
+            'pm25_AQI_ch4': 'pm25_AQI_ch4',
+            'pm25_AQI_co2': 'pm25_AQI_co2',
+            'pm10_AQI_co2': 'pm10_AQI_co2',
+            'pm25_AQI_avg_24h_ch1': 'pm25_AQI_avg_24h_ch1',
+            'pm25_AQI_avg_24h_ch2': 'pm25_AQI_avg_24h_ch2',
+            'pm25_AQI_avg_24h_ch3': 'pm25_AQI_avg_24h_ch3',
+            'pm25_AQI_avg_24h_ch4': 'pm25_AQI_avg_24h_ch4',
+            'pm25_AQI_24h_co2': 'pm25_AQI_24h_co2',
+            'pm10_AQI_24h_co2': 'pm10_AQI_24h_co2',
+            'sunhours': 'sunhours',
+            'sunshine': 'sunshine',
        }
 
         IGNORED_LABELS = [
             'PASSKEY', 'dateutc', 'freq', 'rfdata', 'isintvl','isintvl10',
-            'dewptf','windchillf','feelslikef','heatindexf',
-            'pm25_AQI_ch1','pm25_AQIlvl_ch1','pm25_AQIlvl_ch1','pm25_AQI_avg_24h_ch1','pm25_AQIlvl_avg_24h_ch1',
-            'pm25_AQI_ch2','pm25_AQIlvl_ch2','pm25_AQI_avg_24h_ch2','pm25_AQIlvl_avg_24h_ch2',
-            'pm25_AQI_ch3','pm25_AQIlvl_ch3','pm25_AQI_avg_24h_ch3','pm25_AQIlvl_avg_24h_ch3',
-            'pm25_AQI_ch4','pm25_AQIlvl_ch4','pm25_AQI_avg_24h_ch4','pm25_AQIlvl_avg_24h_ch4',
+            #'dewptf','windchillf','feelslikef','heatindexf',
+            'pm25_AQIlvl_ch1','pm25_AQIlvl_avg_24h_ch1',
+            'pm25_AQIlvl_ch2','pm25_AQIlvl_avg_24h_ch2',
+            'pm25_AQIlvl_ch3','pm25_AQIlvl_avg_24h_ch3',
+            'pm25_AQIlvl_ch4','pm25_AQIlvl_avg_24h_ch4',
             'co2lvl',
-            'pm25_AQI_co2','pm25_AQIlvl_co2','pm25_AQI_24h_co2','pm25_AQIlvl_24h_co2',
-            'pm10_AQI_co2','pm10_AQIlvl_co2','pm10_AQI_24h_co2','pm10_AQIlvl_24h_co2',
-            'windspdmph_avg10m','winddir_avg10m','windgustmph_max10m','windrun',
-            'brightness','cloudf','sunhours','sunshine',
-            'srsum',
+            'pm25_AQIlvl_co2','pm25_AQIlvl_24h_co2',
+            'pm10_AQIlvl_co2','pm10_AQIlvl_24h_co2',
+            #'windspdmph_avg10m','winddir_avg10m','windgustmph_max10m','windrun',
+            'brightness','cloudf','srsum',
+            #'sunhours','sunshine',
             'ptrend1','pchange1','ptrend3','pchange3',
             'running','wswarning','sensorwarning','batterywarning','stormwarning','tswarning','updatewarning','leakwarning','co2warning','intvlwarning','time',
         ]
