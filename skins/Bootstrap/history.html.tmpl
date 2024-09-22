@@ -1,0 +1,86 @@
+#errorCatcher Echo
+#set $history_items = $to_list($HistoryReport.get('history_items', ['min_temp', 'avg_temp', 'max_temp', 'rain', 'rain_days', 'max_wind', 'NOAA']))
+<!DOCTYPE html>
+<html lang="$lang">
+#include "head.html.inc"
+<body>
+<!-- Menu navbar -->
+#include "nav.html.inc"
+<!-- Main container -->
+<div class="$global_main_container_classes">
+    <div class="row">
+        <!-- Gauge panel -->
+        #include "livegauges.html.inc"
+        <!-- Main panel -->
+        <div id="${global_main_panel_id}" class="${global_main_panel_classes}">
+            #for $history_item in $history_items
+            #set $table = $history_tables[$history_item]
+            <h3 class="historyHeader">$gettext($table.header_text)</h3>
+            <table class="table historyTable text-center">
+                #if $table.noaa is False
+                <thead>
+                <tr>
+                    <th class="head">$table.header.head</th>
+                    #for $headervalue in $table.header.values
+                    <th class="month">$gettext($headervalue)</th>
+                    #end for
+                    #if "summary" in $table.header.keys()
+                    <th class="year">$gettext($table.header.summary)</th>
+                    #end if
+                </tr>
+                </thead>
+                <tbody>
+                #for $line in $table.lines
+                <tr>
+                    <th class="head">$line.head.value</th>
+                    #for $linevalue in $line.values
+                    #set $value = '-'
+                    #set $style = ''
+                    #if $linevalue.value
+                    #set $value = $linevalue.value
+                    #set $style = ' style="background-color:' + $linevalue.bgcolor + '; color:' + $linevalue.fontcolor + ';"'
+                    #end if
+                    <td class="month"$style>$value</td>
+                    #end for
+                    #set $style = ''
+                    #if "summary" in $line.keys()
+                    #set $style = ' style="background-color:' + $line.summary.bgcolor + '; color:' + $line.summary.fontcolor + ';"'
+                    <td class="year"$style>$line.summary.value</td>
+                    #end if
+
+                </tr>
+                #end for
+                </tbody>
+                #else
+                <thead>
+                <tr>
+                    <th class="head">$table.header.head</th>
+                    #for $headervalue in $table.header.values
+                    <th>$headervalue</th>
+                    #end for
+                </tr>
+                </thead>
+                <tbody>
+                #for $line in $table.lines
+                <tr>
+                    <th class="noaa"><a href="$line.head.url" class="btn btn-sm btn-primary primaryLive btnNOAA">$line.head.value</a></th>
+                    #for $linevalue in $line.values
+                    #set $data = '-'
+                    #if $linevalue.value
+                    #set $data = '<a href="' + $linevalue.url + '" class="btn btn-sm btn-light primaryLight btnNOAA">' + $linevalue.value + '</a>'
+                    #end if
+                    <td class="noaa">$data</td>
+                    #end for
+                </tr>
+                #end for
+                </tbody>
+                #end if
+            </table>
+            #end for
+        </div>
+    </div>
+    #include "foot.html.inc"
+</div>
+#include "script.html.inc"
+</body>
+</html>

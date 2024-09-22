@@ -1,0 +1,33 @@
+#errorCatcher Echo
+#set $live_chart_items = $to_list($LiveCharts.get('live_chart_items', ['outTemp', 'barometer', 'rain', 'outHumidity', 'wind', 'windDir']))
+<!DOCTYPE html>
+<html lang="$lang">
+#include "head.html.inc"
+<body>
+<!-- Menu navbar -->
+#include "nav.html.inc"
+<!-- Main container -->
+<div class="$global_main_container_classes">
+    <div class="row">
+        <!-- Gauge panel -->
+        #set global $display_gauge_panel = 'd-block'
+        #include "livegauges.html.inc"
+        <!-- Main panel -->
+        <div id="${global_main_panel_id}" class="${global_main_panel_classes}">
+            #include "graphMenu.html.inc"
+            <div class="row">
+                #for $chartName in $live_chart_items
+                #set $value = $LiveCharts[$chartName]
+                #if isinstance($value, dict)
+                <div id="${chartName}Chart" class="chart" onmouseover="setToolboxVisibility(this, true)" onmouseout="setToolboxVisibility(this, false)"></div>
+                #end if
+                #end for
+            </div>
+        </div>
+    </div>
+    #include "foot.html.inc"
+</div>
+#include "script.html.inc"
+<script src="js/charts.js"></script>
+</body>
+</html>
