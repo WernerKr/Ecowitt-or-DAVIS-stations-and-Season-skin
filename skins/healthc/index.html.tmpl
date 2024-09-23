@@ -1,0 +1,258 @@
+## Copyright 2023 Werner Krenn
+## Distributed under terms of GPLv3.  See LICENSE.txt for your rights.
+#errorCatcher Echo
+#encoding UTF-8
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <META HTTP-EQUIV="Refresh" CONTENT="300">
+    <title>$station.location Telemetry</title>
+    <link rel="icon" type="image/png" href="favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="healthc.css"/>
+    <script src="healthc.js"></script>
+  </head>
+
+  <body onload="setup();">
+    #include "titlebar.inc"
+
+    <div id="contents">
+
+      <div id="widget_group">
+        #include "sensors.inc"
+        #if $latest.rssiA.has_data
+         #include "sensorsair.inc"
+        #end if
+
+      </div>
+
+      <div id="plot_group">
+        <div id="history_widget" class="widget">
+          <div id="plot_title" class="widget_title">$gettext("Telemetry"):&nbsp;&nbsp;
+            <a class="button_selected" id="button_history_day"
+               onclick="choose_history('day')">$gettext("Day")</a>
+            <a class="button" id="button_history_week"
+               onclick="choose_history('week')">$gettext("Week")</a>
+            <a class="button" id="button_history_month"
+               onclick="choose_history('month')">$gettext("Month")</a>
+            <a class="button" id="button_history_year"
+               onclick="choose_history('year')">$gettext("Year")</a>
+          </div>
+
+          <div id="history_day" class="plot_container">
+            #if $day.consoleBatteryC.has_data
+            <img src="dayvoltConsole.png"        alt="$obs.label.consoleBatteryC"/>
+            #end if
+            #if $day.batteryPercentC.has_data
+             #set $test = $getattr($current($max_delta=3600), "batteryPercentC").raw
+             #set $xt = $getattr($yesterday, 'batteryPercentC') 
+             #set $test1 = $xt.min.format("%.0f")
+             #if $test != 100 or $test1 !='100%'
+              <img src="daybatteryPercentConsole.png"        alt="$obs.label.batteryPercentC"/>
+             #end if
+            #end if
+
+            #if $day.rssiC.has_data
+            <img src="daysignalC.png"        alt="$obs.label.rssiC"/>
+            #end if
+            #if $day.batteryCurrentC.has_data
+            <img src="daycurrentConsole.png"        alt="$obs.label.batteryCurrentC"/>
+            #end if
+            #if $day.batteryTempC.has_data
+            <img src="daytempBatConsole.png"        alt="$obs.label.batteryTempC"/>
+            #end if
+            #if $day.freeMemC.has_data
+            <img src="daymemConsole.png"        alt="$obs.label.freeMemC"/>
+            #end if
+
+            #if $day.rxCheckPercent.has_data
+            <img src="dayrx.png"        alt="$obs.label.rxCheckPercent"/>
+            #end if
+            #if $day.rxCheckPercent7.has_data
+            <img src="dayrx1.png"        alt="$obs.label.rxCheckPercent7"/>
+            #end if
+
+            #if $day.rssi.has_data
+            <img src="daysignal.png"        alt="$obs.label.rssi"/>
+            #end if
+            #if $day.rssi7.has_data
+            <img src="daysignal1.png"        alt="$obs.label.rssi7"/>
+            #end if
+            #if $day.rssi2.has_data
+            <img src="daysignal2.png"        alt="$obs.label.rssi2"/>
+            #end if
+            #if $day.supercapVolt.has_data
+            <img src="dayvoltSensor0.png"        alt="$obs.labelsupercapVolt"/>
+            #end if
+
+            #if $day.supercapVolt_2.has_data
+            <img src="dayvoltSensor.png"        alt="$obs.labelsupercapVolt_2"/>
+            #end if
+            #if $day.rssiA.has_data
+            <img src="daysignalA.png"        alt="$obs.label.rssiA"/>
+            #end if
+ 
+         </div>
+          <div id="history_week" class="plot_container" style="display:none">
+            #if $week.consoleBatteryC.has_data
+            <img src="weekvoltConsole.png"        alt="$obs.label.consoleBatteryC"/>
+            #end if
+            #if $week.batteryPercentC.has_data
+             #set $test = $getattr($current($max_delta=3600), "batteryPercentC").raw
+             #set $xt = $getattr($week, 'batteryPercentC') 
+             #set $test1 = $xt.min.format("%.0f")
+             #if $test != 100 or $test1 !='100%'
+              <img src="weekbatteryPercentConsole.png"        alt="$obs.label.batteryPercentC"/>
+             #end if
+            #end if
+
+            #if $week.rssiC.has_data
+            <img src="weeksignalC.png"        alt="$obs.label.rssiC"/>
+            #end if
+            #if $week.batteryCurrentC.has_data
+            <img src="weekcurrentConsole.png"        alt="$obs.label.batteryCurrentC"/>
+            #end if
+            #if $week.batteryTempC.has_data
+            <img src="weektempBatConsole.png"        alt="$obs.label.batteryTempC"/>
+            #end if
+            #if $week.freeMemC.has_data
+            <img src="weekmemConsole.png"        alt="$obs.label.freeMemC"/>
+            #end if
+
+            #if $week.rxCheckPercent.has_data
+            <img src="weekrx.png"        alt="$obs.label.rxCheckPercent"/>
+            #end if
+            #if $week.rxCheckPercent7.has_data
+            <img src="weekrx1.png"        alt="$obs.label.rxCheckPercent7"/>
+            #end if
+
+            #if $week.rssi.has_data
+            <img src="weeksignal.png"        alt="$obs.label.rssi"/>
+            #end if
+            #if $week.rssi7.has_data
+            <img src="weeksignal1.png"        alt="$obs.label.rssi7"/>
+            #end if
+            #if $week.supercapVolt.has_data
+            <img src="weekvoltSensor0.png"        alt="$obs.labelsupercapVolt"/>
+            #end if
+
+            #if $week.supercapVolt_2.has_data
+            <img src="weekvoltSensor.png"        alt="$obs.labelsupercapVolt_2"/>
+            #end if
+            #if $week.rssiA.has_data
+            <img src="weeksignalA.png"        alt="$obs.label.rssiA"/>
+            #end if
+
+          </div>
+          <div id="history_month" class="plot_container" style="display:none">
+            #if $month.consoleBatteryC.has_data
+            <img src="monthvoltConsole.png"        alt="$obs.label.consoleBatteryC"/>
+            #end if
+            #if $month.batteryPercentC.has_data
+             #set $test = $getattr($current($max_delta=3600), "batteryPercentC").raw
+             #set $xt = $getattr($month, 'batteryPercentC') 
+             #set $test1 = $xt.min.format("%.0f")
+             #if $test != 100 or $test1 !='100%'
+              <img src="monthbatteryPercentConsole.png"        alt="$obs.label.batteryPercentC"/>
+             #end if
+            #end if
+
+            #if $month.rssiC.has_data
+            <img src="monthsignalC.png"        alt="$obs.label.rssiC"/>
+            #end if
+            #if $month.batteryCurrentC.has_data
+            <img src="monthcurrentConsole.png"        alt="$obs.label.batteryCurrentC"/>
+            #end if
+            #if $month.batteryTempC.has_data
+            <img src="monthtempBatConsole.png"        alt="$obs.label.batteryTempC"/>
+            #end if
+            #if $month.freeMemC.has_data
+            <img src="monthmemConsole.png"        alt="$obs.label.freeMemC"/>
+            #end if
+
+            #if $month.rxCheckPercent.has_data
+            <img src="monthrx.png"        alt="$obs.label.rxCheckPercent"/>
+            #end if
+            #if $month.rxCheckPercent7.has_data
+            <img src="monthrx1.png"        alt="$obs.label.rxCheckPercent7"/>
+            #end if
+
+            #if $month.rssi.has_data
+            <img src="monthsignal.png"        alt="$obs.label.rssi"/>
+            #end if
+            #if $month.rssi7.has_data
+            <img src="monthsignal1.png"        alt="$obs.label.rssi7"/>
+            #end if
+            #if $month.supercapVolt.has_data
+            <img src="monthvoltSensor0.png"        alt="$obs.labelsupercapVolt"/>
+            #end if
+
+            #if $month.supercapVolt_2.has_data
+            <img src="monthvoltSensor.png"        alt="$obs.labelsupercapVolt_2"/>
+            #end if
+
+            #if $month.rssiA.has_data
+            <img src="monthsignalA.png"        alt="$obs.label.rssiA"/>
+            #end if
+
+          </div>
+          <div id="history_year" class="plot_container" style="display:none">
+            #if $year.consoleBatteryC.has_data
+            <img src="yearvoltConsole.png"        alt="$obs.label.consoleBatteryC"/>
+            #end if
+            #if $year.batteryPercentC.has_data
+             #set $test = $getattr($current($max_delta=3600), "batteryPercentC").raw
+             #set $xt = $getattr($month, 'batteryPercentC') 
+             #set $test1 = $xt.min.format("%.0f")
+             #if $test != 100 or $test1 !='100%'
+              <img src="yearbatteryPercentConsole.png"        alt="$obs.label.batteryPercentC"/>
+             #end if
+            #end if
+            #if $year.rssiC.has_data
+            <img src="yearsignalC.png"        alt="$obs.label.rssiC"/>
+            #end if
+            #if $year.batteryCurrentC.has_data
+            <img src="yearcurrentConsole.png"        alt="$obs.label.batteryCurrentC"/>
+            #end if
+            #if $year.batteryTempC.has_data
+            <img src="yeartempBatConsole.png"        alt="$obs.label.batteryTempC"/>
+            #end if
+            #if $year.freeMemC.has_data
+            <img src="yearmemConsole.png"        alt="$obs.label.freeMemC"/>
+            #end if
+
+            #if $year.rxCheckPercent.has_data
+            <img src="yearrx.png"        alt="$obs.label.rxCheckPercent"/>
+            #end if
+            #if $year.rxCheckPercent7.has_data
+            <img src="yearrx1.png"        alt="$obs.label.rxCheckPercent7"/>
+            #end if
+
+            #if $year.rssi.has_data
+            <img src="yearsignal.png"        alt="$obs.label.rssi"/>
+            #end if
+            #if $year.rssi7.has_data
+            <img src="yearsignal1.png"        alt="$obs.label.rssi7"/>
+            #end if
+            #if $year.supercapVolt.has_data
+            <img src="yearvoltSensor0.png"        alt="$obs.labelsupercapVolt"/>
+            #end if
+
+            #if $year.supercapVolt_2.has_data
+            <img src="yearvoltSensor.png"        alt="$obs.labelsupercapVolt_2"/>
+            #end if
+            #if $year.rssiA.has_data
+            <img src="yearsignalA.png"        alt="$obs.label.rssiA"/>
+            #end if
+
+
+          </div>
+        </div>
+      </div>
+
+      #include "about.inc"
+    </div>
+
+  </body>
+</html>
