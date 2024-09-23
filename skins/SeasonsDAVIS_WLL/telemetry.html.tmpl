@@ -1,0 +1,109 @@
+## Copyright 2017 Tom Keffer, Matthew Wall
+## Distributed under terms of GPLv3.  See LICENSE.txt for your rights.
+#errorCatcher Echo
+#encoding UTF-8
+
+#set $allways_lang = False
+#set $use_lang = False
+#try
+ #if $SKIN_VERSION != '' or $allways_lang == True
+  #set $use_lang = True
+ #end if
+#except
+ #pass
+#end try
+
+#def period_plots($period, $label)
+<div id="history_${label}" class="plot_containter" style="display:none">
+#for $x in [
+{'data': $period.rxCheckPercent, 'img': 'rx', 'alt': 'signal'},
+{'data': $period.signal2, 'img': 'rx1', 'alt': 'signal2'},
+{'data': $period.signal5, 'img': 'rx2', 'alt': 'signal5'},
+{'data': $period.signal3x, 'img': 'rx3', 'alt': 'signal'},
+{'data': $period.signal4x, 'img': 'rx4', 'alt': 'signal'},
+{'data': $period.signal5x, 'img': 'rx5', 'alt': 'signal'},
+{'data': $period.signal6x, 'img': 'rx6', 'alt': 'signal'},
+{'data': $period.signal7x, 'img': 'rx7', 'alt': 'signal'},
+{'data': $period.signal8x, 'img': 'rx8', 'alt': 'signal'},
+{'data': $period.consBatteryVoltage, 'img': 'volt', 'alt': 'voltage'},
+{'data': $period.heatingVoltage, 'img': 'volt', 'alt': 'voltage'},
+{'data': $period.supplyVoltage, 'img': 'volt', 'alt': 'voltage'},
+{'data': $period.referenceVoltage, 'img': 'volt', 'alt': 'voltage'},
+{'data': $period.windBatteryStatus, 'img': 'volt', 'alt': 'voltage'},
+{'data': $period.soilMoistBatt1, 'img': 'voltage1', 'alt': 'soilMoistBatt1'},
+{'data': $period.soilMoistBatt2x, 'img': 'voltage1x', 'alt': 'soilMoistBatt2'},
+{'data': $period.soilMoistBatt3, 'img': 'voltage2', 'alt': 'soilMoistBatt3'},
+{'data': $period.rainBatteryStatus, 'img': 'voltage3', 'alt': 'rainBatteryStatus'},
+{'data': $period.ws90cap_volt, 'img': 'voltcap', 'alt': 'ws90cap_volt'},
+]
+#if $x['data'].has_data
+#set $img = "%s%s.png" % ($label, $x['img'])
+<img src="$img" alt="$x['alt']" />
+#end if
+#end for
+</div>
+#end def
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>$station.location Telemetry</title>
+    <link rel="icon" type="image/png" href="favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="seasons.css"/>
+    <script src="seasons.js"></script>
+  </head>
+
+  <body onload="setup();">
+    #include "titlebar.inc"
+    
+    <div id="contents">
+    #if not $use_lang 
+      <p><a href="index.html">&#10096; Current Conditions</a></p>
+    #else
+      <p><a href="index.html">&#10096; $gettext("Current Conditions")</a></p>
+    #end if
+
+      <div id="widget_group">
+        #include "sensors.inc"
+      </div>
+
+      <div id="plot_group">
+        <div id="history_widget" class="widget">
+        #if not $use_lang  
+          <div id="plot_title" class="widget_title">Telemetry:&nbsp;&nbsp;
+            <a class="button_selected" id="button_history_day"
+               onclick="choose_history('day')">Day</a>
+            <a class="button" id="button_history_week"
+               onclick="choose_history('week')">Week</a>
+            <a class="button" id="button_history_month"
+               onclick="choose_history('month')">Month</a>
+            <a class="button" id="button_history_year"
+               onclick="choose_history('year')">Year</a>
+        #else
+          <div id="plot_title" class="widget_title">$gettext("Telemetry"):&nbsp;&nbsp;
+            <a class="button_selected" id="button_history_day"
+               onclick="choose_history('day')">$gettext("Day")</a>
+            <a class="button" id="button_history_week"
+               onclick="choose_history('week')">$gettext("Week")</a>
+            <a class="button" id="button_history_month"
+               onclick="choose_history('month')">$gettext("Month")</a>
+            <a class="button" id="button_history_year"
+               onclick="choose_history('year')">$gettext("Year")</a>
+        #end if 
+          </div>
+          $period_plots($day, 'day')
+          
+          $period_plots($week, 'week')
+
+          $period_plots($month, 'month')
+
+          $period_plots($year, 'year')
+        </div>
+      </div>
+
+      #include "identifier.inc"
+    </div>
+
+  </body>
+</html>
