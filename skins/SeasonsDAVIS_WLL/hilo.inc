@@ -32,7 +32,8 @@
 ## The list of observations determines which database fields will be shown in
 ## the summary as well as the order in which they will be displayed.
 ## observ-Array -> (1:value, 2:labelcolor, ''=black, 3:''=min&max or max or sum or wx_binding?, 4:don't show, although values are available = 0)
-## 3: ='wx_binding?' -> example: 'wx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
+## 3: ='wx_binding?' or 'sumwx_binding?' or 'maxwx_binding?' or 'minwx_binding?'or 'maxwx_binding?, Text' or ...  
+## -> example: 'wx_binding3, WS90' or 'maxwx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
 ## labelcolor can be general disabled -> #set $usefontcolor = 0
 
 #set $observ = [('outTemp','#e85d0d','','1'),
@@ -81,8 +82,6 @@
 ('pm25_2','#0e25f2','','1'),
 ('pm25_3','#0e25f2','','1'),
 ('pm25_4','#0e25f2','','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','3'),
-('weitere Sensoren','','','3'),
 ('inTemp','#c95716','','1'),
 ('inHumidity','#17c4ef','','1'),
 ('extraTemp1','#e85d0d','','1'),
@@ -143,23 +142,6 @@
 ('lightning_strike_count','','max','1'),
 ('lightning_energy','','max','1'),
 ('lightning_noise_count','','max','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','current','3'),
-('Daten VUE','','','3'),
-('outTemp_2','#e85d0d','','1'),
-('outTemp_2','#e85d0d','avg','1'),
-('outHumidity_2','#82dbf2','','1'),
-('heatindex2','#b44242','','1'),
-('windchill2','#4282b4','','1'),
-('dewpoint2','#ea4c12','','1'),
-('outWetbulb_2','','','1'),
-('THSW_2','','','1'),
-('THW_2','','','1'),
-('UV_2','#E238EC','','1'),
-('radiation_2','#f2a265','','1'),
-('windSpeed_2','#0000ff','','1'),
-('windGust_2','#4282b4','','1'),
-('rain_2','#72b2c4','','1'),
-('rainRate_2','#72b2c4','','1'),
 ]
 
 

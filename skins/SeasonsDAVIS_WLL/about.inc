@@ -14,16 +14,6 @@
  #pass
 #end try
 
-
-#set $xt = ''
-#if $current.stationtype.has_data
- #if '_' in $current.stationtype.raw
-  #set $xt = $current.stationtype.raw
- #elif $current.model.has_data
-  #set $xt = $current.model.raw 
- #end if
-#end if
-
 #if not $use_lang
 <div id='about_widget' class="widget">
   <div class="widget_title">
@@ -35,7 +25,7 @@
   <table>
     <tr>
       <td class="label">Hardware</td>
-       <td class="data">$station.hardware $xt</td>
+      <td class="data">$station.hardware</td>
     </tr>
    #try
     #if $current.runtime.has_data
@@ -98,7 +88,7 @@
   <table>
     <tr>
       <td class="label">$gettext("Hardware")</td>
-       <td class="data">$station.hardware $xt</td>
+      <td class="data">$station.hardware</td>
     </tr>
    #try
     #if $current.runtime.has_data

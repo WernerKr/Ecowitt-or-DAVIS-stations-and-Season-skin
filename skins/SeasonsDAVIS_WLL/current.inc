@@ -4,6 +4,16 @@
 #errorCatcher Echo
 #encoding UTF-8
 
+#set $allways_lang = False
+#set $use_lang = False
+#try
+ #if $SKIN_VERSION != '' or $allways_lang == True
+  #set $use_lang = True
+ #end if
+#except
+ #pass
+#end try
+
 #set $ecowitt_hw = [('GW1000'),
                     ('GW1100'),
                     ('GW2000'),
@@ -17,34 +27,18 @@
 
 ## The list of observations determines which database fields will be shown in
 ## the summary as well as the order in which they will be displayed.
-
-## observ-Array -> 
-## (1:value, 2:labelcolor, ''=black, 3:current or day or yesterday or aqiepa or aqieea or trend or deltatime or wx_binding?, 4:'1')
-## 3: = current -> default
-## 3: = day -> show avages of the day
-## 3: = yesterday -> show avages of the last day
-## 3: = 3:yesterday -> at 1:radiation  -> radiation.energy_integral.kilowatt_hour_per_meter_squared for yesterday and day
-## 3: = trend -> show additonal to value the 24hr trend or 3 hr trend (barometer)
-## 3: = deltatime -> for sunShineDur or rainDur or hailDur
-## 3: = 'wx_binding?' -> example: 'wx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
-## 3: = 'daywx_bindig?' or 'trendwx_bindging?' are also allowed. example: 'daywx_binding3, Ultrasonic'
-## 3: = aqiepa -> computes pm2_5 Air quality Index EPA
-## 3: = aqieea -> computes pm2_5 Air quality Index EEA
-## 4: = 1 show, 4: = 0 don't show, although values are available, 4: = 3 Textinformation or Separation
-
-
-
 #set $observ = [('outTemp','#e85d0d','trend','1'),
 ('outTemp','#e85d0d','day','1'),
 ('outTemp','#e85d0d','yesterday','1'),
-('outTemp','#e85d0d','wx_binding3, WS80','0'),
-('outTemp','#e85d0d','wx_binding2, WH32','0'),
+('outTemp','','wx_binding3','0'),
 ('heatindex','#b44242','current','1'),
 ('windchill','#4282b4','current','1'),
 ('dewpoint','#0000ff','current','1'),
 ('outHumidity','#82dbf2','current','1'),
  ('appTemp','','current','1'),
+ ('appTemp1','','current','1'),
  ('humidex','','current','1'),
+ ('humidex1','','current','1'),
  ('outWetbulb','','current','1'),
  ('wetbulb','','current','1'),
 ('THSW','','current','1'),
@@ -52,12 +46,9 @@
 ('barometer','#25ea2f','trend','1'),
 ('pressure','','trend','1'),
 ('cloudbase','','current','1'),
-('heatdeg','','current','0'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('windSpeed','#0000ff','current','1'),
-('windSpeed','#0000ff','wx_binding3, WS80','0'),
-('windGust','#4282b4','current','1'),
-('windGust','#4282b4','wx_binding3, WS80','0'),
+('windGust','#4282b4','day','1'),
  ('windspdmph_avg10m','','current','1'),
  ('maxdailygust','','current','1'),
  ('windSpeed1','','current','1'),
@@ -67,7 +58,6 @@
  ('windGustSpeed10','','current','1'),
  ('windGustDir10','','current','1'),
 ('windrun','','day','1'),
-('windrun','','wx_binding3, WS80','0'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('rain','#72b2c4','current','1'),
 ('rainRate','#72b2c4','current','1'),
@@ -97,12 +87,12 @@
 ('wrain_piezo','','current','1'),
 ('mrain_piezo','','current','1'),
 ('yrain_piezo','','current','1'),
-('rainDur','#006eff','deltatime','1'),
-('hailDur','#006eff','deltatime','0'),
 ('snow','','current','1'),
 ('snowRate','','current','1'),
 ('snowMoisture','','current','1'),
 ('snowDepth','','current','1'),
+('rainDur','#006eff','deltatime','1'),
+('hailDur','#006eff','deltatime','0'),
 ('ET','#42B4B4','current','1'),
  ('dayET','#42B4B4','current','1'),
 ('ET24','#42B4B4','current','1'),
@@ -121,6 +111,7 @@
  ('pm25_avg_24h_ch3','','current','1'),
 ('pm25_4','#0e25f2','current','1'),
  ('pm25_avg_24h_ch4','','current','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','0'),
 ('inTemp','#c95716','current','1'),
 ('inHumidity','#17c4ef','current','1'),
 ('inDewpoint','','current','1'),
@@ -190,48 +181,50 @@
  ('maxSolarRad','#f2a265','current','1'),
  ('sunshine_time','red','current','1'),
 ('luminosity','','current','0'),
-('radiation','','yesterday','1'),
+('radiation','','yesterday','2'),
 ('sunshine_hours','#f2a265','day','1'),
 ('sunshineDur','#f2a265','deltatime','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('GTS','#25ea2f','current','1'),
 ('GTSdate','#25ea2f','day','2'),
-('- - - - - - - - - - - - - - - - - - - - -','','','0'),
-($gettext("Data CO2 Sensor"),'','current','0'),
-('co2_Temp','#f20e3c','current','0'),
-('co2_Hum','#0e25f2','current','0'),
-('co2','#32e5d9','current','0'),
- ('co2_24h','','current','0'),
-('pm2_5','#0e25f2','current','0'),
- ('pm2_5_aqi','','current','0'),
- ('pm2_5','','aqiepa','0'),
- ('pm2_5','','aqieea','0'),
- ('pm25_24h_co2','','current','0'),
-('pm10_0','#0e25f2','current','0'),
- ('pm10_24h_co2','','current','0'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
-($gettext("Data Airlink"),'','current','3'),
+('Daten CO2-Sensor','','current','3'),
 ('co2_Temp','#f20e3c','current','1'),
 ('co2_Hum','#0e25f2','current','1'),
-('dewpoint1','#ea4c12','current','1'),
-('heatindex1','#b44242','current','1'),
-('wetbulb1','','current','1'),
-('pm1_0','','current','1'),
+('co2','#32e5d9','current','1'),
+ ('co2_24h','','current','1'),
 ('pm2_5','#0e25f2','current','1'),
  ('pm2_5_aqi','','current','1'),
  ('pm2_5','','aqiepa','1'),
  ('pm2_5','','aqieea','1'),
+ ('pm25_24h_co2','','current','1'),
+('pm10_0','#0e25f2','current','1'),
+ ('pm10_24h_co2','','current','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+('Daten Air','','current','0'),
+('co2_Temp','#f20e3c','current','0'),
+('co2_Hum','#0e25f2','current','0'),
+('dewpoint1','#ea4c12','current','1'),
+('heatindex1','#b44242','current','1'),
+('wetbulb1','','current','1'),
+('pct_pm_data_last_1_hour','','current','1'),
+('pct_pm_data_last_3_hours','','current','1'),
+('pct_pm_data_last_24_hours','','current','1'),
+('pm1_0','','current','1'),
+('pm2_5','#0e25f2','current','0'),
+ ('pm2_5_aqi','','current','0'),
+ ('pm2_5','#0e25f2','aqiepa','0'),
+ ('pm2_5','#0e25f2','aqieea','0'),
+ ('pm25_24h_co2','','current','0'),
 ('pm2_5_nowcast','','current','1'),
 ('pm_2p5_last_1_hour','','current','1'),
 ('pm_2p5_last_3_hours','','current','1'),
 ('pm_2p5_last_24_hours','','current','1'),
-('pm10_0','#0e25f2','current','1'),
+('pm10_0','#0e25f2','current','0'),
 ('pm10_0_nowcast','','current','1'),
 ('pm_10_last_1_hour','','current','1'),
 ('pm_10_last_3_hours','','current','1'),
 ('pm_10_last_24_hours','','current','1'),
-('pct_pm_data_last_1_hour','','current','1'),
-('pct_pm_data_last_3_hours','','current','1'),
-('pct_pm_data_last_24_hours','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','#E238EC','','3'),
 ('Daten VUE','','current','3'),
 ('outTemp_2','#e85d0d','current','1'),
@@ -239,18 +232,15 @@
 ('heatindex2','#b44242','current','1'),
 ('windchill2','#4282b4','current','1'),
 ('dewpoint2','#ea4c12','current','1'),
- ('appTemp1','','current','1'),
- ('humidex1','','current','1'),
 ('outWetbulb_2','','current','1'),
 ('THSW_2','','current','1'),
 ('THW_2','','current','1'),
-('UV_2','#E238EC','current','1'),
-('radiation_2','#f2a265','current','1'),
+('UV_2','#E238EC','current','0'),
+('radiation_2','#f2a265','current','0'),
 ('windSpeed_2','#0000ff','current','1'),
  ('windDir_2','#0000ff','current','1'),
 ('windGust_2','#4282b4','current','1'),
 ('windGustDir_2','#4282b4','current','1'),
-('windrun_2','','current','1'),
 ('rain_2','#72b2c4','current','1'),
 ('rainRate_2','#72b2c4','current','1'),
  ('rain15_2','','current','1'),
@@ -262,13 +252,11 @@
  ('rain_storm_last_start_at_2','#72b2c4','current','1'),
  ('rain_storm_last_end_at_2','#72b2c4','current','1'),
  ('dayRain_2','','current','1'),
-('rainDur_2','#006eff','current','0'),
-('rainDur_2','#006eff','deltatime','1'),
  ('rain24_2','','current','1'),
  ('monthRain_2','','current','1'),
  ('yearRain_2','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
-($gettext('Data other'),'','','3'),
+('Daten Test','','current','3'),
 ('outVaporP','','current','1'),
 ('outSVP','','current','1'),
 ('outMixingRatio','','current','1'),
@@ -278,8 +266,8 @@
 ('boilingTemp','','current','1'),
 ]
 
+
 #set $usefontcolor = 1
-#set $uselatest = 1
 #set $ecowitt = 0
 #for $x in $ecowitt_hw
   #if $x in $station.hardware
@@ -297,9 +285,9 @@
    #set $sh_std = $sh_std + 1 
   #end if 
   #if $sh_min < 10
-   <td class="data">$sh_std:0$sh_min $gettext("hrs.")</td>
+   <td class="data">$sh_std:0$sh_min Std.</td>
   #else
-   <td class="data">$sh_std:$sh_min $gettext("hrs.")</td>
+   <td class="data">$sh_std:$sh_min Std.</td>
   #end if
  #end if
 #end def
@@ -365,7 +353,11 @@
 
 <div id='current_widget' class="widget">
   <div class="widget_title">
+    #if not $use_lang
+      Current Conditions
+    #else 
       $gettext("Current Conditions")
+    #end if
     <a class="widget_control"
       onclick="toggle_widget('current')">&diams;</a>
   </div>
@@ -404,18 +396,10 @@
      #set $xt = getattr($day, $x[0])
    #elif $x[2] == 'yesterday'
      #set $xt = getattr($yesterday, $x[0])
-   #elif $x[2] == 'aqiepa' or $x[2] == 'aqieea'
-     #if $uselatest == 1 
-      #set $xt = getattr($latest, $x[0])
-     #else
-      #set $xt = getattr($current, $x[0])
-     #end if
+   #elif $x[2] == 'aqiepa' or $x[2] == 'aqieea' 
+     #set $xt = getattr($current, $x[0])
    #else
-     #if $uselatest == 1 
-      #set $xt = getattr($latest, $x[0])
-     #else
-      #set $xt = getattr($current, $x[0])
-     #end if
+     #set $xt = getattr($current, $x[0])
    #end if 
   
    #if ($xt.has_data and $x[3] == '1') or $x[3] == '2' or $x[3] == '3'
@@ -443,8 +427,8 @@
          #set $xt1 = $latest(data_binding=$txt).windDir.ordinal_compass
          #set $xt2 = $latest(data_binding=$txt).windDir
         #else 
-         #set $xt1 = $latest.windDir.ordinal_compass
-         #set $xt2 = $latest.windDir
+         #set $xt1 = $current.windDir.ordinal_compass
+         #set $xt2 = $current.windDir
         #end if
         <td class="data">$xt $xt1 ($xt2)</td>
       </tr>
@@ -455,25 +439,25 @@
          #set $xt1 = $latest(data_binding=$txt).windGustDir.ordinal_compass
          #set $xt2 = $latest(data_binding=$txt).windGustDir
         #else 
-         #set $xt1 = $latest.windGustDir.ordinal_compass
-         #set $xt2 = $latest.windGustDir
+         #set $xt1 = $current.windGustDir.ordinal_compass
+         #set $xt2 = $current.windGustDir
         #end if
         <td class="data">$xt $xt1 ($xt2)</td>
       </tr>
-    #elif $x[0] == 'windrun' or $x[0] == 'windrun_2'
+    #elif $x[0] == 'windrun'
       <tr>
         <td class="label"><font color=$color>$obs.label[$x[0]]$ztx</font></td>
         #if 'wx_binding' in $x[2]
-         #set $xt1 = $getattr($day(data_binding=$txt), $x[0]).sum 
-        #else
-         #set $xt1 = getattr($day, $x[0]).sum 
+         #set $xt1 = $day(data_binding=$txt).windrun.sum
+        #else 
+         #set $xt1 = $day.windrun.sum
         #end if
         <td class="data">$xt1</td>
       </tr>
     #elif $x[0] == 'windspdmph_avg10m'
       <tr>
         <td class="label"><font color=$color>$obs.label[$x[0]]</font></td>
-        <td class="data">$latest.windspdmph_avg10m $latest.winddir_avg10m.ordinal_compass ($latest.winddir_avg10m)</td>
+        <td class="data">$current.windspdmph_avg10m $current.winddir_avg10m.ordinal_compass ($current.winddir_avg10m)</td>
       </tr>
     #elif $x[0] == 'rain'
       <tr>
@@ -481,7 +465,11 @@
         <td class="data">$xt</td>
       </tr>
       <tr>
+        #if not $use_lang
+         #set $xt2 = 'Tag'
+        #else 
          #set $xt2 = $gettext("Day")
+        #end if
         <td class="label"><font color=$color>$obs.label[$x[0]]$ztx $xt2</font></td>
         #if 'wx_binding' in $x[2]
          #set $xt1 = $day(data_binding=$txt).rain.sum
@@ -496,7 +484,11 @@
         <td class="data">$xt</td>
       </tr>
       <tr>
+        #if not $use_lang
+         #set $xt2 = 'Tag'
+        #else 
          #set $xt2 = $gettext("Day")
+        #end if
         <td class="label"><font color=$color>$obs.label[$x[0]]$ztx $xt2</font></td>
         #if 'wx_binding' in $x[2]
          #set $xt1 = $day(data_binding=$txt).hail.sum
@@ -521,8 +513,13 @@
     #elif $x[0] == 'radcompensation'
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]$ztx</font></span></td>
-           #set $xt1 = $gettext("On")
-           #set $xt2 = $gettext("Off")
+          #if not $use_lang
+           #set $xt1 = 'Ein'
+           #set $xt2 = 'Aus'
+          #else 
+           #set $xt1 = $gettext("Ein")
+           #set $xt2 = $gettext("Aus")
+          #end if
         #if $xt.raw == 1
           #set $ztxt = $xt1
         #else
@@ -533,7 +530,7 @@
     #elif $x[0] == 'lightningcount'
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]</font></span></td>
-          ##<td class="data">$latest.lightningcount.format("%.0f")</td>
+          ##<td class="data">$current.lightningcount.format("%.0f")</td>
           <td class="data">$xt.format("%.0f")</td>
       </tr>
     #elif $x[0] == 'lightning_strike_count'
@@ -541,8 +538,8 @@
          #set $xt1 = $latest(data_binding=$txt).lightning_strike_count
          #set $xt2 = $latest(data_binding=$txt).lightning_distance
         #else 
-         #set $xt1 = $latest.lightning_strike_count
-         #set $xt2 = $latest.lightning_distance
+         #set $xt1 = $current.lightning_strike_count
+         #set $xt2 = $current.lightning_distance
         #end if
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]$ztx</font></span></td>
@@ -561,10 +558,10 @@
           #set $xt3 = $latest(data_binding=$txt).lightning_disturber_count
          #end if
         #else 
-         #if $latest.lightning_disturber_count.raw == 0
+         #if $current.lightning_disturber_count.raw == 0
           #set $xt3 = 'N/A' 
          #else
-          #set $xt3 = $latest.lightning_disturber_count
+          #set $xt3 = $current.lightning_disturber_count
          #end if
         #end if
         <td class="data">$xt3</td>
@@ -572,12 +569,7 @@
     #elif $x[0] == 'GTSdate'
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]</font></span></td>
-        #try
-         #set $xt = $day.GTSdate.last.format("%d.%m.%Y") 
-        #except
-         #set $xt = "no GTS-ext"
-        #end try 
-          <td class="data">$xt</td>
+          <td class="data">$day.GTSdate.last.format("%d.%m.%Y")</td>
       </tr>
     #elif 'sunshine_hours' in $x[0] 
       <tr>
@@ -586,26 +578,15 @@
           $decHourToHMstr($xv)
 	   ##<td class="data">$day.sunshine_hours.sum.format("%.3f", add_label=False) Std.</td>
       </tr>
-    #elif ($x[0] == 'radiation' or $x[0] == 'radiation_2') and $x[2] == 'yesterday'
+    #elif $x[0] == 'radiation' and $x[2] == 'yesterday'
       <tr>
-       #try
         <td class="label"><span><font color=$color>$obs.label.energy_integral $obs.label.yesterday</font></span></td>
-        #set $xt = getattr($yesterday, $x[0]).energy_integral.kilowatt_hour_per_meter_squared  
-        <td class="data">$xt</td>
-        #except
-          <td class="label"><span><font color=$color>energy_integral</font></span></td>
-          <td class="data">No GTS-ext</td>
-        #end try
+          <td class="data">$yesterday.radiation.energy_integral.kilowatt_hour_per_meter_squared</td>
       </tr>
       <tr>
-        #try
-        <td class="label"><span><font color=$color>$obs.label.energy_integral $obs.label.today</font></span></td>
+          <td class="label"><span><font color=$color>$obs.label.energy_integral $obs.label.today</font></span></td>
           <td class="data">$day.radiation.energy_integral.kilowatt_hour_per_meter_squared</td>
-        #except
-          <td class="label"><span><font color=$color>energy_integral</font></span></td> 
-          <td class="data">No GTS-ext</td>
-        #end try
-     </tr>
+      </tr>
     #elif $x[2] == 'aqiepa'
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]</font></span></td>
@@ -622,55 +603,7 @@
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]</font></span></td>
         <td class="data">$xt.gram_per_meter_cubed</td>
-        ##<td class="data">$latest.outHumAbs.gram_per_meter_cubed</td>
-      </tr>
-    #elif $x[0] == 'cdd_day'
-       #set $xt1 = $unit.label.outTemp
-       #set $xt2 = $xt.raw
-       #if $xt1 == "°F"
-        #if $xt2 > 0 
-         #set $xt = getattr($latest, 'cdd_day')
-         #set $txt = 'cdd_day'
-        #else 
-         #set $xt = getattr($latest, 'hdd_day')
-         #set $txt = 'hdd_day'
-        #end if
-       #else
-        #if $xt2 > 0 
-         #set $xt = getattr($latest, 'cddc_day')
-         #set $txt = 'cddc_day'
-        #else 
-         #set $xt = getattr($latest, 'hddc_day')
-         #set $txt = 'hddc_day'
-        #end if
-       #end if
-      <tr>
-        <td class="label"><span><font color=$color>$obs.label[$txt]</font></span></td>
-        <td class="data">$xt</td>
-      </tr>
-    #elif $x[0] == 'cdd_day_2'
-       #set $xt1 = $unit.label.outTemp_2
-       #set $xt2 = $xt.raw
-       #if $xt1 == "°F"
-        #if $xt2 > 0 
-         #set $xt = getattr($latest, 'cdd_day_2')
-         #set $txt = 'cdd_day_2'
-        #else 
-         #set $xt = getattr($latest, 'hdd_day_2')
-         #set $txt = 'hdd_day_2'
-        #end if
-       #else
-        #if $xt2 > 0 
-         #set $xt = getattr($latest, 'cddc_day_2')
-         #set $txt = 'cddc_day_2'
-        #else 
-         #set $xt = getattr($latest, 'hddc_day_2')
-         #set $txt = 'hddc_day_2'
-        #end if
-       #end if
-      <tr>
-        <td class="label"><span><font color=$color>$obs.label[$txt]</font></span></td>
-        <td class="data">$xt</td>
+        ##<td class="data">$current.outHumAbs.gram_per_meter_cubed</td>
       </tr>
     #else
       <tr>
@@ -681,13 +614,14 @@
         #end if 
         <td class="label"><font color=$color>$obs.label[$x[0]]$ztx$xt1</font></td>
         #if $x[2] == 'deltatime'
-         #try
           #set $xt = $getattr($day, $x[0])
+          #if not $use_lang
+           #set $ztx = 'Std.'
+           #set $xt1 = $xt.sum.format("%(hour)d:%(minute)02d:%(second)02d")
+          #else 
            #set $ztx = $gettext("hrs.")
            #set $xt1 = $xt.sum.long_form(format_string="%(hour)d:%(minute)02d:%(second)02d")
-          #except
-           #set $xt1 = '??:??:??'
-          #end try
+          #end if
           <td class="data">$xt1 $ztx</td>
         #elif $x[2] == 'trend' or $atx == 'trend'
             #set $ztx = ''

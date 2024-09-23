@@ -39,11 +39,11 @@
 ## The list of observations determines which database fields will be shown in
 ## the summary as well as the order in which they will be displayed.
 ## observ-Array -> (1:value, 2:labelcolor, ''=black, 3:''=min&max or max or sum or wx_binding?, 4:don't show, although values are available = 0)
-## 3: ='wx_binding?' -> example: 'wx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
+## 3: ='wx_binding?' or 'sumwx_binding?' or 'maxwx_binding?' or 'minwx_binding?'  
+## -> example: 'wx_binding3, WS90' or 'maxwx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
 ## labelcolor can be general disabled -> #set $usefontcolor = 0
 
 #set $observ = [('outTemp','#e85d0d','','1'),
-('outTemp','#e85d0d','avg','1'),
 ('outTemp','','wx_binding2, WH32','0'),
 ('heatindex','#b44242','','1'),
 ('windchill','#4282b4','','1'),
@@ -75,8 +75,6 @@
 ('snowRate','','max','1'),
 ('radiation','#f2a265','max','1'),
 ('luminosity','','max','0'),
-('- - - - - - - - - - - - - - - - - - - - -','','','3'),
-('Airlink Sensor','','','3'),
 ('co2','#32e5d9','','1'),
 ('co2_Temp','#f20e3c','','1'),
 ('co2_Hum','#0e25f2','','1'),
@@ -87,8 +85,6 @@
 ('pm25_2','#0e25f2','','1'),
 ('pm25_3','#0e25f2','','1'),
 ('pm25_4','#0e25f2','','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','3'),
-('weitere Sensoren','','','3'),
 ('inTemp','#c95716','','1'),
 ('inHumidity','#17c4ef','','1'),
 ('extraTemp1','#e85d0d','','1'),

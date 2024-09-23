@@ -5,6 +5,17 @@
 ## Specifying an encoding of UTF-8 is usually safe:
 #encoding UTF-8
 ##
+
+#set $allways_lang = False
+#set $use_lang = False
+#try
+ #if $SKIN_VERSION != '' or $allways_lang == True
+  #set $use_lang = True
+ #end if
+#except
+ #pass
+#end try
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -34,35 +45,23 @@
 .col-md-8 table td {
     font-weight: normal;
     text-align: right;
-    font-size: 12px;
+    font-size: 13px;
     padding-right: 5px;
     padding-left: 5px;
     border-bottom: 1px solid;
 }
 
 .history {
-  #font-size: calc(5px + 0.5vw);
+  #font-size: calc(8px + 0.5vw);
   font-size: 1.1vw;
   margin-bottom: 30px;
   overflow: auto;
   float: left;
 }
-
     </style>
 
     <script src="seasons.js"></script>
   </head>
-
-#set $allways_lang = False
-#set $use_lang = False
-#try
- #if $SKIN_VERSION != '' or $allways_lang == True
-  #set $use_lang = True
- #end if
-#except
- #pass
-#end try
-
 #set $Month=int($current.dateTime.format("%m"))
   <body onload="setup();">
     #include "titlebar.inc"
@@ -73,9 +72,9 @@
         #include "sunmoon.inc"
         #include "hilo.inc"
         #include "health.inc"
-        #include "healthc.inc"
+        ##include "healthc.inc"
         #include "airlink.inc"
-        #include "belchertown.inc"      
+        ##include "belchertown.inc"      
         #include "sensors.inc"
         #include "about.inc"
         #include "radar.inc"
@@ -124,11 +123,6 @@
             <img src="daywinddir1.png"   alt="$obs.label.windDir" />
             <img src="daywindvec.png"   alt="$obs.label.windvec" />
             <img src="dayrain.png"      alt="$obs.label.rain" />
-            #if $day.rain_2.has_data
-             <img src="dayrain2.png"        alt="$obs.label.rain_2" />
-            #end if
-            <img src="dayrainbar.png"      alt="$obs.label.rain" />
-            <img src="dayrainbar2.png"     alt="$obs.label.rain_2" />
             #if $day.UV.has_data
             <img src="dayuv.png"        alt="$obs.label.UV" />
             #end if
@@ -270,10 +264,6 @@
             <img src="yearwinddir.png"   alt="$obs.label.windDir" />
             <img src="yearwindvec.png"   alt="$obs.label.windvec" />
             <img src="yearrain.png"      alt="$obs.label.rain" />
-            #if $year.rainDur.has_data
-            <img src="yearrainDur.png" alt="$obs.label.rainDur" />
-            #end if
-
             #if $year.UV.has_data
             <img src="yearuv.png"        alt="$obs.label.UV" />
             #end if
@@ -281,10 +271,6 @@
             <img src="yearradiation.png" alt="$obs.label.radiation" />
             <img src="yearRadiationEnergy.png" />
             #end if
-            #if $year.sunshineDur.has_data
-            <img src="yearsunshineDur.png" alt="$obs.label.sunshineDur" />
-            #end if
-
             #if $year.inTemp.has_data
             <img src="yeartempin.png"    alt="$obs.label.inTemp" />
             #end if
@@ -354,17 +340,17 @@ $outTemp_days_table
             <h4>$BootstrapLabels.history_tables.outTemp20_days</h4>
 $outTemp20_days_table
 
-            <h4>$BootstrapLabels.history_tables.outTemp20x_days</h4>
-$outTemp20x_days_table
-
-            <h4>$BootstrapLabels.history_tables.vegetations_days</h4>
-$vegetations_days_table
-
             <h4>$BootstrapLabels.history_tables.outTemp0_days</h4>
 $outTemp0_days_table
 
             <h4>$BootstrapLabels.history_tables.outTemp00_days</h4>
 $outTemp00_days_table
+ <h4>$BootstrapLabels.history_tables.sunshineDur</h4>
+$sunshineDur_table
+
+ <h4>$BootstrapLabels.history_tables.rainDur</h4>
+$rainDur_table
+
 
 
 ##          <h4>$BootstrapLabels.history_tables.NOAA</h4>
@@ -378,7 +364,7 @@ $outTemp00_days_table
     </div>
 
     <p class="footnote">
-      This station is controlled by <a href="http://weewx.com/">WeeWX</a>, an
+      This station is controlled by <a href="https://weewx.com">WeeWX</a>, an
       experimental weather software system written in Python.
     </p>
 
