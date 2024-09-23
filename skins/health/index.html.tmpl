@@ -1,0 +1,200 @@
+## Copyright 2021 Werner Krenn
+## Distributed under terms of GPLv3.  See LICENSE.txt for your rights.
+#errorCatcher Echo
+#encoding UTF-8
+
+#set $allways_lang = False
+#set $use_lang = False
+#try
+ #if $SKIN_VERSION != '' or $allways_lang == True
+  #set $use_lang = True
+ #end if
+#except
+ #pass
+#end try
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <META HTTP-EQUIV="Refresh" CONTENT="300">
+    <title>$station.location Telemetry</title>
+    <link rel="icon" type="image/png" href="favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="health.css"/>
+    <script src="health.js"></script>
+  </head>
+
+  <body onload="setup();">
+    #include "titlebar.inc"
+
+    <div id="contents">
+
+      <div id="widget_group">
+        #include "sensors.inc"
+        #if $day($data_binding='davishealthapi_binding').rssiA.has_data
+         #include "sensorsair.inc"
+        #end if
+      </div>
+
+      <div id="plot_group">
+        <div id="history_widget" class="widget">
+         #if $use_lang
+          <div id="plot_title" class="widget_title">$gettext("Telemetry"):&nbsp;&nbsp;
+         #else
+          <div id="plot_title" class="widget_title">Telemetry:&nbsp;&nbsp;
+         #end if
+         #if $use_lang
+            <a class="button_selected" id="button_history_day"
+               onclick="choose_history('day')">$gettext("Day")</a>
+            #if $day($data_binding='davishealthapi_binding').supercapVolt.has_data
+            <a class="button" id="button_history_xday"
+               onclick="choose_history('xday')">$gettext("XDay")</a>
+            #end if
+            <a class="button" id="button_history_week"
+               onclick="choose_history('week')">$gettext("Week")</a>
+            <a class="button" id="button_history_month"
+               onclick="choose_history('month')">$gettext("Month")</a>
+            <a class="button" id="button_history_year"
+               onclick="choose_history('year')">$gettext("Year")</a>
+          #else
+            <a class="button_selected" id="button_history_day"
+               onclick="choose_history('day')">Day</a>
+            #if $day($data_binding='davishealthapi_binding').supercapVolt.has_data
+            <a class="button" id="button_history_xday"
+               onclick="choose_history('xday')">XDay</a>
+            #end if
+            <a class="button" id="button_history_week"
+               onclick="choose_history('week')">Week</a>
+            <a class="button" id="button_history_month"
+               onclick="choose_history('month')">Month</a>
+            <a class="button" id="button_history_year"
+               onclick="choose_history('year')">Year</a>
+          #end if 
+          </div>
+
+          <div id="history_day" class="plot_container">
+            #if $day($data_binding='davishealthapi_binding').signalQuality.has_data
+            <img src="dayrx.png"        alt="$obs.label.signalQuality"/>
+            #end if
+            #if $day($data_binding='davishealthapi_binding').rssi.has_data
+            <img src="daysignal.png"        alt="$obs.label.rssi"/>
+            #end if
+            #if $day($data_binding='davishealthapi_binding').signalQuality2.has_data
+            <img src="dayrx1.png"        alt="$obs.label.signalQuality2"/>
+            #end if
+            #if $day($data_binding='davishealthapi_binding').rssi2.has_data
+            <img src="daysignal1.png"        alt="$obs.label.rssi2"/>
+            #end if
+
+            #if $day($data_binding='davishealthapi_binding').supercapVolt.has_data
+            <img src="dayvoltSensor.png"        alt="$obs.label.supercapVolt"/>
+            #end if
+            #if $day($data_binding='davishealthapi_binding').supercapVolt1.has_data
+            <img src="dayvoltSensor1.png"        alt="$obs.label.supercapVolt1"/>
+            #end if
+            #if $day($data_binding='davishealthapi_binding').consolePower.has_data
+            <img src="dayvoltConsole.png"        alt="$obs.label.consolePower"/>
+            #end if
+            #if $day($data_binding='davishealthapi_binding').rssiA.has_data
+            <img src="daysignalA.png"        alt="$obs.label.rssiA"/>
+            #end if
+          </div>
+          #if $day($data_binding='davishealthapi_binding').supercapVolt.has_data
+          <div id="history_xday" class="plot_container" style="display:none">
+             <img src="dayvoltSensor.png"        alt="$obs.label.supercapVolt"/>
+             <img src="xdayvoltSensor_0.png"        alt="$obs.label.supercapVolt"/>
+             <img src="xdayvoltSensor_1.png"        alt="$obs.label.supercapVolt"/>
+             <img src="xdayvoltSensor_2.png"        alt="$obs.label.supercapVolt"/>
+             <img src="xdayvoltSensor_3.png"        alt="$obs.label.supercapVolt"/>
+             <img src="xdayvoltSensor_4.png"        alt="$obs.label.supercapVolt"/>
+          </div>
+          #end if
+          <div id="history_week" class="plot_container" style="display:none">
+            #if $week($data_binding='davishealthapi_binding').signalQuality.has_data
+            <img src="weekrx.png"        alt="$obs.label.signalQuality"/>
+            #end if
+            #if $week($data_binding='davishealthapi_binding').rssi.has_data
+            <img src="weeksignal.png"        alt="$obs.label.rssi"/>
+            #end if
+            #if $week($data_binding='davishealthapi_binding').signalQuality2.has_data
+            <img src="weekrx1.png"        alt="$obs.label.signalQuality2"/>
+            #end if
+            #if $week($data_binding='davishealthapi_binding').rssi2.has_data
+            <img src="weeksignal1.png"        alt="$obs.label.rssi2"/>
+            #end if
+
+            #if $week($data_binding='davishealthapi_binding').supercapVolt.has_data
+            <img src="weekvoltSensor.png"        alt="$obs.label.supercapVolt"/>
+            #end if
+            #if $week($data_binding='davishealthapi_binding').supercapVolt1.has_data
+            <img src="weekvoltSensor1.png"        alt="$obs.label.supercapVolt1"/>
+            #end if
+            #if $week($data_binding='davishealthapi_binding').consolePower.has_data
+            <img src="weekvoltConsole.png"        alt="$obs.label.consolePower"/>
+            #end if
+            #if $week($data_binding='davishealthapi_binding').rssiA.has_data
+            <img src="weeksignalA.png"        alt="$obs.label.rssiA"/>
+            #end if
+          </div>
+          <div id="history_month" class="plot_container" style="display:none">
+            #if $month($data_binding='davishealthapi_binding').signalQuality.has_data
+            <img src="monthrx.png"        alt="$obs.label.signalQuality"/>
+            #end if
+            #if $month($data_binding='davishealthapi_binding').rssi.has_data
+            <img src="monthsignal.png"        alt="$obs.label.rssi"/>
+            #end if
+            #if $month($data_binding='davishealthapi_binding').signalQuality2.has_data
+            <img src="monthrx1.png"        alt="$obs.label.signalQuality2"/>
+            #end if
+            #if $month($data_binding='davishealthapi_binding').rssi2.has_data
+            <img src="monthsignal1.png"        alt="$obs.label.rssi2"/>
+            #end if
+
+            #if $month($data_binding='davishealthapi_binding').supercapVolt.has_data
+            <img src="monthvoltSensor.png"        alt="$obs.label.supercapVolt"/>
+            #end if
+            #if $month($data_binding='davishealthapi_binding').supercapVolt1.has_data
+            <img src="monthvoltSensor1.png"        alt="$obs.label.supercapVolt1"/>
+            #end if
+            #if $month($data_binding='davishealthapi_binding').consolePower.has_data
+            <img src="monthvoltConsole.png"        alt="$obs.label.consolePower"/>
+            #end if
+            #if $month($data_binding='davishealthapi_binding').rssiA.has_data
+            <img src="monthsignalA.png"        alt="$obs.label.rssiA"/>
+            #end if
+          </div>
+          <div id="history_year" class="plot_container" style="display:none">
+            #if $year($data_binding='davishealthapi_binding').signalQuality.has_data
+            <img src="yearrx.png"        alt="$obs.label.signalQuality"/>
+            #end if
+            #if $year($data_binding='davishealthapi_binding').rssi.has_data
+            <img src="yearsignal.png"        alt="$obs.label.rssi"/>
+            #end if
+            #if $year($data_binding='davishealthapi_binding').signalQuality2.has_data
+            <img src="yearrx1.png"        alt="$obs.label.signalQuality2"/>
+            #end if
+            #if $year($data_binding='davishealthapi_binding').rssi2.has_data
+            <img src="yearsignal1.png"        alt="$obs.label.rssi2"/>
+            #end if
+
+            #if $year($data_binding='davishealthapi_binding').supercapVolt.has_data
+            <img src="yearvoltSensor.png"        alt="$obs.label.supercapVolt"/>
+            #end if
+            #if $year($data_binding='davishealthapi_binding').supercapVolt1.has_data
+            <img src="yearvoltSensor1.png"        alt="$obs.label.supercapVolt1"/>
+            #end if
+            #if $year($data_binding='davishealthapi_binding').consolePower.has_data
+            <img src="yearvoltConsole.png"        alt="$obs.label.consolePower"/>
+            #end if
+            #if $year($data_binding='davishealthapi_binding').rssiA.has_data
+            <img src="yearsignalA.png"        alt="$obs.label.rssiA"/>
+            #end if
+          </div>
+        </div>
+      </div>
+
+      #include "identifier.inc"
+    </div>
+
+  </body>
+</html>
