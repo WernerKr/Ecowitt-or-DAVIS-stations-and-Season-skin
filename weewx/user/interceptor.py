@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.6.5'
+DRIVER_VERSION = '0.6.6kw'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -594,13 +594,24 @@ weewx.units.obs_group_dict['fpm25_AQI_24h_co2'] = 'group_count'
 weewx.units.obs_group_dict['fpm10_AQI_24h_co2'] = 'group_count'
 weewx.units.obs_group_dict['fsunshine'] = 'group_count'
 
+weewx.units.obs_group_dict['radcompensation'] = 'group_count'
+weewx.units.obs_group_dict['upgrade'] = 'group_count'
+weewx.units.obs_group_dict['newVersion'] = 'group_count'
+weewx.units.obs_group_dict['rainFallPriority'] = 'group_count'
+weewx.units.obs_group_dict['rainGain'] = 'group_count'
+weewx.units.obs_group_dict['piezo'] = 'group_count'
+weewx.units.obs_group_dict['rain1_gain'] = 'group_count'
+weewx.units.obs_group_dict['rain2_gain'] = 'group_count'
+weewx.units.obs_group_dict['rain3_gain'] = 'group_count'
+weewx.units.obs_group_dict['rain4_gain'] = 'group_count'
+weewx.units.obs_group_dict['rain5_gain'] = 'group_count'
+
 weewx.units.USUnits["group_sunhours"] = "sunhours"
 weewx.units.MetricUnits["group_sunhours"] = "sunhours"
 weewx.units.MetricWXUnits["group_sunhours"] = "sunhours"
 weewx.units.default_unit_format_dict["sunhours"] = "%.2f"
 weewx.units.default_unit_label_dict["sunhours"] = " h"
 weewx.units.obs_group_dict['fsunhours'] = 'group_sunhours'
-
 
 weewx.units.default_unit_format_dict["microgram_per_meter_cubed"] = "%.1f"
 weewx.units.default_unit_format_dict["volt"] = "%.2f"
@@ -953,8 +964,8 @@ class Consumer(object):
         'wh65_sig': 'wh65sig',
         'wh68_sig': 'wh68sig',
         'wh69_sig': 'wh69sig',
-        'ws80_sig': 'ws80sig',
-        'ws90_sig': 'ws90sig',
+        'ws80_sig': 'wh80sig',
+        'ws90_sig': 'wh90sig',
         'ws85_sig': 'wh85sig',
         'fdewptf': 'dewptf',
         'fwindchillf': 'windchillf',
@@ -978,7 +989,20 @@ class Consumer(object):
         'fpm10_AQI_24h_co2': 'pm10_AQI_24h_co2',
         'fsunhours': 'sunhours',
         'fsunshine': 'sunshine',
-
+        'radcompensation': 'radcompensation',
+        'newVersion': 'newVersion',
+        'upgrade': 'upgrade',
+        'rain_source': 'rainFallPriority',
+        'rain_day_reset': 'rstRainDay',
+        'rain_week_reset': 'rstRainWeek',
+        'rain_annual_reset': 'rstRainYear',
+        'raingain': 'rainGain',
+        'piezo': 'piezo',
+        'gain0': 'rain1_gain',
+        'gain1': 'rain2_gain',
+        'gain2': 'rain3_gain',
+        'gain3': 'rain4_gain',
+        'gain4': 'rain5_gain',
     }
 
     def default_sensor_map(self):
@@ -2904,6 +2928,7 @@ class EcowittClient(Consumer):
 
         # map labels to observation names
         LABEL_MAP = {
+            #from station : to weewx
             'baromrelin': 'barometer',
             'baromabsin': 'pressure',
             'humidity': 'humidity_out',
@@ -3209,6 +3234,20 @@ class EcowittClient(Consumer):
             'pm10_AQI_24h_co2': 'pm10_AQI_24h_co2',
             'sunhours': 'sunhours',
             'sunshine': 'sunshine',
+            'radcompensation': 'radcompensation',
+            'newVersion': 'newVersion',
+            'upgrade': 'upgrade',
+            'rainFallPriority': 'rainFallPriority',
+            'rstRainDay': 'rstRainDay',
+            'rstRainWeek': 'rstRainWeek',
+            'rstRainYear': 'rstRainYear',
+            'rainGain': 'rainGain',
+            'piezo': 'piezo',
+            'rain1_gain': 'rain1_gain',
+            'rain2_gain': 'rain2_gain',
+            'rain3_gain': 'rain3_gain',
+            'rain4_gain': 'rain4_gain',
+            'rain5_gain': 'rain5_gain',
        }
 
         IGNORED_LABELS = [
