@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.6.6kw'
+DRIVER_VERSION = '0.6.7kw'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -408,6 +408,8 @@ weewx.units.obs_group_dict['wrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['mrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['yrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['p_rain'] = 'group_rain'
+weewx.units.obs_group_dict['p_rainrate'] = 'group_rainrate'
 
 weewx.units.obs_group_dict['ws90cap_volt'] = 'group_volt'
 weewx.units.obs_group_dict['ws85cap_volt'] = 'group_volt'
@@ -855,8 +857,12 @@ class Consumer(object):
         'weekRain': 'weeklyrainin',
         'monthRain': 'monthlyrainin',
         'yearRain': 'rainyear',
-        'rain_piezo': 'rain_piezo',
-        'rrain_piezo': 'rrain_piezo',
+        'p_rain': 'rain_piezo',
+        'p_rainrate': 'rrain_piezo',
+        'hail': 'rain_piezo',
+        'hailRate': 'rrain_piezo',
+        #'rain_piezo': 'rain_piezo',
+        #'rrain_piezo': 'rrain_piezo',
         'erain_piezo': 'erain_piezo',
         'hrain_piezo': 'hrain_piezo',
         'drain_piezo': 'drain_piezo',
