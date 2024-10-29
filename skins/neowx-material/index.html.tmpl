@@ -76,6 +76,70 @@
           </div>
         </div>
 
+        #else if $name == 'ET'
+
+        <div class="row">
+          <div class="col-3 text-muted font-small">
+            Heute<br>
+            gesamt
+          </div>
+          <div class="col-6">
+            <h4 class="h2-responsive">$day.ET.sum</h4>
+          </div>
+          <div class="col-3 text-muted font-small hi-text">
+
+          </div>
+        </div>
+
+        #else if $name == 'UV'
+
+        <div class="row">
+          <div class="col-3 text-muted font-small">
+            <br>
+            
+          </div>
+          <div class="col-6">
+            <h4 class="h2-responsive">$current.UV</h4>
+          </div>
+          <div class="col-3 text-muted font-small hi-text">
+            $day.UV.max <br>
+            ($day.UV.maxtime.format($Extras.Formatting.datetime_today))
+          </div>
+        </div>
+
+        #else if $name == 'radiation'
+
+        <div class="row">
+          <div class="col-3 text-muted font-small">
+            <br>
+            
+          </div>
+          <div class="col-6">
+            <h4 class="h2-responsive">$current.radiation</h4>
+          </div>
+          <div class="col-3 text-muted font-small hi-text">
+            $day.radiation.max <br>
+            ($day.radiation.maxtime.format($Extras.Formatting.datetime_today))
+          </div>
+        </div>
+
+
+        #else if $name == 'hail'
+
+        <div class="row">
+          <div class="col-3 text-muted font-small">
+            $current.hailRate <br>
+            $obs.label.hailRate
+          </div>
+          <div class="col-6">
+            <h4 class="h2-responsive">$day.hail.sum</h4>
+          </div>
+          <div class="col-3 text-muted font-small hi-text">
+            $day.hailRate.max <br>
+            ($day.hailRate.maxtime.format($Extras.Formatting.datetime_today))
+          </div>
+        </div>
+
         #else
 
         <div class="row">
@@ -194,7 +258,7 @@
 
 #def getChartData($name, $column)
   #set current_interval = int($Extras.Charts.current_timespan)
-  #if $name == "rain"
+  #if $name == "rain" or $name == "ET" or $name == "hail"
     #set current_interval = int($Extras.Charts.current_rain_timespan)
   #end if
 
@@ -300,6 +364,10 @@ new ApexCharts(document.querySelector('#$id'), {
   // Rain
   $getChartJsCode("rain", "rainchart", "bar", "rain", "", "sum")
 
+  // hail
+  $getChartJsCode("hail", "hailchart", "bar", "hail", "", "sum")
+
+
   // Wind
   $getChartJsCode("windSpeed", "windSpeedchart", "area", "windSpeed", "windGust", "max")
 
@@ -312,7 +380,8 @@ new ApexCharts(document.querySelector('#$id'), {
   #end if
 
   #if $day.ET.has_data and $day.ET.sum.raw is not None and $day.ET.sum.raw > 0.0
-  $getChartJsCode("ET", "ETchart", "area", "ET", "", "max")
+  ##$getChartJsCode("ET", "ETchart", "area", "ET", "", "max")
+  $getChartJsCode("ET", "ETchart", "bar", "ET", "", "sum")
   #end if
 
   #if $day.radiation.has_data
@@ -516,14 +585,41 @@ new ApexCharts(document.querySelector('#$id'), {
   $getChartJsCode("extraHumid8", "extraHumid8chart", "area", "extraHumid8")
   #end if
 
-  #if $day.soilTemp1.has_data
+  #if $current.leafWet1.has_data
+  $getChartJsCode("leafWet1", "leafWet1chart", "area", "leafWet1")
+  #end if
+
+  #if $current.soilTemp1.has_data
   $getChartJsCode("soilTemp1", "soilTemp1chart", "area", "soilTemp1")
   #end if
 
-  #if $day.soilTemp2.has_data
+  #if $current.soilTemp2.has_data
   $getChartJsCode("soilTemp2", "soilTemp2chart", "area", "soilTemp2")
   #end if
 
+  #if $current.soilTemp3.has_data
+  $getChartJsCode("soilTemp3", "soilTemp3chart", "area", "soilTemp3")
+  #end if
+
+  #if $current.soilTemp4.has_data
+  $getChartJsCode("soilTemp4", "soilTemp4chart", "area", "soilTemp4")
+  #end if
+
+  #if $current.soilTemp5.has_data
+  $getChartJsCode("soilTemp5", "soilTemp5chart", "area", "soilTemp5")
+  #end if
+
+  #if $current.soilTemp6.has_data
+  $getChartJsCode("soilTemp6", "soilTemp6chart", "area", "soilTemp6")
+  #end if
+
+  #if $current.soilTemp7.has_data
+  $getChartJsCode("soilTemp7", "soilTemp7chart", "area", "soilTemp7")
+  #end if
+
+  #if $current.soilTemp8.has_data
+  $getChartJsCode("soilTemp8", "soilTemp8chart", "area", "soilTemp8")
+  #end if
 
   #if $day.co2.has_data
   $getChartJsCode("co2", "co2chart", "area", "co2")
@@ -545,6 +641,10 @@ new ApexCharts(document.querySelector('#$id'), {
   $getChartJsCode("pm2_5", "pm2_5chart", "area", "pm2_5")
   #end if
 
+  #if $day.pm4_0.has_data
+  $getChartJsCode("pm4_0", "pm4_0chart", "area", "pm4_0")
+  #end if
+
   #if $day.pm10_0.has_data
   $getChartJsCode("pm10_0", "pm10_0chart", "area", "pm10_0")
   #end if
@@ -563,14 +663,6 @@ new ApexCharts(document.querySelector('#$id'), {
 
   #if $day.pm25_4.has_data
   $getChartJsCode("pm25_4", "pm25_4chart", "area", "pm25_4")
-  #end if
-
-  #if $day.hailBatteryStatus.has_data
-  $getChartJsCode("hailBatteryStatus", "hailBatteryStatuschart", "area", "hailBatteryStatus")
-  #end if
-
-  #if $day.ws90cap_volt.has_data
-  $getChartJsCode("ws90cap_volt", "ws90cap_voltchart", "area", "ws90cap_volt")
   #end if
 
   #if $day.lightning_strike_count.has_data

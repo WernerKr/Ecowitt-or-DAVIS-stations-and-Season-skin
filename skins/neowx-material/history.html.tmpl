@@ -18,7 +18,7 @@
             #for $table in $history_tables
             <h3 class="historyHeader">$gettext($table.header_text)</h3>
             <table class="table historyTable text-center">
-                #if $table.noaa is False
+                #if $table.noaa == False
                 <thead>
                     <tr>
                         <th class="head">$table.header.head</th>
