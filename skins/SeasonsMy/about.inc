@@ -26,6 +26,18 @@
        <td class="data">$station.hardware $xt</td>
     </tr>
    #try
+    #if $current.upgrade.has_data
+    <tr> 
+      <td class="label">$gettext("Station Auto upgrade")</td>
+      <td class="data">$current.upgrade</td>
+    </tr>
+    #end if
+    #if $current.newVersion.has_data
+    <tr> 
+      <td class="label">$gettext("Station newVersion")</td>
+      <td class="data">$current.newVersion</td>
+    </tr>
+    #end if
     #if $current.runtime.has_data
     <tr> 
       <td class="label">$gettext("Station uptime")</td>

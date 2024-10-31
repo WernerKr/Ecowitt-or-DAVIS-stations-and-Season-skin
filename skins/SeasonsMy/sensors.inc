@@ -173,15 +173,88 @@ $gettext('never')
                      ('wh55_ch4_sig'),
                      ('wh57_sig'),
                      ('wh68_sig'),
+                     ('wh69_sig'),
                      ('ws80_sig'),
                      ('ws90_sig'),
                      ('wh85_sig'),
                     ]
+##set $conns = $to_list(get('$signal_data', [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala" ]))
 
-#set $conns = [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala" ]
+#set $conns = [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala",
+('wh24_sig'),
+('wh25_sig'),
+('wh26_sig'),
+('wh31_ch1_sig'),
+('wh31_ch2_sig'),
+('wh31_ch3_sig'),
+('wh31_ch4_sig'),
+('wh31_ch5_sig'),
+('wh31_ch6_sig'),
+('wh31_ch7_sig'),
+('wh31_ch8_sig'),
+('wh32_sig'),                     
+                     ('wn34_ch1_sig'),
+                     ('wn34_ch2_sig'),
+                     ('wn34_ch3_sig'),
+                     ('wn34_ch4_sig'),
+                     ('wn34_ch5_sig'),
+                     ('wn34_ch6_sig'),
+                     ('wn34_ch7_sig'),
+                     ('wn34_ch8_sig'),
+                     ('wn34_ch9_sig'),
+                     ('wn34_ch10_sig'),
+                     ('wn34_ch11_sig'),
+                     ('wn34_ch12_sig'),
+                     ('wn34_ch13_sig'),
+                     ('wn34_ch14_sig'),
+                     ('wn34_ch15_sig'),
+                     ('wn34_ch16_sig'),
+                     ('wn35_ch1_sig'),
+                     ('wn35_ch2_sig'),
+                     ('wn35_ch3_sig'),
+                     ('wn35_ch4_sig'),
+                     ('wn35_ch5_sig'),
+                     ('wn35_ch6_sig'),
+                     ('wn35_ch7_sig'),
+                     ('wn35_ch8_sig'),
+                     ('wh40_sig'),
+                     ('wh41_ch1_sig'),
+                     ('wh41_ch2_sig'),
+                     ('wh41_ch3_sig'),
+                     ('wh41_ch4_sig'),
+                     ('wh45_sig'),
+                     ('wh51_ch1_sig'),
+                     ('wh51_ch2_sig'),
+                     ('wh51_ch3_sig'),
+                     ('wh51_ch4_sig'),
+                     ('wh51_ch5_sig'),
+                     ('wh51_ch6_sig'),
+                     ('wh51_ch7_sig'),
+                     ('wh51_ch8_sig'),
+                     ('wh51_ch9_sig'),
+                     ('wh51_ch10_sig'),
+                     ('wh51_ch11_sig'),
+                     ('wh51_ch12_sig'),
+                     ('wh51_ch13_sig'),
+                     ('wh51_ch14_sig'),
+                     ('wh51_ch15_sig'),
+                     ('wh51_ch16_sig'),
+                     ('wh55_ch1_sig'),
+                     ('wh55_ch2_sig'),
+                     ('wh55_ch3_sig'),
+                     ('wh55_ch4_sig'),
+                     ('wh57_sig'),
+                     ('wh68_sig'),
+                     ('wh69_sig'),
+                     ('ws80_sig'),
+                     ('ws90_sig'),
+                     ('wh85_sig'),
+]
+
 ##
 #set $battery_statuses = [ "outTempBatteryStatus", "inTempBatteryStatus", "windBatteryStatus", "rainBatteryStatus", "hailBatteryStatus", "snowBatteryStatus", "uvBatteryStatus", "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
 #set $battery_statuses_ecowitt = [ "wh24_batt", "wh25_batt", "wh26_batt", "wh65_batt", "wh68_batt" ]
+
 ##set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
 #set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus2", "batteryStatus7", "batteryStatus8" ]
 ##
@@ -386,9 +459,12 @@ $gettext('never')
 
  #for $x in $conns
   #if $getattr($recent, $x).has_data or $getattr($current, $x).has_data
+    #set $sstate = getattr($current, $x).raw
+    ##set $unitxx = $unit.label[$x]
+    #if ($sstate > 4) or ($ecowitt == 0)
     <tr>
+      #set $xv = $getattr($current, $x)
       <td class="label">$obs.label[$x]</td>
-      #set $xv = $getattr($current, $x) 
       #if $x == 'rxCheckPercent'
        <td class="data">$xv</td> 
       #elif $ecowitt == 0
@@ -398,15 +474,13 @@ $gettext('never')
        <td class="data">$xv</td>
       #end if
       #if $x != 'signal1_2' 
-    #try
-       #set $lasttime = $getattr($recent, $x).lasttime.raw
-    #except (AttributeError, TypeError)
-      #set $lasttime = $now
-    #end try
-       ##set $lasttime = $getattr($recent, $x).lasttime.raw
-       <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+       #if $getattr($recent, $x).has_data
+        #set $lasttime = $getattr($recent, $x).lasttime.raw
+        <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+       #end if
       #end if
     </tr>
+    #end if
   #end if
  #end for
 #end if
@@ -423,13 +497,10 @@ $gettext('never')
       #set $xv = $getattr($current, $x) 
       <td class="data">$get_battery_status($xv.raw)</td>
       #if $x != 'txBatteryStatus_2'
-    #try
-       #set $lasttime = $getattr($recent, $x).lasttime.raw
-    #except (AttributeError, TypeError)
-      #set $lasttime = $now
-    #end try
-       ##set $lasttime = $getattr($recent, $x).lasttime.raw
-       <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+       #if $getattr($recent, $x).has_data
+        #set $lasttime = $getattr($recent, $x).lasttime.raw
+        <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+       #end if
       #end if
     </tr>
     #end if
@@ -486,13 +557,10 @@ $gettext('never')
           #else
            <td class="data"><img src=$graf style="height: 10px; width: 6px;" > $state  <font color=#dfdfdf>$vstate</font></td>
           #end if
-    #try
-       #set $lasttime = $getattr($recent,  $battery[0]).lasttime.raw
-    #except (AttributeError, TypeError)
-      #set $lasttime = $now
-    #end try
-          ##set $lasttime = $getattr($recent, $battery[0]).lasttime.raw
+        #if getattr($recent, $battery[0]).has_data
+          #set $lasttime = $getattr($recent,  $battery[0]).lasttime.raw
           <td class="timestamp"> $get_time_delta($lasttime, $now)</td>
+        #end if
         </tr>
       #end if
     #except (AttributeError, TypeError)
@@ -552,13 +620,10 @@ $gettext('never')
         #end if 
       #end if
       #if $ecowitt == 1
-    #try
-       #set $lasttime = $getattr($recent,  $battery[0]).lasttime.raw
-    #except (AttributeError, TypeError)
-      #set $lasttime = $now
-    #end try
-       ##set $lasttime = $getattr($recent, $battery[0]).lasttime.raw
-       <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+       #if $getattr($recent, $x[0]).has_data
+        #set $lasttime = $getattr($recent,  $battery[0]).lasttime.raw
+        <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+       #end if
       #end if
     </tr>
     #end if
@@ -595,13 +660,15 @@ $gettext('never')
    <tr><th>$gettext("Signal")</th><th></th></tr>
  #for $signal in $signal_data
     #try
-      #if getattr($current, $signal).has_data
+      #if getattr($current, $signal).has_data or $getattr($recent, $signal).has_data
         #set $sstate = getattr($current, $signal).raw
+        #if $sstate <= 4
         <tr>
          <td class="label">$obs.label[$signal]</td>
          $sig_out($sstate)
          ##<td class="data">$sstate</td>
         </tr>
+        #end if
       #end if
     #except (AttributeError, TypeError)
       ## there is no signal state data for that sensor

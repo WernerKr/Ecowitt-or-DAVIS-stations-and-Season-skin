@@ -3,7 +3,7 @@
  * Distributed under terms of GPLv3.  See LICENSE.txt for your rights.
  */
 
-const cookie_prefix = "weewx4.seasons.";
+const cookie_prefix = "weewx5.seasons.";
 let year_type = get_state('year_type', 'year');
 
 function setup(widgets) {

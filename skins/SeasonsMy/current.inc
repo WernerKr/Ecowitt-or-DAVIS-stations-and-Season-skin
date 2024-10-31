@@ -308,6 +308,7 @@
  ('rain24_2','','current','1'),
  ('monthRain_2','','current','1'),
  ('yearRain_2','','current','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ($gettext('Data FOSHKplugin'),'','','3'),
 ('fdewptf','','current','1'),
 ('fwindchillf','','current','1'),
