@@ -38,6 +38,10 @@
 
 #set $recent=$span($day_delta=30, boundary='midnight')
 ##set $recent=$span($day_delta=30)
+#set $userecentcon = 1
+#set $userecentbat = 1
+#set $userecentvol = 1
+#set $userecentsig = 1
 
 
 ## provide an indication of how much time has passed since the last sensor
@@ -379,7 +383,7 @@ $gettext('never')
 
 #for $x in $sensor_batt_data
   #try
-      #if getattr($current, $x[0]).has_data
+      #if $getattr($current, $x[0]).has_data
         #set $have_battery_status = 1
       #end if
   #except (AttributeError, TypeError)
@@ -458,8 +462,8 @@ $gettext('never')
     #end try
 
  #for $x in $conns
-  #if $getattr($recent, $x).has_data or $getattr($current, $x).has_data
-    #set $sstate = getattr($current, $x).raw
+  #if ($getattr($recent, $x).has_data and $userecentcon == 1) or $getattr($current, $x).has_data
+    #set $sstate = $getattr($current, $x).raw
     ##set $unitxx = $unit.label[$x]
     #if ($sstate > 4) or ($ecowitt == 0)
     <tr>
@@ -470,7 +474,7 @@ $gettext('never')
       #elif $ecowitt == 0
        <td class="data">$get_conn_status($xv.raw)</td>
       #else
-       #set $xv = getattr($current, $x).format("%.0f")
+       #set $xv = $getattr($current, $x).format("%.0f")
        <td class="data">$xv</td>
       #end if
       #if $x != 'signal1_2' 
@@ -488,7 +492,7 @@ $gettext('never')
 #if $have_battery_status
      <tr><th>$gettext("Battery Status")</th><th></th></tr>
  #for $x in $battery_statuses
-  #if $getattr($recent, $x).has_data or $getattr($current, $x).has_data
+  #if ($getattr($recent, $x).has_data and $userecentbat == 1) or $getattr($current, $x).has_data
     #if ( ( (($x != 'windBatteryStatus') and ($x != 'rainBatteryStatus') and ($x != 'hailBatteryStatus')) ) and $ecowitt == 1 ) or $ecowitt == 0
     ##if ( ( (($x != 'windBatteryStatus') and ($x != 'rainBatteryStatus') and ($x != 'hailBatteryStatus')) or ($x == 'wh24_batt') or ($x == 'wh25_batt') or ($x == 'wh26_batt')) and $ecowitt == 1 ) or $ecowitt == 0
     ##if ( (($x == 'wh24_batt') or ($x == 'wh25_batt') or ($x == 'wh26_batt')) and $ecowitt == 1 ) or $ecowitt == 0
@@ -520,7 +524,7 @@ $gettext('never')
  #end for
 
  #for $x in $battery_statuses_ecowitt
-   #if ($getattr($recent, $x).has_data or $getattr($current, $x).has_data) and $ecowitt == 1 
+   #if (($getattr($recent, $x).has_data and $userecentbat == 1) or $getattr($current, $x).has_data) and $ecowitt == 1 
     <tr>
       <td class="label">$obs.label[$x]</td>
       #set $xv = $getattr($current, $x) 
@@ -531,9 +535,9 @@ $gettext('never')
 
  #for $battery in $sensor_batt_data
     #try
-      #if getattr($recent, $battery[0]).has_data
-        #set $state = getattr(self, $battery[1])(getattr($current, $battery[0]).raw)
-        #set $vstate = getattr($current, $battery[0]).format("%.0f")
+      #if $getattr($recent, $battery[0]).has_data
+        #set $state = $getattr(self, $battery[1])(getattr($current, $battery[0]).raw)
+        #set $vstate = $getattr($current, $battery[0]).format("%.0f")
         #if $vstate == '6'
            #set $vstate = ""
            #set $graf = "Batt6x.png"
@@ -557,7 +561,7 @@ $gettext('never')
           #else
            <td class="data"><img src=$graf style="height: 10px; width: 6px;" > $state  <font color=#dfdfdf>$vstate</font></td>
           #end if
-        #if getattr($recent, $battery[0]).has_data
+        #if $getattr($recent, $battery[0]).has_data
           #set $lasttime = $getattr($recent,  $battery[0]).lasttime.raw
           <td class="timestamp"> $get_time_delta($lasttime, $now)</td>
         #end if
@@ -574,12 +578,12 @@ $gettext('never')
 #if $have_voltage
      <tr><th>$gettext("Voltage")</th><th></th></tr>
 #for $x in $voltages
-  #if $getattr($recent, $x[0]).has_data or $getattr($current, $x[0]).has_data
+  #if ($getattr($recent, $x[0]).has_data and $userecentvol == 1) or $getattr($current, $x[0]).has_data
     #if ((($x[0] == 'windBatteryStatus') or ($x[0] == 'rainBatteryStatus') or ($x[0] == 'hailBatteryStatus')) and $ecowitt == 1 ) or $x[0] not in $battery_statuses
     <tr>
       <td class="label">$obs.label[$x[0]]</td>
       #set $xv = $getattr($current, $x[0])
-      #set $xx = getattr($current, $x[0]).raw
+      #set $xx = $getattr($current, $x[0]).raw
       #if  $xx == None
         <td class="data"><span class="status_unknown">N/A</span></td>
       ##elif $xx <= $x[1]
@@ -621,7 +625,7 @@ $gettext('never')
       #end if
       #if $ecowitt == 1
        #if $getattr($recent, $x[0]).has_data
-        #set $lasttime = $getattr($recent,  $battery[0]).lasttime.raw
+        #set $lasttime = $getattr($recent,  $x[0]).lasttime.raw
         <td class="timestamp">$get_time_delta($lasttime, $now)</td>
        #end if
       #end if
@@ -637,7 +641,7 @@ $gettext('never')
     <tr>
       <td class="label">$obs.label[$x[0]]</td>
       #set $xv = $getattr($current, $x[0])
-      #set $xx = getattr($current, $x[0]).raw
+      #set $xx = $getattr($current, $x[0]).raw
       #if  $xx == None
         <td class="data"><span class="status_unknown">N/A</span></td>
       #elif $xx <= $x[1]
@@ -660,8 +664,8 @@ $gettext('never')
    <tr><th>$gettext("Signal")</th><th></th></tr>
  #for $signal in $signal_data
     #try
-      #if getattr($current, $signal).has_data or $getattr($recent, $signal).has_data
-        #set $sstate = getattr($current, $signal).raw
+      #if $getattr($current, $signal).has_data or ($getattr($recent, $signal).has_data and $userecentsig == 1)
+        #set $sstate = $getattr($current, $signal).raw
         #if $sstate <= 4
         <tr>
          <td class="label">$obs.label[$signal]</td>
