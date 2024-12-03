@@ -6,12 +6,19 @@
 
 #set $xt = ''
 #if $current.stationtype.has_data
- #if '_' in $current.stationtype.raw
+ #if not 'EasyWeather' in $current.stationtype.raw
   #set $xt = $current.stationtype.raw
  #elif $current.model.has_data
   #set $xt = $current.model.raw 
  #end if
 #end if
+#set $xt1 = ''
+#if $current.stationtype.has_data
+ #if 'EasyWeather' in $current.stationtype.raw
+  #set $xt1 = $current.stationtype.raw
+ #end if
+#end if
+
 
 <div id='about_widget' class="widget">
   <div class="widget_title">
@@ -25,6 +32,12 @@
       <td class="label">$gettext("Hardware")</td>
        <td class="data">$station.hardware $xt</td>
     </tr>
+    #if $xt1 !=''
+    <tr> 
+      <td class="label">$gettext("StationType")</td>
+      <td class="data">$xt1</td>
+    </tr>
+    #end if
    #try
     #if $current.upgrade.has_data
     <tr> 

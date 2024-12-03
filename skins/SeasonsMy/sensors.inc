@@ -589,7 +589,7 @@ $gettext('never')
       ##elif $xx <= $x[1]
       ##  <td class="data"><span class="status_low">$xv.format("%.2f") <font color=#dfdfdf>0</font></span></td>
       #else
-        #if $xx > 2.0
+        #if $x[1] > 2.0
          #set $xxv = float($xx/2)
         #else
          #set $xxv = float($xx)

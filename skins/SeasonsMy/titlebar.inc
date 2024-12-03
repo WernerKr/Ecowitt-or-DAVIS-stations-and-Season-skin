@@ -9,7 +9,7 @@
 
 #set $xt = ''
 #if $current.stationtype.has_data
- #if '_' in $current.stationtype.raw
+ #if not 'EasyWeather' in $current.stationtype.raw
   #set $xt = $current.stationtype.raw
  #elif $current.model.has_data
   #set $xt = $current.model.raw 
