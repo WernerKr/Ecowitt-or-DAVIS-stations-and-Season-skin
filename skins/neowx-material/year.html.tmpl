@@ -709,6 +709,33 @@ new ApexCharts(document.querySelector('#$id'), {
   $getChartJsCode("lightning_distance", "lightning_distancechart", "area", "lightning_distance")
   #end if
 
+  #if $year.ws1900batt.has_data
+  $getChartJsCode("ws1900batt", "ws1900battchart", "area", "ws1900batt")
+  #end if
+
+  #if $year.ws80_batt.has_data
+  $getChartJsCode("ws80_batt", "ws80_battchart", "area", "ws80_batt")
+  #end if
+
+  #if $year.ws85_batt.has_data
+  $getChartJsCode("ws85_batt", "ws85_battchart", "area", "ws85_batt")
+  #end if
+
+  #if $year.ws90_batt.has_data
+  $getChartJsCode("ws90_batt", "ws90_battchart", "area", "ws90_batt")
+  #end if
+
+  #if $year.hailBatteryStatus.has_data
+  $getChartJsCode("hailBatteryStatus", "hailBatteryStatuschart", "area", "hailBatteryStatus")
+  #end if
+
+  #if $year.ws85cap_volt.has_data
+  $getChartJsCode("ws85cap_volt", "ws85cap_voltchart", "area", "ws85cap_volt")
+  #end if
+
+  #if $year.ws90cap_volt.has_data
+  $getChartJsCode("ws90cap_volt", "ws90cap_voltchart", "area", "ws90cap_volt")
+  #end if
 
 </script>
 

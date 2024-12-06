@@ -136,7 +136,7 @@
       #for $x in $Extras.Appearance.values_order
 
       #if $x == "ET"
-        #if $month.ET.has_data and $month.ET.sum.raw != None and $month.ET.sum.raw > 0.0
+        #if $month.ET.has_data and $month.ET.sum.raw is not None and $month.ET.sum.raw > 0.0
           $valuesCard('ET')
         #end if
       #else
@@ -154,7 +154,7 @@
       #for $x in $Extras.Appearance.charts_order
 
       #if $x == "ET"
-        #if $month.ET.has_data and $month.ET.sum.raw != None and $month.ET.sum.raw > 0.0
+        #if $month.ET.has_data and $month.ET.sum.raw is not None and $month.ET.sum.raw > 0.0
           $chartCard($x, $x + 'chart')
         #end if
       #else
@@ -233,19 +233,19 @@ new ApexCharts(document.querySelector('#$id'), {
       name: "$getVar('obs.label.' + series1) Max",
       data: [ $getChartData(series1, 'max') ]
     }
-    #if $series2 != "" and $getVar('month.' + series2 + '.has_data')
+    #if $series2 is not "" and $getVar('month.' + series2 + '.has_data')
     ,{
       name: "$getVar('obs.label.' + series2)",
       data: [ $getChartData(series2, column) ]
     }
     #end if
-    #if $series3 != "" and $getVar('month.' + series3 + '.has_data')
+    #if $series3 is not "" and $getVar('month.' + series3 + '.has_data')
     ,{
       name: "$getVar('obs.label.' + series3)",
       data: [ $getChartData(series3, column) ]
     }
     #end if
-    #if $series4 != "" and $getVar('month.' + series4 + '.has_data')
+    #if $series4 is not "" and $getVar('month.' + series4 + '.has_data')
     ,{
       name: "$getVar('obs.label.' + series4)",
       data: [ $getChartData(series4, column) ]
@@ -270,19 +270,19 @@ new ApexCharts(document.querySelector('#$id'), {
       name: "$getVar('obs.label.' + series1)",
       data: [ $getChartData(series1, column) ]
     }
-    #if $series2 != "" and $getVar('month.' + series2 + '.has_data')
+    #if $series2 is not "" and $getVar('month.' + series2 + '.has_data')
     ,{
       name: "$getVar('obs.label.' + series2)",
       data: [ $getChartData(series2, column) ]
     }
     #end if
-    #if $series3 != "" and $getVar('month.' + series3 + '.has_data')
+    #if $series3 is not "" and $getVar('month.' + series3 + '.has_data')
     ,{
       name: "$getVar('obs.label.' + series3)",
       data: [ $getChartData(series3, column) ]
     }
     #end if
-    #if $series4 != "" and $getVar('month.' + series4 + '.has_data')
+    #if $series4 is not "" and $getVar('month.' + series4 + '.has_data')
     ,{
       name: "$getVar('obs.label.' + series4)",
       data: [ $getChartData(series4, column) ]
@@ -342,7 +342,7 @@ new ApexCharts(document.querySelector('#$id'), {
   $getChartJsCode("UV", "UVchart", "area", "UV", "", "max")
   #end if
 
-  #if $month.ET.has_data and $month.ET.sum.raw != None and $month.ET.sum.raw > 0.0
+  #if $month.ET.has_data and $month.ET.sum.raw is not None and $month.ET.sum.raw > 0.0
   $getChartJsCode("ET", "ETchart", "area", "ET", "", "max")
   #end if
 
@@ -594,6 +594,44 @@ new ApexCharts(document.querySelector('#$id'), {
   #if $month.pm25_4.has_data
   $getChartJsCode("pm25_4", "pm25_4chart", "area", "pm25_4")
   #end if
+
+  #if $month.lightning_strike_count.has_data
+  ##$getChartJsCode("lightning_strike_count", "lightning_strike_countchart", "bar", "lightning_strike_count", "", "sum")
+  $getChartJsCode("lightning_strike_count", "lightning_strike_countchart", "area", "lightning_strike_count")
+  #end if
+
+  #if $month.lightning_distance.has_data
+  $getChartJsCode("lightning_distance", "lightning_distancechart", "area", "lightning_distance")
+  #end if
+
+  #if $month.ws1900batt.has_data
+  $getChartJsCode("ws1900batt", "ws1900battchart", "area", "ws1900batt")
+  #end if
+
+  #if $month.ws80_batt.has_data
+  $getChartJsCode("ws80_batt", "ws80_battchart", "area", "ws80_batt")
+  #end if
+
+  #if $month.ws85_batt.has_data
+  $getChartJsCode("ws85_batt", "ws85_battchart", "area", "ws85_batt")
+  #end if
+
+  #if $month.ws90_batt.has_data
+  $getChartJsCode("ws90_batt", "ws90_battchart", "area", "ws90_batt")
+  #end if
+
+  #if $month.hailBatteryStatus.has_data
+  $getChartJsCode("hailBatteryStatus", "hailBatteryStatuschart", "area", "hailBatteryStatus")
+  #end if
+
+  #if $month.ws85cap_volt.has_data
+  $getChartJsCode("ws85cap_volt", "ws85cap_voltchart", "area", "ws85cap_volt")
+  #end if
+
+  #if $month.ws90cap_volt.has_data
+  $getChartJsCode("ws90cap_volt", "ws90cap_voltchart", "area", "ws90cap_volt")
+  #end if
+
 
 </script>
 
