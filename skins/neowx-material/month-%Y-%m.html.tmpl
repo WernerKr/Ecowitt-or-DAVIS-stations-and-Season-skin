@@ -44,6 +44,53 @@
           </div>
         </div>
 
+        #else if $name == 'ET'
+
+        <div class="row">
+          <div class="col-3 text-muted font-small">
+            Monat<br>
+            gesamt
+          </div>
+          <div class="col-6">
+            <h4 class="h2-responsive">$month.ET.sum</h4>
+          </div>
+          <div class="col-3 text-muted font-small hi-text">
+
+          </div>
+        </div>
+
+        #else if $name == 'UV'
+
+        <div class="row">
+          <div class="col-3 text-muted font-small">
+            <br>
+            
+          </div>
+          <div class="col-6">
+            <h4 class="h2-responsive">$month.UV.avg</h4>
+          </div>
+          <div class="col-3 text-muted font-small hi-text">
+            $month.UV.max <br>
+            ($month.UV.maxtime.format($Extras.Formatting.datetime))
+          </div>
+        </div>
+
+        #else if $name == 'radiation'
+
+        <div class="row">
+          <div class="col-3 text-muted font-small">
+            <br>
+            
+          </div>
+          <div class="col-6">
+            <h4 class="h2-responsive">$month.radiation.avg</h4>
+          </div>
+          <div class="col-3 text-muted font-small hi-text">
+            $month.radiation.max <br>
+            ($month.radiation.maxtime.format($Extras.Formatting.datetime))
+          </div>
+        </div>
+
         #else if $name == 'rain'
 
         <div class="row">
@@ -56,6 +103,21 @@
           <div class="col-3 text-muted font-small hi-text">
             $month.rainRate.max <br>
             ($month.rainRate.maxtime.format($Extras.Formatting.datetime))
+          </div>
+        </div>
+
+        #else if $name == 'hail'
+
+        <div class="row">
+          <div class="col-3 text-muted font-small">
+
+          </div>
+          <div class="col-6">
+            <h4 class="h2-responsive">$month.hail.sum</h4>
+          </div>
+          <div class="col-3 text-muted font-small hi-text">
+            $month.hailRate.max <br>
+            ($month.hailRate.maxtime.format($Extras.Formatting.datetime))
           </div>
         </div>
 
@@ -182,7 +244,13 @@
 ## +-------------------------------------------------------------------------+
 
 #def getChartData($name, $column)
-  #for $record in $month.days
+  #set current_interval = int($Extras.Charts.month_timespan)
+  #if $name == "rain" or $name == "ET" or $name == "hail"
+    #set current_interval = int($Extras.Charts.month_rain_timespan)
+  #end if
+
+  ##for $record in $month.days
+  #for $record in $month.spans(interval=current_interval)
     #try
       #set val = $getattr($record, $name)
       #set data = $getattr($val, $column).format(add_label=False, localize=False, None_string="null")
@@ -331,6 +399,9 @@ new ApexCharts(document.querySelector('#$id'), {
   // Rain
   $getChartJsCode("rain", "rainchart", "bar", "rain", "", "sum")
 
+  // hail
+  $getChartJsCode("hail", "hailchart", "bar", "hail", "", "sum")
+
   // Wind
   $getChartJsCode("windSpeed", "windSpeedchart", "area", "windSpeed", "windGust", "max")
 
@@ -343,7 +414,8 @@ new ApexCharts(document.querySelector('#$id'), {
   #end if
 
   #if $month.ET.has_data and $month.ET.sum.raw is not None and $month.ET.sum.raw > 0.0
-  $getChartJsCode("ET", "ETchart", "area", "ET", "", "max")
+  ##$getChartJsCode("ET", "ETchart", "area", "ET", "", "max")
+  $getChartJsCode("ET", "ETchart", "bar", "ET", "", "sum")
   #end if
 
   #if $month.radiation.has_data
@@ -555,6 +627,42 @@ new ApexCharts(document.querySelector('#$id'), {
   $getChartJsCode("extraHumid8", "extraHumid8chart", "area", "extraHumid8")
   #end if
 
+  #if $month.leafWet1.has_data
+  $getChartJsCode("leafWet1", "leafWet1chart", "area", "leafWet1")
+  #end if
+
+  #if $month.soilTemp1.has_data
+  $getChartJsCode("soilTemp1", "soilTemp1chart", "area", "soilTemp1")
+  #end if
+
+  #if $month.soilTemp2.has_data
+  $getChartJsCode("soilTemp2", "soilTemp2chart", "area", "soilTemp2")
+  #end if
+
+  #if $month.soilTemp3.has_data
+  $getChartJsCode("soilTemp3", "soilTemp3chart", "area", "soilTemp3")
+  #end if
+
+  #if $month.soilTemp4.has_data
+  $getChartJsCode("soilTemp4", "soilTemp4chart", "area", "soilTemp4")
+  #end if
+
+  #if $month.soilTemp5.has_data
+  $getChartJsCode("soilTemp5", "soilTemp5chart", "area", "soilTemp5")
+  #end if
+
+  #if $month.soilTemp6.has_data
+  $getChartJsCode("soilTemp6", "soilTemp6chart", "area", "soilTemp6")
+  #end if
+
+  #if $month.soilTemp7.has_data
+  $getChartJsCode("soilTemp7", "soilTemp7chart", "area", "soilTemp7")
+  #end if
+
+  #if $month.soilTemp8.has_data
+  $getChartJsCode("soilTemp8", "soilTemp8chart", "area", "soilTemp8")
+  #end if
+
   #if $month.co2.has_data
   $getChartJsCode("co2", "co2chart", "area", "co2")
   #end if
@@ -573,6 +681,10 @@ new ApexCharts(document.querySelector('#$id'), {
 
   #if $month.pm2_5.has_data
   $getChartJsCode("pm2_5", "pm2_5chart", "area", "pm2_5")
+  #end if
+
+  #if $month.pm4_0.has_data
+  $getChartJsCode("pm4_0", "pm4_0chart", "area", "pm4_0")
   #end if
 
   #if $month.pm10_0.has_data

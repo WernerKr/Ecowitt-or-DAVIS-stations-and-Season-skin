@@ -82,7 +82,7 @@
             
           </div>
           <div class="col-6">
-            <h4 class="h2-responsive">$current.UV</h4>
+            <h4 class="h2-responsive">$year.UV.avg</h4>
           </div>
           <div class="col-3 text-muted font-small hi-text">
             $year.UV.max <br>
@@ -98,7 +98,7 @@
             
           </div>
           <div class="col-6">
-            <h4 class="h2-responsive">$current.radiation</h4>
+            <h4 class="h2-responsive">$year.radiation.avg</h4>
           </div>
           <div class="col-3 text-muted font-small hi-text">
             $year.radiation.max <br>
@@ -707,7 +707,9 @@ new ApexCharts(document.querySelector('#$id'), {
 
   #if $year.lightning_distance.has_data
   $getChartJsCode("lightning_distance", "lightning_distancechart", "area", "lightning_distance")
+  ##$getChartJsCode("lightning_distance", "lightning_distancechartt", "bar", "lightning_distance", "", "min")
   #end if
+
 
   #if $year.ws1900batt.has_data
   $getChartJsCode("ws1900batt", "ws1900battchart", "area", "ws1900batt")
