@@ -175,6 +175,10 @@ $gettext('never')
                      ('wh55_ch2_sig'),
                      ('wh55_ch3_sig'),
                      ('wh55_ch4_sig'),
+                     ('wh54_ch1_sig'),
+                     ('wh54_ch2_sig'),
+                     ('wh54_ch3_sig'),
+                     ('wh54_ch4_sig'),
                      ('wh57_sig'),
                      ('wh68_sig'),
                      ('wh69_sig'),
@@ -197,62 +201,66 @@ $gettext('never')
 ('wh31_ch7_sig'),
 ('wh31_ch8_sig'),
 ('wh32_sig'),                     
-                     ('wn34_ch1_sig'),
-                     ('wn34_ch2_sig'),
-                     ('wn34_ch3_sig'),
-                     ('wn34_ch4_sig'),
-                     ('wn34_ch5_sig'),
-                     ('wn34_ch6_sig'),
-                     ('wn34_ch7_sig'),
-                     ('wn34_ch8_sig'),
-                     ('wn34_ch9_sig'),
-                     ('wn34_ch10_sig'),
-                     ('wn34_ch11_sig'),
-                     ('wn34_ch12_sig'),
-                     ('wn34_ch13_sig'),
-                     ('wn34_ch14_sig'),
-                     ('wn34_ch15_sig'),
-                     ('wn34_ch16_sig'),
-                     ('wn35_ch1_sig'),
-                     ('wn35_ch2_sig'),
-                     ('wn35_ch3_sig'),
-                     ('wn35_ch4_sig'),
-                     ('wn35_ch5_sig'),
-                     ('wn35_ch6_sig'),
-                     ('wn35_ch7_sig'),
-                     ('wn35_ch8_sig'),
-                     ('wh40_sig'),
-                     ('wh41_ch1_sig'),
-                     ('wh41_ch2_sig'),
-                     ('wh41_ch3_sig'),
-                     ('wh41_ch4_sig'),
-                     ('wh45_sig'),
-                     ('wh51_ch1_sig'),
-                     ('wh51_ch2_sig'),
-                     ('wh51_ch3_sig'),
-                     ('wh51_ch4_sig'),
-                     ('wh51_ch5_sig'),
-                     ('wh51_ch6_sig'),
-                     ('wh51_ch7_sig'),
-                     ('wh51_ch8_sig'),
-                     ('wh51_ch9_sig'),
-                     ('wh51_ch10_sig'),
-                     ('wh51_ch11_sig'),
-                     ('wh51_ch12_sig'),
-                     ('wh51_ch13_sig'),
-                     ('wh51_ch14_sig'),
-                     ('wh51_ch15_sig'),
-                     ('wh51_ch16_sig'),
-                     ('wh55_ch1_sig'),
-                     ('wh55_ch2_sig'),
-                     ('wh55_ch3_sig'),
-                     ('wh55_ch4_sig'),
-                     ('wh57_sig'),
-                     ('wh68_sig'),
-                     ('wh69_sig'),
-                     ('ws80_sig'),
-                     ('ws90_sig'),
-                     ('wh85_sig'),
+('wn34_ch1_sig'),
+('wn34_ch2_sig'),
+('wn34_ch3_sig'),
+('wn34_ch4_sig'),
+('wn34_ch5_sig'),
+('wn34_ch6_sig'),
+('wn34_ch7_sig'),
+('wn34_ch8_sig'),
+('wn34_ch9_sig'),
+('wn34_ch10_sig'),
+('wn34_ch11_sig'),
+('wn34_ch12_sig'),
+('wn34_ch13_sig'),
+('wn34_ch14_sig'),
+('wn34_ch15_sig'),
+('wn34_ch16_sig'),
+('wn35_ch1_sig'),
+('wn35_ch2_sig'),
+('wn35_ch3_sig'),
+('wn35_ch4_sig'),
+('wn35_ch5_sig'),
+('wn35_ch6_sig'),
+('wn35_ch7_sig'),
+('wn35_ch8_sig'),
+('wh40_sig'),
+('wh41_ch1_sig'),
+('wh41_ch2_sig'),
+('wh41_ch3_sig'),
+('wh41_ch4_sig'),
+('wh45_sig'),
+('wh51_ch1_sig'),
+('wh51_ch2_sig'),
+('wh51_ch3_sig'),
+('wh51_ch4_sig'),
+('wh51_ch5_sig'),
+('wh51_ch6_sig'),
+('wh51_ch7_sig'),
+('wh51_ch8_sig'),
+('wh51_ch9_sig'),
+('wh51_ch10_sig'),
+('wh51_ch11_sig'),
+('wh51_ch12_sig'),
+('wh51_ch13_sig'),
+('wh51_ch14_sig'),
+('wh51_ch15_sig'),
+('wh51_ch16_sig'),
+('wh55_ch1_sig'),
+('wh55_ch2_sig'),
+('wh55_ch3_sig'),
+('wh55_ch4_sig'),
+('wh54_ch1_sig'),
+('wh54_ch2_sig'),
+('wh54_ch3_sig'),
+('wh54_ch4_sig'),
+('wh57_sig'),
+('wh68_sig'),
+('wh69_sig'),
+('ws80_sig'),
+('ws90_sig'),
+('wh85_sig'),
 ]
 
 ##
@@ -320,6 +328,10 @@ $gettext('never')
 ("leafWetBatt6",1.2),
 ("leafWetBatt7",1.2),
 ("leafWetBatt8",1.2),
+("ldsbatt1",2.4),
+("ldsbatt2",2.4),
+("ldsbatt3",2.4),
+("ldsbatt4",2.4),
 ]
 
 #set $testvoltage = True
@@ -465,7 +477,7 @@ $gettext('never')
   #if ($getattr($recent, $x).has_data and $userecentcon == 1) or $getattr($current, $x).has_data
     #set $sstate = $getattr($current, $x).raw
     ##set $unitxx = $unit.label[$x]
-    #if ($sstate > 4) or ($ecowitt == 0)
+    #if ($sstate > 4) or ($ecowitt == 0) or (($sstate == 0) and ($ecowitt == 1))
     <tr>
       #set $xv = $getattr($current, $x)
       <td class="label">$obs.label[$x]</td>
@@ -586,8 +598,6 @@ $gettext('never')
       #set $xx = $getattr($current, $x[0]).raw
       #if  $xx == None
         <td class="data"><span class="status_unknown">N/A</span></td>
-      ##elif $xx <= $x[1]
-      ##  <td class="data"><span class="status_low">$xv.format("%.2f") <font color=#dfdfdf>0</font></span></td>
       #else
         #if $x[1] > 2.0
          #set $xxv = float($xx/2)
@@ -614,13 +624,15 @@ $gettext('never')
          #set $vv = 0
          #set $graf = "Batt0.png"
         #end if
-        ##if $xx <= $x[1]
         #if $xx == 0
          <td class="data"><span class="status_low">$xv.format("%.2f") <font color=#dfdfdf>$vv</font></span></td>
         #else
-         ##<td class="data">$xv.format("%.2f") <font color=#dfdfdf>$vv</font></td>
-         <td class="data"><img src=$graf style="height: 10px; width: 6px;" > $xv.format("%.2f") <font color=#dfdfdf>$vv</font></td>
-         ##<td class="data">$xv.format("%.2f")</td>
+         <td class="data"><img src=$graf style="height: 10px; width: 6px;" >
+        #if $vv >= 2 
+         $xv.format("%.2f") <font color=#dfdfdf>$vv</font></td>
+        #else
+         <span class="status_low">$xv.format("%.2f") <font color=#dfdfdf>$vv</font></span></td>
+        #end if 
         #end if 
       #end if
       #if $ecowitt == 1

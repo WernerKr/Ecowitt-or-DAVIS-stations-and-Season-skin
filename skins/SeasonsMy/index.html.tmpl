@@ -101,6 +101,9 @@
           <div id="history_day" class="plot_container">
             <img src="daybarometer.png" alt="$obs.label.barometer"/>
             <img src="daytempdew.png"   alt="$obs.label.outTemp" />
+            #if $day.extraTemp1.has_data
+            <img src="daytemp.png"    alt="$obs.label.extraTemp1" />
+            #end if
             <img src="daytemp0.png"   alt="$obs.label.outTemp" />
             <img src="daytempfeel.png"  alt="$obs.label.feel" />
             <img src="dayhum.png"       alt="$obs.label.outHumidity" />
@@ -254,10 +257,17 @@
             <img src="dayheap0.png"        alt="$obs.label.pb"/>
             #end if
 
+            #if $current.depth_ch1.has_data
+            <img src="daydepth.png"        alt="$obs.label.depth_ch1"/>
+            #end if
+
           </div>
           <div id="history_week" class="plot_container" style="display:none">
             <img src="weekbarometer.png" alt="$obs.label.barometer"/>
             <img src="weektempdew.png"   alt="$obs.label.outTemp" />
+            #if $week.extraTemp1.has_data
+            <img src="weektemp.png"    alt="$obs.label.extraTemp1" />
+            #end if
             <img src="weektemp0.png"  alt="$obs.label.outTemp" />
             <img src="weektempfeel.png"  alt="$obs.label.feel" />
             <img src="weekhum.png"       alt="$obs.label.outHumidity" />
@@ -410,11 +420,17 @@
             <img src="weekheap0.png"        alt="$obs.label.pb"/>
             #end if
 
+            #if $week.depth_ch1.has_data
+            <img src="weekdepth.png"        alt="$obs.label.depth_ch1"/>
+            #end if
 
           </div>
           <div id="history_month" class="plot_container" style="display:none">
             <img src="monthbarometer.png" alt="$obs.label.barometer"/>
             <img src="monthtempdew.png"   alt="$obs.label.outTemp" />
+            #if $month.extraTemp1.has_data
+            <img src="monthtemp.png"    alt="$obs.label.extraTemp1" />
+            #end if
             <img src="monthtemp0.png"   alt="$obs.label.outTemp" />
             <img src="monthtempfeel.png"  alt="$obs.label.feel" />
             <img src="monthhum.png"       alt="$obs.label.outHumidity" />
@@ -567,10 +583,17 @@
             <img src="monthheap0.png"        alt="$obs.label.pb"/>
             #end if
 
+            #if $month.depth_ch1.has_data
+            <img src="monthdepth.png"        alt="$obs.label.depth_ch1"/>
+            #end if
+
           </div>
           <div id="history_year" class="plot_container" style="display:none">
             <img src="yearbarometer.png" alt="$obs.label.barometer"/>
             <img src="yeartempdew.png"   alt="$obs.label.outTemp" />
+            #if $year.extraTemp1.has_data
+            <img src="yeartemp.png"    alt="$obs.label.extraTemp1" />
+            #end if
             <img src="yeartempfeel.png"  alt="$obs.label.feel" />
             <img src="yearhum.png"       alt="$obs.label.outHumidity" />
             <img src="yearwind.png"      alt="$obs.label.windSpeed" />
@@ -713,6 +736,10 @@
             <img src="yearheap0.png"        alt="$obs.label.pb"/>
             #end if
 
+            #if $year.depth_ch1.has_data
+            <img src="yeardepth.png"        alt="$obs.label.depth_ch1"/>
+            #end if
+
           </div>
 
           <div id="history_chronicle" class="history" style="display:none">
@@ -755,13 +782,11 @@ $outTemp_days_table
             <h4>$BootstrapLabels.history_tables.outTemp20_days</h4>
 $outTemp20_days_table
 
-<h4 class="historyHeader">$BootstrapLabels.history_tables.outTemp20x_days</h4>
+            <h4>$BootstrapLabels.history_tables.outTemp20x_days</h4>
 $outTemp20x_days_table
-<h4 class="historyHeader">$BootstrapLabels.history_tables.vegetations_days</h4>
-$vegetations_days_table
 
- <h4>$BootstrapLabels.history_tables.heatdays</h4>
-$heatdays_table
+            <h4>$BootstrapLabels.history_tables.vegetations_days</h4>
+$vegetations_days_table
 
             <h4>$BootstrapLabels.history_tables.outTemp0_days</h4>
 $outTemp0_days_table
@@ -769,10 +794,10 @@ $outTemp0_days_table
             <h4>$BootstrapLabels.history_tables.outTemp00_days</h4>
 $outTemp00_days_table
 
- <h4>$BootstrapLabels.history_tables.sunshineDur</h4>
+		<h4>$BootstrapLabels.history_tables.sunshineDur</h4>
 $sunshineDur_table
 
- <h4>$BootstrapLabels.history_tables.rainDur</h4>
+		<h4>$BootstrapLabels.history_tables.rainDur</h4>
 $rainDur_table
 
 
