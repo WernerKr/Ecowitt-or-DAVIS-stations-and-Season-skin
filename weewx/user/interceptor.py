@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.6.7kw'
+DRIVER_VERSION = '0.7.0kw'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -499,76 +499,101 @@ weewx.units.obs_group_dict['soilad14'] = 'group_count'
 weewx.units.obs_group_dict['soilad15'] = 'group_count'
 weewx.units.obs_group_dict['soilad16'] = 'group_count'
 
-#weewx.units.obs_group_dict['wh24_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh25_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh26_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh31_ch1_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh31_ch2_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh31_ch3_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh31_ch4_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh31_ch5_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh31_ch6_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh31_ch7_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh31_ch8_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch1_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch2_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch3_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch4_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch5_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch6_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch7_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch8_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch9_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch10_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch11_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch12_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch13_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch14_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch15_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn34_ch16_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn35_ch1_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn35_ch2_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn35_ch3_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn35_ch4_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn35_ch5_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn35_ch6_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn35_ch7_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wn35_ch8_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh40_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh41_ch1_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh41_ch2_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh41_ch3_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh41_ch4_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh45_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch1_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch2_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch3_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch4_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch5_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch6_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch7_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch8_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch9_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch10_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch11_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch12_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch13_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch14_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch15_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh51_ch16_sig'] = 'group_percent'
+"""
+weewx.units.obs_group_dict['wh24_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh25_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh26_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh31_ch1_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh31_ch2_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh31_ch3_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh31_ch4_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh31_ch5_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh31_ch6_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh31_ch7_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh31_ch8_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch1_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch2_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch3_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch4_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch5_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch6_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch7_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch8_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch9_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch10_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch11_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch12_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch13_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch14_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch15_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn34_ch16_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn35_ch1_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn35_ch2_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn35_ch3_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn35_ch4_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn35_ch5_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn35_ch6_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn35_ch7_sig'] = 'group_count'
+weewx.units.obs_group_dict['wn35_ch8_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh40_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh41_ch1_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh41_ch2_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh41_ch3_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh41_ch4_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh45_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch1_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch2_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch3_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch4_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch5_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch6_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch7_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch8_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch9_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch10_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch11_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch12_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch13_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch14_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch15_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh51_ch16_sig'] = 'group_count'
 
-#weewx.units.obs_group_dict['wh55_ch1_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh55_ch2_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh55_ch3_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh55_ch4_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh57_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh65_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh68_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh69_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['ws80_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['ws90_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['ws85_sig'] = 'group_percent'
-#weewx.units.obs_group_dict['wh85_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh54_ch1_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh54_ch2_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh54_ch3_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh54_ch4_sig'] = 'group_count'
+
+weewx.units.obs_group_dict['wh55_ch1_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh55_ch2_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh55_ch3_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh55_ch4_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh57_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh65_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh68_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh69_sig'] = 'group_count'
+weewx.units.obs_group_dict['ws80_sig'] = 'group_count'
+weewx.units.obs_group_dict['ws90_sig'] = 'group_count'
+weewx.units.obs_group_dict['ws85_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh85_sig'] = 'group_count'
+"""
+
+weewx.units.obs_group_dict['thi_ch1'] = 'group_lengthmm'
+weewx.units.obs_group_dict['thi_ch2'] = 'group_lengthmm'
+weewx.units.obs_group_dict['thi_ch3'] = 'group_lengthmm'
+weewx.units.obs_group_dict['thi_ch4'] = 'group_lengthmm'
+weewx.units.obs_group_dict['depth_ch1'] = 'group_lengthmm'
+weewx.units.obs_group_dict['depth_ch2'] = 'group_lengthmm'
+weewx.units.obs_group_dict['depth_ch3'] = 'group_lengthmm'
+weewx.units.obs_group_dict['depth_ch4'] = 'group_lengthmm'
+weewx.units.obs_group_dict['air_ch1'] = 'group_lengthmm'
+weewx.units.obs_group_dict['air_ch2'] = 'group_lengthmm'
+weewx.units.obs_group_dict['air_ch3'] = 'group_lengthmm'
+weewx.units.obs_group_dict['air_ch4'] = 'group_lengthmm'
+weewx.units.obs_group_dict['ldsbatt1'] = 'group_volt'
+weewx.units.obs_group_dict['ldsbatt2'] = 'group_volt'
+weewx.units.obs_group_dict['ldsbatt3'] = 'group_volt'
+weewx.units.obs_group_dict['ldsbatt4'] = 'group_volt'
+
 
 weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
@@ -617,6 +642,13 @@ weewx.units.obs_group_dict['fsunhours'] = 'group_sunhours'
 
 weewx.units.default_unit_format_dict["microgram_per_meter_cubed"] = "%.1f"
 weewx.units.default_unit_format_dict["volt"] = "%.2f"
+
+weewx.units.USUnits["group_lengthmm"] = "mm"
+weewx.units.MetricUnits["group_lengthmm"] = "mm"
+weewx.units.MetricWXUnits["group_lengthmm"] = "mm"
+weewx.units.default_unit_label_dict["mm"] = "mm"
+weewx.units.default_unit_format_dict["mm"] = "%.0f"
+
 
 def loader(config_dict, _):
     return InterceptorDriver(**config_dict[DRIVER_NAME])
@@ -973,6 +1005,26 @@ class Consumer(object):
         'ws80_sig': 'wh80sig',
         'ws90_sig': 'wh90sig',
         'ws85_sig': 'wh85sig',
+        'wh54_ch1_sig': 'wh54sig1',
+        'wh54_ch2_sig': 'wh54sig2',
+        'wh54_ch3_sig': 'wh54sig3',
+        'wh54_ch4_sig': 'wh54sig4',
+        'thi_ch1': 'thi_ch1',
+        'thi_ch2': 'thi_ch2',
+        'thi_ch3': 'thi_ch3',
+        'thi_ch4': 'thi_ch4',
+        'depth_ch1': 'depth_ch1',
+        'depth_ch2': 'depth_ch2',
+        'depth_ch3': 'depth_ch3',
+        'depth_ch4': 'depth_ch4',
+        'air_ch1': 'air_ch1',
+        'air_ch2': 'air_ch2',
+        'air_ch3': 'air_ch3',
+        'air_ch4': 'air_ch4',
+        'ldsbatt1': 'ldsbatt1',
+        'ldsbatt2': 'ldsbatt2',
+        'ldsbatt3': 'ldsbatt3',
+        'ldsbatt4': 'ldsbatt4',
         'fdewptf': 'dewptf',
         'fwindchillf': 'windchillf',
         'ffeelslikef': 'feelslikef',
@@ -3218,6 +3270,18 @@ class EcowittClient(Consumer):
             'wh80sig': 'wh80sig',
             'wh90sig': 'wh90sig',
             'wh85sig': 'wh85sig',
+            'lds_ch1': 'lds_ch1',
+            'lds_ch2': 'lds_ch2',
+            'lds_ch3': 'lds_ch3',
+            'lds_ch4': 'lds_ch4',
+            'wh54sig1': 'wh54sig1',
+            'wh54sig2': 'wh54sig2',
+            'wh54sig3': 'wh54sig3',
+            'wh54sig4': 'wh54sig4',
+            'wh54batt1': 'wh54batt1',
+            'wh54batt2': 'wh54batt2',
+            'wh54batt3': 'wh54batt3',
+            'wh54batt4': 'wh54batt4',
             'dewptf': 'dewptf',
             'windchillf': 'windchillf',
             'feelslikef': 'feelslikef',
@@ -3254,6 +3318,26 @@ class EcowittClient(Consumer):
             'rain3_gain': 'rain3_gain',
             'rain4_gain': 'rain4_gain',
             'rain5_gain': 'rain5_gain',
+            'wh54_ch1_sig': 'wh54sig1',
+            'wh54_ch2_sig': 'wh54sig2',
+            'wh54_ch3_sig': 'wh54sig3',
+            'wh54_ch4_sig': 'wh54sig4',
+            'thi_ch1': 'thi_ch1',
+            'thi_ch2': 'thi_ch2',
+            'thi_ch3': 'thi_ch3',
+            'thi_ch4': 'thi_ch4',
+            'depth_ch1': 'depth_ch1',
+            'depth_ch2': 'depth_ch2',
+            'depth_ch3': 'depth_ch3',
+            'depth_ch4': 'depth_ch4',
+            'air_ch1': 'air_ch1',
+            'air_ch2': 'air_ch2',
+            'air_ch3': 'air_ch3',
+            'air_ch4': 'air_ch4',
+            'ldsbatt1': 'ldsbatt1',
+            'ldsbatt2': 'ldsbatt2',
+            'ldsbatt3': 'ldsbatt3',
+            'ldsbatt4': 'ldsbatt4',
        }
 
         IGNORED_LABELS = [
@@ -3317,7 +3401,6 @@ class EcowittClient(Consumer):
                 if 'yrain_piezo' in data:
                     pkt['yrain_piezo'] = self.decode_float(data['yrain_piezo']) if data['yrain_piezo'] != '' else 0
 
-
                 if not self._rain_mapping_confirmed:
                     if 'totalrainin' not in data and 'yearlyrainin' in data:
                         self.LABEL_MAP.pop('totalrainin')
@@ -3356,7 +3439,8 @@ class EcowittClient(Consumer):
                             val = 'X' * len(data[n])
                         logdbg("ignored parameter %s=%s" % (n, val))
                     else:
-                        loginf("unrecognized parameter %s=%s" % (n, data[n]))
+                        if n != 'totalrainin':
+                          loginf("unrecognized parameter %s=%s" % (n, data[n]))
 
                 # get the rain this period from total
                 if 'rain_total' in pkt:

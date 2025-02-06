@@ -29,8 +29,15 @@ locale.setlocale(locale.LC_ALL, '')
 #"group_rainrate"    : "cm_per_hour",     '] = 'group_rainrate'
 
 import weewx.units
+weewx.units.obs_group_dict['heap'] = 'group_data'
+weewx.units.obs_group_dict['pb'] = 'group_data'
+
 weewx.units.obs_group_dict['sunshine_hours'] = 'group_radiation'
-weewx.units.obs_group_dict['sunshine_time'] = 'group_interval'
+weewx.units.obs_group_dict['sunshine_time'] = 'group_radiation'
+
+weewx.units.obs_group_dict['sunshineDur'] = 'group_deltatime'
+weewx.units.obs_group_dict['rainDur'] = 'group_deltatime'
+weewx.units.obs_group_dict['hailDur'] = 'group_deltatime'
 
 weewx.units.obs_group_dict['co2'] = 'group_fraction'
 weewx.units.obs_group_dict['co2_24h'] = 'group_fraction'
@@ -147,6 +154,23 @@ weewx.units.obs_group_dict['leak_Batt3'] = 'group_count'
 weewx.units.obs_group_dict['leak_Batt4'] = 'group_count'
 weewx.units.obs_group_dict['lightning_Batt'] = 'group_count'
 
+weewx.units.obs_group_dict['wh24_sig'] = 'group_percent'
+weewx.units.obs_group_dict['ws85_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh31_ch1_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh31_ch2_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh31_ch3_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh31_ch4_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh31_ch5_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh31_ch6_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh31_ch7_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh31_ch8_sig'] = 'group_percent'
+
+#LDS Sensor
+weewx.units.obs_group_dict['wh54_ch1_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh54_ch2_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh54_ch3_sig'] = 'group_percent'
+weewx.units.obs_group_dict['wh54_ch4_sig'] = 'group_percent'
+
 # VantagePro
 weewx.units.obs_group_dict['stormRain'] = 'group_rain'
 weewx.units.obs_group_dict['stormRainlast'] = 'group_rain'
@@ -159,6 +183,19 @@ weewx.units.obs_group_dict['monthET'] = 'group_rain'
 weewx.units.obs_group_dict['yearET'] = 'group_rain'
 weewx.units.obs_group_dict['stormStart'] = 'group_time'
 weewx.units.obs_group_dict['windSpeed2'] = 'group_speed2'
+
+weewx.units.obs_group_dict['signal1'] = 'group_percent'
+weewx.units.obs_group_dict['signal2'] = 'group_percent'
+weewx.units.obs_group_dict['signal3'] = 'group_percent'
+weewx.units.obs_group_dict['signal4'] = 'group_percent'
+weewx.units.obs_group_dict['signal5'] = 'group_percent'
+weewx.units.obs_group_dict['signal6'] = 'group_percent'
+weewx.units.obs_group_dict['signal7'] = 'group_percent'
+weewx.units.obs_group_dict['signal8'] = 'group_percent'
+weewx.units.obs_group_dict['signal1_2'] = 'group_percent'
+weewx.units.obs_group_dict['signala'] = 'group_percent'
+weewx.units.obs_group_dict['signalw'] = 'group_percent'
+weewx.units.obs_group_dict['signalr'] = 'group_percent'
 
 
 
