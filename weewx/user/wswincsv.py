@@ -1,4 +1,4 @@
-# Copyright 2021 Werner Krenn
+# Copyright 2021/2025 Werner Krenn
 # Distributed under terms of the GPLv3
 """
 Emit archive data to wswin.csv file for WsWin automatic importing
@@ -9,10 +9,10 @@ weewx configuration file:
 [WswinCSV]
     filename = /path/to/wswin.csv
     binding = archive 	# or loop = not active!
-    mode = append		# or overwrite
+    mode = append	# or overwrite
     txtheader = False	# not active !
     append_datestamp = False  # then file = 202110_wswin.csv
-
+    use_depth_ch1 = False  # this replaces soilmoisture4 with the depth_ch1 value
 [Engine]
     [[Services]]
         process_services = ..., user.wswincsv.WswinCSV
@@ -68,7 +68,7 @@ except ImportError:
     def log_traceback_error(prefix=''):
         log_traceback(prefix=prefix, loglevel=syslog.LOG_ERR)
 
-VERSION = "0.6"
+VERSION = "0.7"
 
 if weewx.__version__ < "3":
     raise weewx.UnsupportedFeature("WeeWX 3 is required, found %s" %
@@ -126,6 +126,10 @@ class WswinCSV(StdService):
         self.bind(weewx.NEW_ARCHIVE_RECORD, self.handle_new_archive)
         # optionally emit a textheader line as the first line of the file
         self.header = weeutil.weeutil.to_bool(d.get('txtheader', False))
+
+        self.depth = False
+        self.depth = weeutil.weeutil.to_bool(d.get('use_depth_ch1', self.depth))
+
         self.append_datestamp =  weeutil.weeutil.to_bool(d.get('append_datestamp', False))
         # mode can be append or overwrite
         self.mode = d.get('mode', 'append')
@@ -133,6 +137,7 @@ class WswinCSV(StdService):
            self.header = False
            self.append_datestamp = False
         loginf("binding is %s" % binding)
+        loginf("use depth_ch1 for soilmoisture4 = %s" % self.depth)
         loginf("output goes to %s, leaf_correction=%s" % (self.filename, self.leafcorr))
 
     def handle_new_loop(self, event):
@@ -318,8 +323,11 @@ class WswinCSV(StdService):
           fields.append("%.0f," % float(data['soilMoist3']))
         else:
           fields.append(",")
-        if testkey('soilMoist4', packet) is True:
-          fields.append("%.0f," % float(data['soilMoist4']))
+        if ((testkey('soilMoist4', packet) is True) and (self.depth is False)) or ((testkey('depth_ch1', packet) is True) and (self.depth is True)):
+          if (self.depth is True) and (testkey('depth_ch1', packet) is True):
+             fields.append("%.1f," % float(data['depth_ch1']/10))
+          if (self.depth is False) and (testkey('soilMoist4', packet) is True):
+             fields.append("%.0f," % float(data['soilMoist4']))
         else:
           fields.append(",")
 
@@ -439,7 +447,10 @@ class WswinCSV(StdService):
            hfields.append('soilMoist1')
            hfields.append('soilMoist2')
            hfields.append('soilMoist3')
-           hfields.append('soilMoist4')
+           if (self.depth is True):
+             hfields.append('depth_ch1')
+           else:
+             hfields.append('soilMoist4')
            hfields.append('barometer')
            hfields.append('rain')
            hfields.append('windSpeed')
