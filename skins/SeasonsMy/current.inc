@@ -217,6 +217,7 @@
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
  ('thi_ch1','','current','1'),
  ('depth_ch1','','current','1'),
+ ('ldsheat_ch1','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
  ('lightningcount','','current','1'),
  ('lightning_num','','current','1'),
