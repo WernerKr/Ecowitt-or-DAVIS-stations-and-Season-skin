@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.7.0kw'
+DRIVER_VERSION = '0.7.1kw'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -593,7 +593,10 @@ weewx.units.obs_group_dict['ldsbatt1'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt2'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt3'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt4'] = 'group_volt'
-
+weewx.units.obs_group_dict['ldsheat_ch1'] = 'group_count'
+weewx.units.obs_group_dict['ldsheat_ch2'] = 'group_count'
+weewx.units.obs_group_dict['ldsheat_ch3'] = 'group_count'
+weewx.units.obs_group_dict['ldsheat_ch4'] = 'group_count'
 
 weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
@@ -1025,6 +1028,23 @@ class Consumer(object):
         'ldsbatt2': 'ldsbatt2',
         'ldsbatt3': 'ldsbatt3',
         'ldsbatt4': 'ldsbatt4',
+        'ldsheat_ch1': 'ldsheat_ch1',
+        'ldsheat_ch2': 'ldsheat_ch2',
+        'ldsheat_ch3': 'ldsheat_ch3',
+        'ldsheat_ch4': 'ldsheat_ch4',
+        'noise_ch1': 'noise_ch1',
+        'noise_ch2': 'noise_ch2',
+        'noise_ch3': 'noise_ch3',
+        'noise_ch4': 'noise_ch4',
+        'peak_ch1': 'peak_ch1',
+        'peak_ch2': 'peak_ch2',
+        'peak_ch3': 'peak_ch3',
+        'peak_ch4': 'peak_ch4',
+        'ldspw_ch1': 'ldspw_ch1',
+        'ldspw_ch2': 'ldspw_ch2',
+        'ldspw_ch3': 'ldspw_ch3',
+        'ldspw_ch4': 'ldspw_ch4',
+        'vpd': 'vpd',
         'fdewptf': 'dewptf',
         'fwindchillf': 'windchillf',
         'ffeelslikef': 'feelslikef',
@@ -3270,18 +3290,10 @@ class EcowittClient(Consumer):
             'wh80sig': 'wh80sig',
             'wh90sig': 'wh90sig',
             'wh85sig': 'wh85sig',
-            'lds_ch1': 'lds_ch1',
-            'lds_ch2': 'lds_ch2',
-            'lds_ch3': 'lds_ch3',
-            'lds_ch4': 'lds_ch4',
             'wh54sig1': 'wh54sig1',
             'wh54sig2': 'wh54sig2',
             'wh54sig3': 'wh54sig3',
             'wh54sig4': 'wh54sig4',
-            'wh54batt1': 'wh54batt1',
-            'wh54batt2': 'wh54batt2',
-            'wh54batt3': 'wh54batt3',
-            'wh54batt4': 'wh54batt4',
             'dewptf': 'dewptf',
             'windchillf': 'windchillf',
             'feelslikef': 'feelslikef',
@@ -3338,6 +3350,23 @@ class EcowittClient(Consumer):
             'ldsbatt2': 'ldsbatt2',
             'ldsbatt3': 'ldsbatt3',
             'ldsbatt4': 'ldsbatt4',
+            'ldsheat_ch1': 'ldsheat_ch1',
+            'ldsheat_ch2': 'ldsheat_ch2',
+            'ldsheat_ch3': 'ldsheat_ch3',
+            'ldsheat_ch4': 'ldsheat_ch4',
+            'noise_ch1': 'noise_ch1',
+            'noise_ch2': 'noise_ch2',
+            'noise_ch3': 'noise_ch3',
+            'noise_ch4': 'noise_ch4',
+            'peak_ch1': 'peak_ch1',
+            'peak_ch2': 'peak_ch2',
+            'peak_ch3': 'peak_ch3',
+            'peak_ch4': 'peak_ch4',
+            'ldspw_ch1': 'ldspw_ch1',
+            'ldspw_ch2': 'ldspw_ch2',
+            'ldspw_ch3': 'ldspw_ch3',
+            'ldspw_ch4': 'ldspw_ch4',
+            'vpd': 'vpd',
        }
 
         IGNORED_LABELS = [
