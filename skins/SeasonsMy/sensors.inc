@@ -547,7 +547,7 @@ $gettext('never')
 
  #for $battery in $sensor_batt_data
     #try
-      #if $getattr($recent, $battery[0]).has_data
+      #if (($getattr($recent, $battery[0]).has_data) or ($getattr($current, $battery[0]).has_data))
         #set $state = $getattr(self, $battery[1])(getattr($current, $battery[0]).raw)
         #set $vstate = $getattr($current, $battery[0]).format("%.0f")
         #if $vstate == '6'
