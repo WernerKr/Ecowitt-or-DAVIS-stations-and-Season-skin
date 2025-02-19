@@ -7,28 +7,7 @@
 ## this is a conditional display of sensor data, including connectivity,
 ## battery status, and various voltages.  if there are no data available,
 ## then this degenerates to nothing displayed.
-## To include GW1000 sensor battery state information in the Seasons skin
-## Sensor Panel list the sensor battery states to display in the
-## $sensor_batt_data list. Sensors will be displayed in the order listed. Each
-## entry is in the format:
-##      (WeeWX sensor battery state field name, decode function name)
-## where 'WeeWX sensor battery state field name' is the WeeWX field holding the
-## battery state data and 'decode function name' is set as follows depending on
-## the sensor type:
-##      WH24: 'get_battery_status'
-##      WH25: 'get_battery_status'
-##      WH26: 'get_battery_status'
-##      WH31: 'get_battery_status'
-##      WH32: 'get_battery_status'
-##      WH40: 'get_battery_status'
-##      WH65: 'get_battery_status'
-##      WH68: 'get_battery_status'
 
-##      WH41/WH43 'get_multi_battery_status'
-##      WH45: 'get_multi_battery_status'
-##      WH55: 'get_multi_battery_status'
-##      WH57: 'get_multi_battery_status'
-##
 
 ## remember the current time - we will use it more than once.
 #import time
@@ -42,6 +21,17 @@
 #set $userecentbat = 1
 #set $userecentvol = 1
 #set $userecentsig = 1
+
+## if sensors can be shown on signalQuality and Signal change $notuse = 1
+#set $notuse = 0
+
+## skin.conf:
+## [DisplayOptions]
+##   sensors_not = 'rxCheckPercent = ws90_sig','signal1 = ws80_sig','signal2 = wh31_ch1_sig','signal3 = wn34_ch1_sig','signal4 = wh40_sig','signal5 = wh45_sig','signal6 = wh57_sig','signal7 = wh51_ch1_sig','signal8 = wn35_ch1_sig'
+##   or sensors_not = ws90_sig, ws80_sig, wh31_ch1_sig, wn34_ch1_sig, wh40_sig, wh45_sig, wh57_sig, wh51_ch1_sig, wn35_ch1_sig
+## = list which sensors only shown at signalQuality
+
+#set $signal_data_not = $to_list($DisplayOptions.get('sensors_not', ['rxCheckPercent']))
 
 
 ## provide an indication of how much time has passed since the last sensor
@@ -187,6 +177,7 @@ $gettext('never')
                      ('wh85_sig'),
                     ]
 ##set $conns = $to_list(get('$signal_data', [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala" ]))
+
 
 #set $conns = [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala",
 ('wh24_sig'),
@@ -477,7 +468,7 @@ $gettext('never')
   #if ($getattr($recent, $x).has_data and $userecentcon == 1) or $getattr($current, $x).has_data
     #set $sstate = $getattr($current, $x).raw
     ##set $unitxx = $unit.label[$x]
-    #if ($sstate > 4) or ($ecowitt == 0) or (($sstate == 0) and ($ecowitt == 1))
+    #if ($sstate > 4) or ($ecowitt == 0)
     <tr>
       #set $xv = $getattr($current, $x)
       <td class="label">$obs.label[$x]</td>
@@ -675,8 +666,16 @@ $gettext('never')
 #if $have_signal and $ecowitt == 1
    <tr><th>$gettext("Signal")</th><th></th></tr>
  #for $signal in $signal_data
+    #set $useit = 1
+    #if $notuse == 0
+    #for $xx in $signal_data_not
+      #if $signal in $xx
+       #set $useit = 0
+      #end if 
+    #end for
+    #end if
     #try
-      #if $getattr($current, $signal).has_data or ($getattr($recent, $signal).has_data and $userecentsig == 1)
+      #if ($getattr($current, $signal).has_data or ($getattr($recent, $signal).has_data and $userecentsig == 1)) and $useit == 1
         #set $sstate = $getattr($current, $signal).raw
         #if $sstate <= 4
         <tr>

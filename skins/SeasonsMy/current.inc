@@ -56,6 +56,7 @@
  ('humidex1','','current','1'),
  ('outWetbulb','','current','1'),
  ('wetbulb','','current','1'),
+ ('vpd','','current','1'),
 ('THSW','','current','1'),
 ('THW','','current','1'),
 ('barometer','#25ea2f','trend','1'),
