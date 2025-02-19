@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.7.1kw'
+DRIVER_VERSION = '0.7.2kw'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -602,6 +602,8 @@ weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['heap'] = 'group_data'
 
+weewx.units.obs_group_dict['vpd'] = 'group_countvpd'
+
 weewx.units.obs_group_dict['fdewptf'] = 'group_temperature'
 weewx.units.obs_group_dict['fwindchillf'] = 'group_temperature'
 weewx.units.obs_group_dict['ffeelslikef'] = 'group_temperature'
@@ -651,6 +653,12 @@ weewx.units.MetricUnits["group_lengthmm"] = "mm"
 weewx.units.MetricWXUnits["group_lengthmm"] = "mm"
 weewx.units.default_unit_label_dict["mm"] = "mm"
 weewx.units.default_unit_format_dict["mm"] = "%.0f"
+
+weewx.units.USUnits["group_countvpd"] = "countvpd"
+weewx.units.MetricUnits["group_countvpd"] = "countvpd"
+weewx.units.MetricWXUnits["group_countvpd"] = "countvpd"
+weewx.units.default_unit_label_dict["countvpd"] = ""
+weewx.units.default_unit_format_dict["countvpd"] = "%.2f"
 
 
 def loader(config_dict, _):
