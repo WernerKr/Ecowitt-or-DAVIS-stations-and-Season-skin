@@ -408,12 +408,27 @@ $gettext('never')
  #set $_state = 0
 #end if
 
+#set $checksignal_not = 0
+#set $xxxx = ""
 #set $have_signal = 0
+#set $have_signalx = 0
 #for $x in $signal_data
   #if $getattr($current, $x).has_data
-    #set $have_signal = 1
+    #set $have_signalx = 1
+    #for $xx in $signal_data_not
+      #if $x in $xx
+        #set $have_signalx = 0
+      #end if 
+    #end for
+    #if $have_signalx == 1
+      #if ($checksignal_not == 1) and ($have_signal == 0)
+       #set $xxxx = $x
+      #end if
+      #set $have_signal = 1
+    #end if
   #end if
 #end for
+
 
 ## now display the available data only
 
@@ -663,8 +678,8 @@ $gettext('never')
 #end if
 
 
-#if $have_signal and $ecowitt == 1
-   <tr><th>$gettext("Signal")</th><th></th></tr>
+#if ($have_signal == 1) and ($ecowitt == 1)
+   <tr><th>$gettext("Signal") $xxxx</th><th></th></tr>
  #for $signal in $signal_data
     #set $useit = 1
     #if $notuse == 0
