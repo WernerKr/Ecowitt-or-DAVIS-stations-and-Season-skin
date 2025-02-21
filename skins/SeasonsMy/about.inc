@@ -75,12 +75,6 @@
       <td class="data">$current.pb</td>
     </tr>
     #end if
-   #if $current.vpd.has_data 
-    <tr> 
-       <td class="label">$gettext("Vpd")</td>
-      <td class="data">$current.vpd</td>
-    </tr>
-    #end if
    #except
     #pass
    #end try
