@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.7.2kw'
+DRIVER_VERSION = '0.7.3kw'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -657,7 +657,7 @@ weewx.units.default_unit_format_dict["mm"] = "%.0f"
 weewx.units.USUnits["group_countvpd"] = "countvpd"
 weewx.units.MetricUnits["group_countvpd"] = "countvpd"
 weewx.units.MetricWXUnits["group_countvpd"] = "countvpd"
-weewx.units.default_unit_label_dict["countvpd"] = ""
+weewx.units.default_unit_label_dict["countvpd"] = "kPa"
 weewx.units.default_unit_format_dict["countvpd"] = "%.2f"
 
 
