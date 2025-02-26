@@ -648,11 +648,11 @@ weewx.units.obs_group_dict['fsunhours'] = 'group_sunhours'
 weewx.units.default_unit_format_dict["microgram_per_meter_cubed"] = "%.1f"
 weewx.units.default_unit_format_dict["volt"] = "%.2f"
 
-weewx.units.USUnits["group_lengthmm"] = "mm"
-weewx.units.MetricUnits["group_lengthmm"] = "mm"
-weewx.units.MetricWXUnits["group_lengthmm"] = "mm"
-weewx.units.default_unit_label_dict["mm"] = "mm"
-weewx.units.default_unit_format_dict["mm"] = "%.0f"
+weewx.units.USUnits["group_lengthmm"] = "lmm"
+weewx.units.MetricUnits["group_lengthmm"] = "lmm"
+weewx.units.MetricWXUnits["group_lengthmm"] = "lmm"
+weewx.units.default_unit_label_dict["lmm"] = "mm"
+weewx.units.default_unit_format_dict["lmm"] = "%.0f"
 
 weewx.units.USUnits["group_countvpd"] = "countvpd"
 weewx.units.MetricUnits["group_countvpd"] = "countvpd"
