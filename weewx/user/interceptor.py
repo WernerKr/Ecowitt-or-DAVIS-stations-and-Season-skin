@@ -304,7 +304,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Interceptor'
-DRIVER_VERSION = '0.7.3kw'
+DRIVER_VERSION = '0.7.4kw'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -577,18 +577,6 @@ weewx.units.obs_group_dict['ws85_sig'] = 'group_percent'
 weewx.units.obs_group_dict['wh85_sig'] = 'group_count'
 """
 
-weewx.units.obs_group_dict['thi_ch1'] = 'group_lengthmm'
-weewx.units.obs_group_dict['thi_ch2'] = 'group_lengthmm'
-weewx.units.obs_group_dict['thi_ch3'] = 'group_lengthmm'
-weewx.units.obs_group_dict['thi_ch4'] = 'group_lengthmm'
-weewx.units.obs_group_dict['depth_ch1'] = 'group_lengthmm'
-weewx.units.obs_group_dict['depth_ch2'] = 'group_lengthmm'
-weewx.units.obs_group_dict['depth_ch3'] = 'group_lengthmm'
-weewx.units.obs_group_dict['depth_ch4'] = 'group_lengthmm'
-weewx.units.obs_group_dict['air_ch1'] = 'group_lengthmm'
-weewx.units.obs_group_dict['air_ch2'] = 'group_lengthmm'
-weewx.units.obs_group_dict['air_ch3'] = 'group_lengthmm'
-weewx.units.obs_group_dict['air_ch4'] = 'group_lengthmm'
 weewx.units.obs_group_dict['ldsbatt1'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt2'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt3'] = 'group_volt'
@@ -602,7 +590,6 @@ weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['heap'] = 'group_data'
 
-weewx.units.obs_group_dict['vpd'] = 'group_countvpd'
 
 weewx.units.obs_group_dict['fdewptf'] = 'group_temperature'
 weewx.units.obs_group_dict['fwindchillf'] = 'group_temperature'
@@ -648,17 +635,48 @@ weewx.units.obs_group_dict['fsunhours'] = 'group_sunhours'
 weewx.units.default_unit_format_dict["microgram_per_meter_cubed"] = "%.1f"
 weewx.units.default_unit_format_dict["volt"] = "%.2f"
 
+weewx.units.obs_group_dict['thi_ch1'] = 'group_lengthmm'
+weewx.units.obs_group_dict['thi_ch2'] = 'group_lengthmm'
+weewx.units.obs_group_dict['thi_ch3'] = 'group_lengthmm'
+weewx.units.obs_group_dict['thi_ch4'] = 'group_lengthmm'
+weewx.units.obs_group_dict['depth_ch1'] = 'group_lengthmm'
+weewx.units.obs_group_dict['depth_ch2'] = 'group_lengthmm'
+weewx.units.obs_group_dict['depth_ch3'] = 'group_lengthmm'
+weewx.units.obs_group_dict['depth_ch4'] = 'group_lengthmm'
+weewx.units.obs_group_dict['air_ch1'] = 'group_lengthmm'
+weewx.units.obs_group_dict['air_ch2'] = 'group_lengthmm'
+weewx.units.obs_group_dict['air_ch3'] = 'group_lengthmm'
+weewx.units.obs_group_dict['air_ch4'] = 'group_lengthmm'
+
+weewx.units.USUnits["group_lengthmm"] = "mm"
+weewx.units.MetricUnits["group_lengthmm"] = "mm"
+weewx.units.MetricWXUnits["group_lengthmm"] = "mm"
+weewx.units.default_unit_label_dict["thi_ch1"] = "mm"
+weewx.units.default_unit_label_dict["thi_ch2"] = "mm"
+weewx.units.default_unit_label_dict["thi_ch3"] = "mm"
+weewx.units.default_unit_label_dict["thi_ch4"] = "mm"
+weewx.units.default_unit_label_dict["depth_ch1"] = "mm"
+weewx.units.default_unit_label_dict["depth_ch2"] = "mm"
+weewx.units.default_unit_label_dict["depth_ch3"] = "mm"
+weewx.units.default_unit_label_dict["depth_ch4"] = "mm"
+weewx.units.default_unit_label_dict["air_ch1"] = "mm"
+weewx.units.default_unit_label_dict["air_ch2"] = "mm"
+weewx.units.default_unit_label_dict["air_ch3"] = "mm"
+weewx.units.default_unit_label_dict["air_ch4"] = "mm"
+
+
+"""
 weewx.units.USUnits["group_lengthmm"] = "lmm"
 weewx.units.MetricUnits["group_lengthmm"] = "lmm"
 weewx.units.MetricWXUnits["group_lengthmm"] = "lmm"
 weewx.units.default_unit_label_dict["lmm"] = "mm"
 weewx.units.default_unit_format_dict["lmm"] = "%.0f"
+"""
 
-weewx.units.USUnits["group_countvpd"] = "countvpd"
-weewx.units.MetricUnits["group_countvpd"] = "countvpd"
-weewx.units.MetricWXUnits["group_countvpd"] = "countvpd"
-weewx.units.default_unit_label_dict["countvpd"] = "kPa"
-weewx.units.default_unit_format_dict["countvpd"] = "%.2f"
+weewx.units.obs_group_dict['vpd'] = 'group_pressurevpd'
+weewx.units.USUnits["group_pressurevpd"] = "inHg"
+weewx.units.MetricUnits["group_pressurevpd"] = "kPa"
+weewx.units.MetricWXUnits["group_pressurevpd"] = "kPa"
 
 
 def loader(config_dict, _):
