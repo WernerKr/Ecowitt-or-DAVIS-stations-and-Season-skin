@@ -78,7 +78,7 @@ https://www.pc-wetterstation.de/weewx
 
 There is also a complete installation file for the Interceptor driver and GW1000 driver (both) with the
 Ecowitt extension and the Seasons skin change
-https://www.pc-wetterstation.de/weewx/weewx-gw1000_interceptor.zip
+weewx-gw1000_interceptor.zip
 
 Download the file, upload it to the RaspPi, change to the directory where uploaded to and with
 sudo wee_extension --install=weewx-gw1000_interceptor.zip
@@ -97,7 +97,7 @@ May/June 2024:
 Support Co2in, PM1, PM4
 WS85
 
-https://www.pc-wetterstation.de/weewx/weewx-interceptor.zip
+weewx-interceptor.zip
 sudo wee_extension --install=weewx-interceptor.zip
 
  or
@@ -109,9 +109,14 @@ wview_ecowitt.py
 
 An existing database can also be expanded with these shell scripts:
   -> is very likely the easiest way
- 
-https://www.pc-wetterstation.de/weewx/add_ecowitt_to_wview_database.zip
-https://www.pc-wetterstation.de/weewx/add_ecowitt_to_wview_extended_database.zip
+
+Version 5
+add_ecowitt_data_v5.sh
+add_ecowitt_allsignaldata_v5.sh
+
+Version 4
+add_ecowitt_to_wview_database.zip
+add_ecowitt_to_wview_extended_database.zip
 
   The new data fields are added to the existing database and the old ones
   Data are retained.
