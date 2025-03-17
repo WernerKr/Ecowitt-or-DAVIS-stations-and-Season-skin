@@ -6,13 +6,23 @@
 #encoding UTF-8
 ##
 
+#set $allways_lang = False
+#set $use_lang = False
+#try
+ #if $SKIN_VERSION != '' or $allways_lang == True
+  #set $use_lang = True
+ #end if
+#except
+ #pass
+#end try
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     ## This choice should match the #encoding directive above
     <meta charset="UTF-8">
 <META HTTP-EQUIV="Refresh" CONTENT="300">
-    <title>$station.location - $station.hardware</title>
+    <title>$station.location</title>
     <link rel="icon" type="image/png" href="favicon.ico" />
     <link rel="stylesheet" type="text/css" href="seasons.css"/>
 
@@ -35,16 +45,10 @@
 .col-md-8 table td {
     font-weight: normal;
     text-align: right;
-    font-size: 12px;
+    font-size: 11px;
     padding-right: 5px;
     padding-left: 5px;
     border-bottom: 1px solid;
-}
-
-.col-md-8 historyHeader {
-  font-weight: bold;
-  font-size: calc(14px + 0.3vw);
-  white-space: nowrap; 
 }
 
 .history {
@@ -54,7 +58,6 @@
   overflow: auto;
   float: left;
 }
-
     </style>
 
     <script src="seasons.js"></script>
@@ -70,13 +73,11 @@
         #include "hilo.inc"
         #include "belchertown.inc"
         #include "neowx.inc"
-        ##include "amphibian.inc"
-        #include "sofaskin.inc"
-        #include "bootstrap.inc"
+        #include "amphibian.inc"
+        ##include "sofaskin.inc"
         ##include "standard.inc"
-        ##include "smartphone.inc"
-        ##include "mobile.inc"
-        #include "cmon.inc"
+        #include "smartphone.inc"
+        #include "mobile.inc"
         #include "sensors.inc"
         #include "about.inc"
         #include "radar.inc"
@@ -86,6 +87,7 @@
 
       <div id="plot_group">
         <div id="history_widget" class="widget">
+         #if $use_lang 
            <div id="plot_title" class="widget_title">$gettext("History"):&nbsp;&nbsp; 
             <a class="button_selected" id="button_history_day"
                onclick="choose_history('day')">$gettext("Day")</a>
@@ -97,30 +99,34 @@
                onclick="choose_history('year')">$gettext("Year")</a>
             <a class="button" id="button_history_chronicle"
                onclick="choose_history('chronicle')">$gettext("Chronicle")</a>
+          #else
+           <div id="plot_title" class="widget_title">History:&nbsp;&nbsp;
+            <a class="button_selected" id="button_history_day"
+               onclick="choose_history('day')">Day</a>
+            <a class="button" id="button_history_week"
+               onclick="choose_history('week')">Week</a>
+            <a class="button" id="button_history_month"
+               onclick="choose_history('month')">Month</a>
+            <a class="button" id="button_history_year"
+               onclick="choose_history('year')">Year</a>
+            <a class="button" id="button_history_chronicle"
+               onclick="choose_history('chronicle')">Chronicle</a>
+          #end if
            </div>
           <div id="history_day" class="plot_container">
             <img src="daybarometer.png" alt="$obs.label.barometer"/>
             <img src="daytempdew.png"   alt="$obs.label.outTemp" />
-            #if $day.extraTemp1.has_data
-            <img src="daytemp.png"    alt="$obs.label.extraTemp1" />
-            #end if
-            <img src="daytemp0.png"   alt="$obs.label.outTemp" />
             <img src="daytempfeel.png"  alt="$obs.label.feel" />
             <img src="dayhum.png"       alt="$obs.label.outHumidity" />
-            <img src="daywind.png"     alt="$obs.label.windSpeed" />
-            ##<img src="daywind1.png"     alt="$obs.label.windSpeed" />
-            <img src="daywind2.png"     alt="$obs.label.windGust" />
+            <img src="daywind.png"      alt="$obs.label.windSpeed" />
             <img src="daywinddir.png"   alt="$obs.label.windDir" />
-            ##<img src="daywinddir1.png"   alt="$obs.label.windDir" />
             <img src="daywindvec.png"   alt="$obs.label.windvec" />
             <img src="dayrain.png"      alt="$obs.label.rain" />
             #if $day.hail.has_data
             <img src="dayrain1.png"        alt="$obs.label.rain" />
             #end if
-            <img src="dayrainbar.png"    alt="$obs.label.rain" />
+            <img src="dayrainbar.png"      alt="$obs.label.rain" />
             <img src="dayrain2.png"      alt="$obs.label.rainRate" />
-            <img src="dayrain3.png"      alt="$obs.label.rainRate" />
-            <img src="dayrain4.png"      alt="$obs.label.rainRate" />
             #if $day.UV.has_data
             <img src="dayuv.png"        alt="$obs.label.UV" />
             #end if
@@ -163,11 +169,8 @@
             #if $day.soilTemp3.has_data or $day.soilTemp4.has_data
             <img src="daytempsoil0.png"      alt="$obs.label.soilTemp3" />
             #end if
-            #if $day.soilTemp5.has_data
+            #if $day.soilTemp5.has_data or $day.soilTemp6.has_data
             <img src="daytempsoil1.png"      alt="$obs.label.soilTemp5" />
-            #end if
-            #if $day.soilTemp6.has_data
-            <img src="daytempsoil1a.png"      alt="$obs.label.soilTemp6" />
             #end if
             #if $day.soilTemp7.has_data or $day.soilTemp8.has_data
             <img src="daytempsoil2.png"      alt="$obs.label.soilTemp7" />
@@ -176,6 +179,13 @@
             <img src="daytempsoil3.png"      alt="$obs.label.soilTemp8" />
             #end if
 
+            #if $current.vpd.has_data
+            <img src="dayvpd.png"        alt="$obs.label.vpd"/>
+            #end if
+
+            ##if $current.vpd.has_data
+            ##<img src="dayvpd1.png"        alt="$obs.label.vpd"/>
+            ##end if
 
             #if $day.soilMoist1.has_data or $day.soilMoist2.has_data or $day.soilMoist3.has_data or $day.soilMoist4.has_data
             <img src="daysoilMoist.png"      alt="$obs.label.soilMoist1" />
@@ -183,10 +193,6 @@
             #if $day.soilMoist5.has_data or $day.soilMoist6.has_data or $day.soilMoist7.has_data or $day.soilMoist8.has_data
             <img src="daysoilMoist2.png"      alt="$obs.label.soilMoist5" />
             #end if
-            #if $day.leak_1.has_data or $day.leak_4.has_data
-            <img src="dayleak.png"        alt="$obs.label.leak_1"/>
-            #end if
-
             #if $day.pm2_5.has_data 
             <img src="dayppm.png"      alt="$obs.label.pm2_5" />
             #end if
@@ -197,13 +203,6 @@
             #if $day.pm25_2.has_data 
             <img src="dayppm2.png"      alt="$obs.label.pm25_2" />
             #end if
-            #if $day.pm25_2.has_data 
-            <img src="dayppm3.png"      alt="$obs.label.pm25_2" />
-            #end if
-            #if $day.pm25_4.has_data 
-            <img src="dayppm4.png"      alt="$obs.label.pm25_4" />
-            #end if
-
 
             #if $day.lightning_strike_count.has_data
             <img src="daylightningcount.png"        alt="$obs.label.lightning_strike_count"/>
@@ -215,19 +214,13 @@
             #if $day.rxCheckPercent.has_data
             <img src="dayrx.png"        alt="$obs.label.rxCheckPercent"/>
             #end if
-            #if $day.signal2.has_data or $day.signal3.has_data or $day.signal4.has_data
-            <img src="dayrx1.png"        alt="$obs.label.signal2"/>
-            #end if
-            #if $day.signal5.has_data or $day.signal6.has_data or $day.signal7.has_data or $day.signal8.has_data
-            <img src="dayrx2.png"        alt="$obs.label.signal5"/>
-            #end if
 
             #if $day.windBatteryStatus.has_data
             <img src="dayvolt.png"        alt="$obs.label.windBatteryStatus"/>
             #end if
 
             #if $day.pm25_Batt4.has_data or $day.pm25_Batt2.has_data
-            <img src="dayppm2volt.png"        alt="$obs.label.pm25_Batt2"/>
+            <img src="dayppm2volt.png"        alt="$obs.label.pm25_Batt4"/>
             #end if
 
             #if $day.soilMoistBatt1.has_data or $day.soilMoistBatt2.has_data or $day.leafWetBatt1.has_data or $day.soilTempBatt1.has_data
@@ -242,58 +235,38 @@
             #if $day.soilTempBatt3.has_data or $day.soilTempBatt4.has_data
             <img src="dayvoltage4.png"        alt="$obs.label.soilTempBatt3"/>
             #end if
-
-            #if $day.ws90cap_volt.has_data
-            <img src="dayvoltcap.png"        alt="$obs.label.ws90cap_volt"/>
-            #end if
-            #if $current.co2in.has_data
-            <img src="dayco2in.png"        alt="$obs.label.co2in"/>
-            #end if
-            #if $current.co2.has_data
-            <img src="dayco2.png"        alt="$obs.label.co2"/>
+            #if $day.ws90cap_volt.has_data or $day.ws85cap_volt.has_data
+            <img src="dayvoltcap.png"        alt="$obs.label.ws85cap_volt"/>
             #end if
 
             #if $current.heap.has_data
             <img src="dayheap0.png"        alt="$obs.label.pb"/>
             #end if
-
             #if $current.depth_ch1.has_data
             <img src="daydepth.png"        alt="$obs.label.depth_ch1"/>
             #end if
+
 
           </div>
           <div id="history_week" class="plot_container" style="display:none">
             <img src="weekbarometer.png" alt="$obs.label.barometer"/>
             <img src="weektempdew.png"   alt="$obs.label.outTemp" />
-            #if $week.extraTemp1.has_data
-            <img src="weektemp.png"    alt="$obs.label.extraTemp1" />
-            #end if
-            <img src="weektemp0.png"  alt="$obs.label.outTemp" />
             <img src="weektempfeel.png"  alt="$obs.label.feel" />
             <img src="weekhum.png"       alt="$obs.label.outHumidity" />
             <img src="weekwind.png"      alt="$obs.label.windSpeed" />
-            ##<img src="weekwind1.png"     alt="$obs.label.windSpeed" />
-            <img src="weekwind2.png"     alt="$obs.label.windGust" />
             <img src="weekwinddir.png"   alt="$obs.label.windDir" />
-            ##<img src="weekwinddir1.png"   alt="$obs.label.windDir" />
             <img src="weekwindvec.png"   alt="$obs.label.windvec" />
             <img src="weekrain.png"      alt="$obs.label.rain" />
             #if $week.hail.has_data
             <img src="weekrain1.png"        alt="$obs.label.rain" />
             #end if
-            #if $week.hail.has_data
             <img src="weekrain2.png"        alt="$obs.label.rainRate" />
-            #end if
             #if $week.UV.has_data
             <img src="weekuv.png"        alt="$obs.label.UV" />
             #end if
             #if $week.radiation.has_data
             <img src="weekradiation.png" alt="$obs.label.radiation" />
             #end if
-            #if $week.sunshineDur.has_data
-            <img src="weeksunshineDur.png" alt="$obs.label.sunshineDur" />
-            #end if
-
             #if $week.inTemp.has_data
             <img src="weektempin.png"    alt="$obs.label.inTemp" />
             #end if
@@ -327,11 +300,8 @@
             #if $week.soilTemp3.has_data or $week.soilTemp4.has_data
             <img src="weektempsoil0.png"      alt="$obs.label.soilTemp3" />
             #end if
-            #if $week.soilTemp5.has_data
+            #if $week.soilTemp5.has_data or $week.soilTemp6.has_data
             <img src="weektempsoil1.png"      alt="$obs.label.soilTemp5" />
-            #end if
-            #if $week.soilTemp6.has_data
-            <img src="weektempsoil1a.png"      alt="$obs.label.soilTemp6" />
             #end if
             #if $week.soilTemp7.has_data or $week.soilTemp8.has_data
             <img src="weektempsoil2.png"      alt="$obs.label.soilTemp8" />
@@ -340,14 +310,15 @@
             <img src="weektempsoil3.png"      alt="$obs.label.soilTemp7" />
             #end if
 
+            #if $week.vpd.has_data
+            <img src="weekvpd.png"        alt="$obs.label.vpd"/>
+            #end if
+
             #if $week.soilMoist1.has_data or $week.soilMoist2.has_data or $week.soilMoist3.has_data or $week.soilMoist4.has_data 
             <img src="weeksoilMoist.png"      alt="$obs.label.soilMoist1" />
             #end if
             #if $week.soilMoist5.has_data or $week.soilMoist6.has_data or $week.soilMoist7.has_data or $week.soilMoist8.has_data
             <img src="weeksoilMoist2.png"      alt="$obs.label.soilMoist5" />
-            #end if
-            #if $week.leak_1.has_data or $week.leak_4.has_data
-            <img src="weekleak.png"        alt="$obs.label.leak_1"/>
             #end if
 
             #if $week.pm2_5.has_data 
@@ -359,13 +330,6 @@
             #if $week.pm25_2.has_data 
             <img src="weekppm2.png"      alt="$obs.label.pm25_2" />
             #end if
-            #if $week.pm25_2.has_data 
-            <img src="weekppm3.png"      alt="$obs.label.pm25_2" />
-            #end if
-            #if $week.pm25_4.has_data 
-            <img src="weekppm4.png"      alt="$obs.label.pm25_4" />
-            #end if
-
             #if $week.lightning_strike_count.has_data
             <img src="weeklightningcount.png"        alt="$obs.label.lightning_strike_count"/>
             #end if
@@ -376,19 +340,13 @@
             #if $week.rxCheckPercent.has_data
             <img src="weekrx.png"        alt="$obs.label.rxCheckPercent"/>
             #end if
-            #if $week.signal2.has_data or $week.signal3.has_data or $week.signal4.has_data
-            <img src="weekrx1.png"        alt="$obs.label.signal2"/>
-            #end if
-            #if $week.signal5.has_data or $week.signal6.has_data or $week.signal7.has_data or $week.signal8.has_data
-            <img src="weekrx2.png"        alt="$obs.label.signal5"/>
-            #end if
 
             #if $week.windBatteryStatus.has_data
             <img src="weekvolt.png"        alt="$obs.label.windBatteryStatus"/>
             #end if
 
             #if $week.pm25_Batt4.has_data or $week.pm25_Batt2.has_data
-            <img src="weekppm2volt.png"        alt="$obs.label.pm25_Batt2"/>
+            <img src="weekppm2volt.png"        alt="$obs.label.pm25_Batt4"/>
             #end if
 
             #if $week.soilMoistBatt1.has_data or $week.soilMoistBatt2.has_data or $week.leafWetBatt1.has_data or $week.soilTempBatt1.has_data
@@ -404,58 +362,34 @@
             #if $week.soilTempBatt3.has_data or $week.soilTempBatt4.has_data
             <img src="weekvoltage4.png"        alt="$obs.label.soilTempBatt3"/>
             #end if
-
-            #if $week.ws90cap_volt.has_data
-            <img src="weekvoltcap.png"        alt="$obs.label.ws90cap_volt"/>
-            #end if
-
-            #if $week.co2in.has_data
-            <img src="weekco2in.png"        alt="$obs.label.co2in"/>
-            #end if
-            #if $week.co2.has_data
-            <img src="weekco2.png"        alt="$obs.label.co2"/>
-            #end if
-
             #if $week.pb.has_data
             <img src="weekheap0.png"        alt="$obs.label.pb"/>
             #end if
-
             #if $week.depth_ch1.has_data
             <img src="weekdepth.png"        alt="$obs.label.depth_ch1"/>
             #end if
+
 
           </div>
           <div id="history_month" class="plot_container" style="display:none">
             <img src="monthbarometer.png" alt="$obs.label.barometer"/>
             <img src="monthtempdew.png"   alt="$obs.label.outTemp" />
-            #if $month.extraTemp1.has_data
-            <img src="monthtemp.png"    alt="$obs.label.extraTemp1" />
-            #end if
-            <img src="monthtemp0.png"   alt="$obs.label.outTemp" />
             <img src="monthtempfeel.png"  alt="$obs.label.feel" />
             <img src="monthhum.png"       alt="$obs.label.outHumidity" />
             <img src="monthwind.png"      alt="$obs.label.windSpeed" />
-            ##<img src="monthwind1.png"      alt="$obs.label.windSpeed" />
-            <img src="monthwind2.png"      alt="$obs.label.windSpeed" />
             <img src="monthwinddir.png"   alt="$obs.label.windDir" />
-            ##<img src="monthwinddir1.png"   alt="$obs.label.windDir" />
             <img src="monthwindvec.png"   alt="$obs.label.windvec" />
             <img src="monthrain.png"      alt="$obs.label.rain" />
             #if $month.hail.has_data
             <img src="monthrain1.png"        alt="$obs.label.rain" />
             #end if
-            #if $month.hail.has_data
             <img src="monthrain2.png"        alt="$obs.label.rainRate" />
-            #end if
             #if $month.UV.has_data
             <img src="monthuv.png"        alt="$obs.label.UV" />
             #end if
             #if $month.radiation.has_data
             <img src="monthradiation.png" alt="$obs.label.radiation" />
 		<img src="monthRadiationEnergy.png" />
-            #end if
-            #if $month.sunshineDur.has_data
-            <img src="monthsunshineDur.png" alt="$obs.label.sunshineDur" />
             #end if
             #if $month.inTemp.has_data
             <img src="monthtempin.png"    alt="$obs.label.inTemp" />
@@ -491,11 +425,8 @@
             #if $month.soilTemp3.has_data or $month.soilTemp4.has_data
             <img src="monthtempsoil0.png"      alt="$obs.label.soilTemp3" />
             #end if
-            #if $month.soilTemp5.has_data
+            #if $month.soilTemp5.has_data or $month.soilTemp6.has_data
             <img src="monthtempsoil1.png"      alt="$obs.label.soilTemp5" />
-            #end if
-            #if $month.soilTemp6.has_data
-            <img src="monthtempsoil1a.png"      alt="$obs.label.soilTemp6" />
             #end if
             #if $month.soilTemp7.has_data or $month.soilTemp8.has_data
             <img src="monthtempsoil2.png"      alt="$obs.label.soilTemp8" />
@@ -504,16 +435,17 @@
             <img src="monthtempsoil3.png"      alt="$obs.label.soilTemp7" />
             #end if
 
+            #if $month.vpd.has_data
+            <img src="monthvpd.png"        alt="$obs.label.vpd"/>
+            #end if
+
+
             #if $month.soilMoist1.has_data or $month.soilMoist2.has_data or $month.soilMoist3.has_data or $month.soilMoist4.has_data 
             <img src="monthsoilMoist.png"      alt="$obs.label.soilMoist1" />
             #end if
             #if $month.soilMoist5.has_data or $month.soilMoist6.has_data or $month.soilMoist7.has_data or $month.soilMoist8.has_data 
             <img src="monthsoilMoist2.png"      alt="$obs.label.soilMoist5" />
             #end if
-            #if $month.leak_1.has_data or $month.leak_4.has_data
-            <img src="monthleak.png"        alt="$obs.label.leak_1"/>
-            #end if
-
 
             #if $Month <= 7
             <img src="monthGTS.png"/>
@@ -539,12 +471,6 @@
             #if $month.rxCheckPercent.has_data
             <img src="monthrx.png"        alt="$obs.label.rxCheckPercent"/>
             #end if
-            #if $month.signal2.has_data or $month.signal3.has_data or $month.signal4.has_data
-            <img src="monthrx1.png"        alt="$obs.label.signal2"/>
-            #end if
-            #if $month.signal5.has_data or $month.signal6.has_data or $month.signal7.has_data or $month.signal8.has_data
-            <img src="monthrx2.png"        alt="$obs.label.signal5"/>
-            #end if
 
             #if $month.windBatteryStatus.has_data
             <img src="monthvolt.png"        alt="$obs.label.windBatteryStatus"/>
@@ -567,33 +493,19 @@
             #if $month.soilTempBatt3.has_data or $month.soilTempBatt4.has_data
             <img src="monthvoltage4.png"        alt="$obs.label.soilTempBatt3"/>
             #end if
-
-            #if $month.ws90cap_volt.has_data
-            <img src="monthvoltcap.png"        alt="$obs.label.ws90cap_volt"/>
-            #end if
-
-            #if $month.co2in.has_data
-            <img src="monthco2in.png"        alt="$obs.label.co2in"/>
-            #end if
-            #if $month.co2.has_data
-            <img src="monthco2.png"        alt="$obs.label.co2"/>
-            #end if
-
             #if $month.pb.has_data
             <img src="monthheap0.png"        alt="$obs.label.pb"/>
             #end if
-
             #if $month.depth_ch1.has_data
             <img src="monthdepth.png"        alt="$obs.label.depth_ch1"/>
             #end if
+
+
 
           </div>
           <div id="history_year" class="plot_container" style="display:none">
             <img src="yearbarometer.png" alt="$obs.label.barometer"/>
             <img src="yeartempdew.png"   alt="$obs.label.outTemp" />
-            #if $year.extraTemp1.has_data
-            <img src="yeartemp.png"    alt="$obs.label.extraTemp1" />
-            #end if
             <img src="yeartempfeel.png"  alt="$obs.label.feel" />
             <img src="yearhum.png"       alt="$obs.label.outHumidity" />
             <img src="yearwind.png"      alt="$obs.label.windSpeed" />
@@ -611,10 +523,6 @@
             <img src="yearradiation.png" alt="$obs.label.radiation" />
             <img src="yearRadiationEnergy.png" />
             #end if
-            #if $year.sunshineDur.has_data
-            <img src="yearsunshineDur.png" alt="$obs.label.sunshineDur" />
-            #end if
-
             #if $year.inTemp.has_data
             <img src="yeartempin.png"    alt="$obs.label.inTemp" />
             #end if
@@ -648,13 +556,9 @@
             #if $year.soilTemp3.has_data or $year.soilTemp4.has_data
             <img src="yeartempsoil0.png"      alt="$obs.label.soilTemp3" />
             #end if
-            #if $year.soilTemp5.has_data
+            #if $year.soilTemp5.has_data or $year.soilTemp6.has_data
             <img src="yeartempsoil1.png"      alt="$obs.label.soilTemp5" />
             #end if
-            #if $year.soilTemp6.has_data
-            <img src="yeartempsoil1a.png"      alt="$obs.label.soilTemp6" />
-            #end if
-
             #if $year.soilTemp7.has_data or $year.soilTemp8.has_data
             <img src="yeartempsoil2.png"      alt="$obs.label.soilTemp8" />
             #end if
@@ -662,14 +566,15 @@
             <img src="yeartempsoil3.png"      alt="$obs.label.soilTemp7" />
             #end if
 
+            #if $year.vpd.has_data
+            <img src="yearvpd.png"        alt="$obs.label.vpd"/>
+            #end if
+
             #if $year.soilMoist1.has_data or $year.soilMoist2.has_data or $year.soilMoist3.has_data or $year.soilMoist4.has_data 
             <img src="yearsoilMoist.png"      alt="$obs.label.soilMoist1" />
             #end if
             #if $year.soilMoist5.has_data or $year.soilMoist6.has_data or $year.soilMoist7.has_data or $year.soilMoist8.has_data 
             <img src="yearsoilMoist2.png"      alt="$obs.label.soilMoist5" />
-            #end if
-            #if $year.leak_1.has_data or $year.leak_4.has_data
-            <img src="yearleak.png"        alt="$obs.label.leak_1"/>
             #end if
 
             <img src="yearGTS.png"/>
@@ -692,19 +597,13 @@
             #if $year.rxCheckPercent.has_data
             <img src="yearrx.png"        alt="$obs.label.rxCheckPercent"/>
             #end if
-            #if $year.signal2.has_data or $year.signal3.has_data or $year.signal4.has_data
-            <img src="yearrx1.png"        alt="$obs.label.signal2"/>
-            #end if
-            #if $year.signal5.has_data or $year.signal6.has_data or $year.signal7.has_data or $year.signal8.has_data
-            <img src="yearrx2.png"        alt="$obs.label.signal5"/>
-            #end if
 
             #if $year.windBatteryStatus.has_data
             <img src="yearvolt.png"        alt="$obs.label.windBatteryStatus"/>
             #end if
 
             #if $year.pm25_Batt4.has_data or $year.pm25_Batt2.has_data
-            <img src="yearppm2volt.png"        alt="$obs.label.pm25_Batt2"/>
+            <img src="yearppm2volt.png"        alt="$obs.label.pm25_Batt4"/>
             #end if
 
             #if $year.soilMoistBatt1.has_data or $year.soilMoistBatt2.has_data or $year.leafWetBatt1.has_data or $year.soilTempBatt1.has_data
@@ -720,99 +619,55 @@
             #if $year.soilTempBatt3.has_data or $year.soilTempBatt4.has_data
             <img src="yearvoltage4.png"        alt="$obs.label.soilTempBatt3"/>
             #end if
-
-            #if $year.ws90cap_volt.has_data
-            <img src="yearvoltcap.png"        alt="$obs.label.ws90cap_volt"/>
-            #end if
-
-            #if $year.co2in.has_data
-            <img src="yearco2in.png"        alt="$obs.label.co2in"/>
-            #end if
-            #if $year.co2.has_data
-            <img src="yearco2.png"        alt="$obs.label.co2"/>
-            #end if
-
             #if $year.pb.has_data
             <img src="yearheap0.png"        alt="$obs.label.pb"/>
             #end if
-
             #if $year.depth_ch1.has_data
             <img src="yeardepth.png"        alt="$obs.label.depth_ch1"/>
             #end if
 
+
           </div>
 
           <div id="history_chronicle" class="history" style="display:none">
-
-<div class="col-md-8">
-            <h4>$BootstrapLabels.history_tables.max_barometer</h4>
-$max_barometer_table
-            <h4>$BootstrapLabels.history_tables.avg_barometer</h4>
-$avg_barometer_table
-            <h4>$BootstrapLabels.history_tables.min_barometer</h4>
-$min_barometer_table
-
-<h4 class="historyHeader">$BootstrapLabels.history_tables.min_temp</h4>
+           <div class="col-md-8">
+            <h3>$BootstrapLabels.history_tables.min_temp</h3>
 $min_temp_table
 
-<h4 class="historyHeader">$BootstrapLabels.history_tables.avg_temp</h4>
+            <h3>$BootstrapLabels.history_tables.avg_temp</h3>
 $avg_temp_table
 
-<h4 class="historyHeader">$BootstrapLabels.history_tables.max_temp</h4>
+            <h3>$BootstrapLabels.history_tables.max_temp</h3>
 $max_temp_table
 
-<h4 class="historyHeader">$BootstrapLabels.history_tables.rain</h4>
+            <h3>$BootstrapLabels.history_tables.rain</h3>
 $rain_table
 
-<h4>$BootstrapLabels.history_tables.rain_days</h4>
+            <h3>$BootstrapLabels.history_tables.rain_days</h3>
 $rain_days_table
 
-<h4>$BootstrapLabels.history_tables.windGust</h4>
+            <h3>$BootstrapLabels.history_tables.windGust</h3>
 $max_windGust_table
 
-<h4>$BootstrapLabels.history_tables.max_UV</h4>
+            <h3>$BootstrapLabels.history_tables.max_UV</h3>
 $max_UV_table
 
-            <h4>$BootstrapLabels.history_tables.max_radiation</h4>
+            <h3>$BootstrapLabels.history_tables.max_radiation</h3>
 $max_radiation_table
 
-            <h4>$BootstrapLabels.history_tables.outTemp_days</h4>
-$outTemp_days_table
+            <h3>$BootstrapLabels.history_tables.min_barometer</h3>
+$min_barometer_table
 
-            <h4>$BootstrapLabels.history_tables.outTemp20_days</h4>
-$outTemp20_days_table
+            <h3>$BootstrapLabels.history_tables.avg_barometer</h3>
+$avg_barometer_table
 
-            <h4>$BootstrapLabels.history_tables.outTemp20x_days</h4>
-$outTemp20x_days_table
+            <h3>$BootstrapLabels.history_tables.max_barometer</h3>
+$max_barometer_table
 
-            <h4>$BootstrapLabels.history_tables.vegetations_days</h4>
-$vegetations_days_table
-
-            <h4>$BootstrapLabels.history_tables.outTemp0_days</h4>
-$outTemp0_days_table
-
-            <h4>$BootstrapLabels.history_tables.outTemp00_days</h4>
-$outTemp00_days_table
-
-		<h4>$BootstrapLabels.history_tables.sunshineDur</h4>
-$sunshineDur_table
-
-		<h4>$BootstrapLabels.history_tables.rainDur</h4>
-$rainDur_table
-
-
- <h4>$BootstrapLabels.history_tables.heatdeg</h4>
-$heatdeg_table
-
-
- <h4>$BootstrapLabels.history_tables.cooldeg</h4>
-$cooldeg_table
-
-
-##          <h4>$BootstrapLabels.history_tables.NOAA</h4>
+##          <h3>$BootstrapLabels.history_tables.NOAA</h3>
 ##$NOAA_table
 
-</div>
+           </div>
           </div>
 
 
@@ -821,7 +676,8 @@ $cooldeg_table
     </div>
 
     <p class="footnote">
-      $gettext("This station is controlled by <a href='https://weewx.com'>WeeWX</a>, an experimental weather software system written in Python.")
+      This station is controlled by <a href="http://weewx.com/">WeeWX</a>, an
+      experimental weather software system written in Python.
     </p>
 
     #include "analytics.inc"
