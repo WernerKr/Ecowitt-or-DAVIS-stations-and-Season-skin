@@ -45,7 +45,7 @@ In addition, the skin also takes into account that the Ecowitt stations / device
   The order in the array is also the display position. 
 
 Files for this
-  https://www.pc-wetterstation.de/weewx/skins_Seasons.zip
+  weewx/skins/SeasonsMy
  
 Example for the skin:
 WeatherLinkLiveUDP: 	https://www.pc-wetterstation.de/wetter/weewx
@@ -56,7 +56,7 @@ Interceptor&GW1000:  https://www.pc-wetterstation.de/wetter/weewx4
 
 Calculation of the sunshine duration and now too rain duration:
 
-Which, however, was modified by me https://www.pc-wetterstation.de/weewx/user/sunrainduration.zip
+Which, however, was modified by me weewx/user/sunrainduration.py
 and the configuration is done via the weewx.conf and this entry:
 
 Code:
@@ -77,7 +77,7 @@ https://www.pc-wetterstation.de/weewx
 ################################################# ###############################################
 
 There is also a complete installation file for the Interceptor driver and GW1000 driver (both) with the
-Ecowitt extension and the Seasons skin change
+Ecowitt extension and the Seasons skin change - is old!!!
 weewx-gw1000_interceptor.zip
 
 Download the file, upload it to the RaspPi, change to the directory where uploaded to and with
@@ -86,7 +86,7 @@ sudo wee_extension --install=weewx-gw1000_interceptor.zip
 
 Only Interceptor: 
 Jan 2024:
-supports soilad1 - soilad8 and heap
+supports soilad1 - soilad16 and heap
 If you will track the heap values - I use the unused value "pb" from the extended database for this
 So add this in the weeewx.conf file to
 [StdCalibrate]
@@ -96,6 +96,11 @@ So add this in the weeewx.conf file to
 May/June 2024:
 Support Co2in, PM1, PM4
 WS85
+
+Jan-Mar 2025:
+all data from FOSHKplugin
+vpd
+LDS01 - LDS04
 
 weewx-interceptor.zip
 sudo wee_extension --install=weewx-interceptor.zip
@@ -115,8 +120,8 @@ add_ecowitt_data_v5.sh
 add_ecowitt_allsignaldata_v5.sh
 
 Version 4
-add_ecowitt_to_wview_database.zip
-add_ecowitt_to_wview_extended_database.zip
+add_ecowitt_to_wview_database.sh
+add_ecowitt_to_wview_extended_database.sh
 
   The new data fields are added to the existing database and the old ones
   Data are retained.
@@ -147,6 +152,9 @@ Since the installation routine does not change any existing entries, one must in
 adapt a few entries
 
 Signal assignment with GW1000 driver (the interceptor cannot evaluate the signals)
+
+But if you use FOSHKplugin, the interceptor can also evalute the signals and all
+this other data (and more), which are only available via gw1000
 The weewx-gw1000.zip installation routine adds these entries to weewx.conf:
 [StdCalibrate]
     [[Corrections]]
@@ -164,6 +172,21 @@ The weewx-gw1000.zip installation routine adds these entries to weewx.conf:
         #signal7 = wh51_ch1_sig * 25 if wh51_ch1_sig is not None else None
         #signal8 = wh35_ch1_sig * 25 if wh35_ch1_sig is not None else None
 
+        ws90_sig = ws90_sig * 25 if ws90_sig is not None else None
+        ws85_sig = ws85_sig * 25 if ws85_sig is not None else None
+        wh54_ch1_sig = wh54_ch1_sig * 25 if wh54_ch1_sig is not None else None
+
+       hail = p_rain if p_rain is not None else None
+       hailRate = p_rainrate if p_rainrate is not None else None
+    
+       pb = heap if heap is not None else None
+
+       wh85_sig = ws85_sig if ws85_sig is not None else None
+       ws85_sig = ws85_sig * 25 if ws85_sig is not None else None 
+
+      lightning_distance_save = lightning_distance if lightning_distance is not None else None
+      lightning_distance = lightning_distance if lightning_strike_count > 0 else None
+
 So are not active and is an example:
 Here everyone can choose for themselves which signals should be assigned to which Ecowitt sensor sig.
 signal 1..8 belongs to the database values, with the assignment they are also recorded for evaluation.
@@ -176,6 +199,12 @@ Code:
   station_type = Interceptor		# with interceptor driver
   #station_type = gw1000			# with GW1000 driver
 
+[[SeasonsMyReport]]
+  # The SeasonsReport uses the 'Seasons' skin, which contains the
+  # images, templates and plots for the report.
+  skin = SeasonsMy
+  enable = true
+
 [StdWXCalculate]
   [[WXXTypes]]
     [[[maxSolarRad]]]
@@ -183,6 +212,21 @@ Code:
       atc = 0.9
       
   [[Calculations]]
+        pressure = prefer_hardware
+        altimeter = prefer_hardware
+        appTemp = prefer_hardware
+        barometer = prefer_hardware
+        cloudbase = prefer_hardware
+        dewpoint = prefer_hardware
+        ET = prefer_hardware
+        heatindex = software
+        humidex = prefer_hardware
+        inDewpoint = prefer_hardware
+        maxSolarRad = prefer_hardware
+        rainRate = prefer_hardware
+        windchill = software
+        windrun = prefer_hardware
+        
         GTS = software, archive
         GTSdate = software, archive
         utcoffsetLMT = software, archive
@@ -190,6 +234,14 @@ Code:
         ET24 = prefer_hardware, archive
         yearGDD = software, archive
         seasonGDD = software, archive
+
+        outVaporP = software, loop
+        outSVP    = software, loop
+        outMixingRatio = software, loop
+        outEquiTemp = software, loop
+        outThetaE = software, loop
+        outHumAbs = software, loop
+        boilingTemp = software, loop
  
 [Engine]
     # The following section specifies which services should be run and in what order.
@@ -389,16 +441,15 @@ Code:
     port = 8575
     iface = eth0
     #iface = wlan0 
-    
+
   [[sensor_map_extensions]]
    # mappings now in the Interceptor.py driver
    #  outTempBatteryStatus = wh26batt
 
 ##############################################################################
 
-# Options for extension 'ecowitt-client'
+# Options for extension 'ecowitt-client' = interceptor (or gw1000 too) 
 [Accumulator]
-
    [[model]]
         accumulator = firstlast
         extractor = last
@@ -609,11 +660,17 @@ Code:
         extractor = last
     [[ws80_batt]]
         extractor = last
+    [[ws85_batt]]
+        extractor = last
     [[ws90_batt]]
+        extractor = last
+    [[ws85cap_volt]]
         extractor = last
     [[ws90cap_volt]]
         extractor = last
     [[ws1900batt]]
+        extractor = last
+    [[console_batt]]
         extractor = last
 
     [[wh25_sig]]
@@ -727,6 +784,8 @@ Code:
     [[wh68_sig]]
         extractor = last
     [[ws80_sig]]
+        extractor = last
+    [[ws85_sig]]
         extractor = last
     [[ws90_sig]]
         extractor = last
