@@ -4,7 +4,8 @@ There is also the option of displaying the air quality index for AQI EPA (US) or
 It currently contains all database values from the weewx_extended database schema
 and now Ecowitt database schema weewx_ecowitt and loop values of
 Ecowitt (Interceptor: ecowitt-client) or GW1000 driver, VantagePro, Davis Weatherlink Live, Davis AirLink
-In order to get all data from the Ecowitt stations/devices, you have to use my modified interceptor driver
+In order to get all data from the Ecowitt stations/devices, you have to use my modified 
+interceptor driver
 or GW1000 driver.
 
 My array offers these possibilities:
