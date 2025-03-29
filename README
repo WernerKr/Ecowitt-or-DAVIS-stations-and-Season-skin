@@ -135,7 +135,7 @@ Code:
 [DataBindings]
      [[wx_binding]]
         schema = schemas.wview.schema
-        "#schema" = schemas.wview_ecowitt.schema # -> is entered in this way by the installation!
+        schema_new = schemas.wview_ecowitt.schema # -> is entered in this way by the installation!
 # Change to
         #schema = schemas.wview.schema
         schema = schemas.wview_ecowitt.schema
@@ -148,7 +148,11 @@ Code:
      [[archive_sqlite]]
          database_name = weewx.sdb
          database_type = SQLite
-         "#database_name" = weewx_ecowitt.sdb
+         database_name_new = weewx_ecowitt.sdb
+     change to
+         # database_name = weewx.sdb
+         database_type = SQLite
+         database_name = weewx_ecowitt.sdb
 Since the installation routine does not change any existing entries, one must in weewx.conf
 adapt a few entries
 
@@ -200,11 +204,17 @@ Code:
   station_type = Interceptor		# with interceptor driver
   #station_type = gw1000			# with GW1000 driver
 
-[[SeasonsMyReport]]
-  # The SeasonsReport uses the 'Seasons' skin, which contains the
-  # images, templates and plots for the report.
-  skin = SeasonsMy
+[[SeasonsReport]]
+  skin = Seasons
+  enable = false
+  HTML_ROOT = /var/www/html/weewx/old
+
+[[SeasonsEcowitt]]
+  skin = SeasonsEcowitt
   enable = true
+  lang =en
+  # lang = de
+  HTML_ROOT = /var/www/html/weewx
 
 [StdWXCalculate]
   [[WXXTypes]]
@@ -246,12 +256,13 @@ Code:
  
 [Engine]
     # The following section specifies which services should be run and in what order.
-    # Using the GW1000 as data-service, 
-    # added user.sunduration.SunshineDuration for calculation sunshinehours
+    # Using the GW1000 as data-service,  if you whish both drivers
+    # added user.sunrainduration.SunshineDuration for calculation sunshinehours
     # addet user.GTS.GTSService for calculation dayET, ET24, GTS, GTSdate and other
     [[Services]]
         data_services = user.gw1000.Gw1000Service
-        process_services = weewx.engine.StdConvert, weewx.engine.StdCalibrate, weewx.engine.StdQC, weewx.wxservices.StdWXCalculate, user.sunduration.SunshineDuration
+        # or data_services = ,
+        process_services = weewx.engine.StdConvert, weewx.engine.StdCalibrate, weewx.engine.StdQC, weewx.wxservices.StdWXCalculate, user.sunrainduration.SunshineDuration
         xtype_services = weewx.wxxtypes.StdWXXTypes, weewx.wxxtypes.StdPressureCooker, weewx.wxxtypes.StdRainRater, weewx.wxxtypes.StdDelta, user.GTS.GTSService
 
 [GW1000]
@@ -427,19 +438,10 @@ Code:
 
 [Interceptor]
     # This section is for the network traffic interceptor driver.
-    
     # The driver to use:
     driver = user.interceptor
-    
-    # Specify the hardware device to capture.  Options include:
-    #   acurite-bridge - acurite internet bridge, smarthub, or access
-    #   observer - fine offset WH2600/HP1000/HP1003, ambient WS2902
-    #   lw30x - oregon scientific LW301/LW302
-    #   lacrosse-bridge - lacrosse GW1000U/C84612 internet bridge
-    #   ecowitt-client - any hardware that uses the ecowitt protocol
-    #   wu-client - any hardware that uses the weather underground protocol
     device_type = ecowitt-client
-    port = 8575
+    port = 8080
     iface = eth0
     #iface = wlan0 
 
