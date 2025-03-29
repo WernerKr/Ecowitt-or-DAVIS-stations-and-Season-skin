@@ -97,3 +97,8 @@ weectl database add-column air_ch2 --type=REAL -y
 weectl database add-column wh54_ch2_sig --type=REAL -y
 weectl database add-column vpd --type=REAL -y
 
+weectl database rename-column co co2in -y
+#weectl database rename-column pb heap -y
+
+
+
