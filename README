@@ -46,7 +46,7 @@ In addition, the skin also takes into account that the Ecowitt stations / device
   The order in the array is also the display position. 
 
 Files for this
-  weewx/skins/SeasonsMy
+  weewx/skins/SeasonsEcowitt
  
 Example for the skin:
 WeatherLinkLiveUDP: 	https://www.pc-wetterstation.de/wetter/weewx
@@ -76,14 +76,6 @@ Code:
 https://www.pc-wetterstation.de/weewx
 
 ################################################# ###############################################
-
-There is also a complete installation file for the Interceptor driver and GW1000 driver (both) with the
-Ecowitt extension and the Seasons skin change - is old!!!
-weewx-gw1000_interceptor.zip
-
-Download the file, upload it to the RaspPi, change to the directory where uploaded to and with
-sudo wee_extension --install=weewx-gw1000_interceptor.zip
-
 
 Only Interceptor: 
 Jan 2024:
