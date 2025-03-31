@@ -4,26 +4,19 @@
 #errorCatcher Echo
 #encoding UTF-8
 
-#set $allways_lang = False
-#set $use_lang = False
-#try
- #if $SKIN_VERSION != '' or $allways_lang == True
-  #set $use_lang = True
- #end if
-#except
- #pass
-#end try
-
 #set $archive_data = [('day', $day), ('week', $week), ('month', $month), ('year', $year), ('alltime', $alltime)]
 
 #set $ecowitt_hw = [('GW1000'),
                     ('GW1100'),
                     ('GW1200'),
                     ('GW2000'),
+                    ('GW3000'),
                     ('WH2650'),
                     ('WH2680'),
                     ('WS1900'),
                     ('WN1980'),
+                    ('WS39'),
+                    ('WS38'),
                     ('HP2550'),
                     ('ecowitt-client'),
                     ]
@@ -138,7 +131,7 @@
 ('leafWet6','#5127db','','1'),
 ('leafWet7','#5127db','','1'),
 ('leafWet8','#5127db','','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+('- - - - - - - - - - - - - - - - - - - - -','','','0'),
 ('leak_1','#006eff','','1'),
 ('leak_2','#006eff','','1'),
 ('leak_3','#006eff','','1'),
@@ -167,11 +160,7 @@
 
 <div id='hilo_widget' class="widget">
   <div class="widget_title">
-   #if not $use_lang
-    <a href="statistics.html">Statistics</a>
-   #else
     <a href="statistics.html">$gettext("Statistics")</a>
-   #end if
     <a class="widget_control"
       onclick="toggle_widget('hilo')">&diams;</a>
   </div>
@@ -181,19 +170,6 @@
     <tbody>
       <tr>
         <td></td>
-        #if not $use_lang
-          <th>&nbsp;<br/>Today</th>
-          <th class="hilo_week">&nbsp;<br/>Week</th>
-          <th class="hilo_month">&nbsp;<br/>Month</th>
-          <th class="hilo_year">&nbsp;<br/>Year</th>
-          <th class="hilo_alltime">&nbsp;<br/>Alltime</th> 
-          ##<th class="hilo_year">
-          ##<a onclick="toggle_rainyear()">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>Year</a>
-          ##</th>
-          ##<th class="hilo_rainyear">
-          ## <a onclick="toggle_rainyear()">Rain<br/>Year</a>
-          ##</th>
-        #else 
           <th>&nbsp;<br/>$gettext("Today")</th>
           <th class="hilo_week">&nbsp;<br/>$gettext("Week")</th>
           <th class="hilo_month">&nbsp;<br/>$gettext("Month")</th>
@@ -205,7 +181,6 @@
           ##<th class="hilo_rainyear">
           ## <a onclick="toggle_rainyear()">$gettext("Rain<br/>Year")</a>
           ##</th>
-        #end if 
         <td></td>
       </tr>
 
@@ -266,11 +241,7 @@
     #if $x[0] == 'wind'
       <tr>
         <td class="label"><font color=$color>
-        #if not $use_lang
-          Max Wind
-        #else 
           $gettext("Max Wind")
-        #end if 
         </font></td>
         #for $archive in $archive_data
         <td class="data new_row hilo_$archive[0]">
@@ -287,11 +258,7 @@
     #elif $x[0] == 'windavg'  
       <tr>
         <td class="label"><font color=$color>
-        #if not $use_lang
-          Average Wind
-        #else 
           $gettext("Average Wind")
-        #end if
         </font></td>
         #for $archive in $archive_data
         <td class="data new_row hilo_$archive[0]">
@@ -303,11 +270,7 @@
     #elif $x[0] == 'windrms'      
       <tr>
         <td class="label"><font color=$color>
-        #if not $use_lang
-          RMS Wind
-        #else 
           $gettext("RMS Wind")
-        #end if
         </font></td>
         #for $archive in $archive_data
         <td class="data new_row hilo_$archive[0]">
@@ -318,13 +281,8 @@
     #elif $x[0] == 'windvecavg'
       <tr>
         <td class="label"><font color=$color>
-        #if not $use_lang
-          Vector Average<br/>
-          Vector Direction
-         #else 
           $gettext("Vector Average")<br/>
           $gettext("Vector Direction")
-        #end if
         </font></td>
         #for $archive in $archive_data
         <td class="data new_row hilo_$archive[0]">
