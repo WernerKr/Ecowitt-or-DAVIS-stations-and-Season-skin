@@ -187,6 +187,35 @@ The weewx-gw1000.zip installation routine adds these entries to weewx.conf:
       lightning_distance_save = lightning_distance if lightning_distance is not None else None
       lightning_distance = lightning_distance if lightning_strike_count > 0 else None
 
+      wh31_ch1_sig = wh31_ch1_sig *25 if wh31_ch1_sig is not None else None
+      wh31_ch2_sig = wh31_ch2_sig *25 if wh31_ch2_sig is not None else None
+      wh31_ch3_sig = wh31_ch3_sig *25 if wh31_ch3_sig is not None else None
+      wh31_ch4_sig = wh31_ch4_sig *25 if wh31_ch4_sig is not None else None
+      wh31_ch5_sig = wh31_ch5_sig *25 if wh31_ch5_sig is not None else None
+      wh31_ch6_sig = wh31_ch6_sig *25 if wh31_ch6_sig is not None else None
+      wh31_ch7_sig = wh31_ch7_sig *25 if wh31_ch7_sig is not None else None
+      wh31_ch8_sig = wh31_ch8_sig *25 if wh31_ch8_sig is not None else None
+
+      wn34_ch1_sig = wn34_ch1_sig *25 if wn34_ch1_sig is not None else None
+      wn34_ch2_sig = wn34_ch2_sig *25 if wn34_ch2_sig is not None else None
+      wn34_ch3_sig = wn34_ch3_sig *25 if wn34_ch3_sig is not None else None
+      wn34_ch4_sig = wn34_ch4_sig *25 if wn34_ch4_sig is not None else None
+      wn34_ch5_sig = wn34_ch5_sig *25 if wn34_ch5_sig is not None else None
+      wn34_ch6_sig = wn34_ch6_sig *25 if wn34_ch6_sig is not None else None
+      wn34_ch7_sig = wn34_ch7_sig *25 if wn34_ch7_sig is not None else None
+      wn34_ch8_sig = wn34_ch8_sig *25 if wn34_ch8_sig is not None else None
+
+      wh51_ch1_sig = wh51_ch1_sig *25 if wh51_ch1_sig is not None else None
+      wh51_ch2_sig = wh51_ch2_sig *25 if wh51_ch2_sig is not None else None
+      wh51_ch3_sig = wh51_ch3_sig *25 if wh51_ch3_sig is not None else None
+      wh51_ch4_sig = wh51_ch4_sig *25 if wh51_ch4_sig is not None else None
+      wh51_ch5_sig = wh51_ch5_sig *25 if wh51_ch5_sig is not None else None
+      wh51_ch6_sig = wh51_ch6_sig *25 if wh51_ch6_sig is not None else None
+      wh51_ch7_sig = wh51_ch7_sig *25 if wh51_ch7_sig is not None else None
+      wh51_ch8_sig = wh51_ch8_sig *25 if wh51_ch8_sig is not None else None
+      wh51_ch9_sig = wh51_ch9_sig *25 if wh51_ch9_sig is not None else None
+      wh51_ch10_sig = wh51_ch10_sig *25 if wh51_ch10_sig is not None else None
+   
 So are not active and is an example:
 Here everyone can choose for themselves which signals should be assigned to which Ecowitt sensor sig.
 signal 1..8 belongs to the database values, with the assignment they are also recorded for evaluation.
