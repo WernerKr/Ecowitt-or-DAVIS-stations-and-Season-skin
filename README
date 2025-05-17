@@ -78,7 +78,7 @@ https://www.pc-wetterstation.de/weewx
 ################################################# ###############################################
 May 2025: 
 Under [Accumulator] all "*.sig" removed, as not necessary
-In signal.inc the assignment of the signals (0..4) to percentage values ​​(in the weewx.conf) is now automatically recognized and displayed correctly.
+In sensors.inc the assignment of the signals (0..4) to percentage values ​​(in the weewx.conf) is now automatically recognized and displayed correctly.
 
 Only Interceptor: 
 Jan 2024:
