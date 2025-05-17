@@ -486,14 +486,18 @@ $gettext('never')
     #if ($sstate > 4) or ($ecowitt == 0)
     <tr>
       #set $xv = $getattr($current, $x)
-      <td class="label">$obs.label[$x]</td>
+      #if $sstate <= 25
+      <td class="label"><font color='red'>$obs.label[$x]</font></td>     
+       #else
+        <td class="label">$obs.label[$x]</td>
+      #end if
       #if $x == 'rxCheckPercent'
        <td class="data">$xv</td> 
       #elif $ecowitt == 0
        <td class="data">$get_conn_status($xv.raw)</td>
       #else
        #set $xv = $getattr($current, $x).format("%.0f")
-       <td class="data">$xv</td>
+        <td class="data">$xv</td>
       #end if
       #if $x != 'signal1_2' 
        #if $getattr($recent, $x).has_data
@@ -692,13 +696,20 @@ $gettext('never')
     #try
       #if ($getattr($current, $signal).has_data or ($getattr($recent, $signal).has_data and $userecentsig == 1)) and $useit == 1
         #set $sstate = $getattr($current, $signal).raw
+
         #if $sstate <= 4
         <tr>
-         <td class="label">$obs.label[$signal]</td>
+         #if $sstate <= 1
+          <td class="label"><font color='red'>$obs.label[$signal]</font></td>
+          ##<td class="data"><font color='red'>N/A</font></td>
+         #else
+          <td class="label">$obs.label[$signal]</td>
+         #end if
          $sig_out($sstate)
          ##<td class="data">$sstate</td>
         </tr>
         #end if
+
       #end if
     #except (AttributeError, TypeError)
       ## there is no signal state data for that sensor
