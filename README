@@ -98,11 +98,12 @@ all data from FOSHKplugin
 vpd
 LDS01 - LDS04
 
-weewx-interceptor.zip
-sudo wee_extension --install=weewx-interceptor.zip
+weewx-ecowittcustom.zip
+V4: sudo wee_extension --install=weewx-ecowittcustom.zip
+V5: sudo weectl extension install weewx-ecowittcustom.zip
 
  or
-sudo wee_extension --install=/%path_where_file_located%/weewx-???.zip
+V4: sudo wee_extension --install=/%path_where_file_located%/weewx-???.zip
 to install.
 
 Both use a new database schema: 
