@@ -3,9 +3,9 @@ extended accordingly so that all possible sensor data of the Ecowitt stations/de
 There is also the option of displaying the air quality index for AQI EPA (US) or AQI EEA (EU).
 It currently contains all database values from the weewx_extended database schema
 and now Ecowitt database schema weewx_ecowitt and loop values of
-Ecowitt (Interceptor: ecowitt-client) or GW1000 driver, VantagePro, Davis Weatherlink Live, Davis AirLink
-In order to get all data from the Ecowitt stations/devices, you have to use my modified 
-interceptor driver
+Ecowitt (Ecowittcustom: ecowitt-client) or GW1000 driver, VantagePro, Davis Weatherlink Live, Davis AirLink
+In order to get all data from the Ecowitt stations/devices, you have to use my 
+Ecowittcustom driver
 or GW1000 driver.
 
 My array offers these possibilities:
@@ -53,7 +53,7 @@ WeatherLinkLiveUDP: 	https://www.pc-wetterstation.de/wetter/weewx
 GW1000: 		https://www.pc-wetterstation.de/wetter/weewx1
 ecowitt-client: 	https://www.pc-wetterstation.de/wetter/weewx2
 VantagePro: https://www.pc-wetterstation.de/wetter/weewx3
-Interceptor&GW1000:  https://www.pc-wetterstation.de/wetter/weewx4
+Ecowittcustom&GW1000:  https://www.pc-wetterstation.de/wetter/weewx4
 
 Calculation of the sunshine duration and now too rain duration:
 
@@ -80,7 +80,7 @@ May 2025:
 Under [Accumulator] all "*.sig" removed, as not necessary
 In sensors.inc the assignment of the signals (0..4) to percentage values ​​(in the weewx.conf) is now automatically recognized and displayed correctly.
 
-Only Interceptor: 
+Only Ecowittcustom (former Interceptor): 
 Jan 2024:
 supports soilad1 - soilad16 and heap
 If you will track the heap values - I use the unused value "pb" from the extended database for this
@@ -460,22 +460,22 @@ Code:
 
 ##############################################################################
 
-[Interceptor]
+[Ecowittcustom]
     # This section is for the network traffic interceptor driver.
     # The driver to use:
-    driver = user.interceptor
+    driver = user.ecowittcustom
     device_type = ecowitt-client
     port = 8080
     iface = eth0
     #iface = wlan0 
 
   [[sensor_map_extensions]]
-   # mappings now in the Interceptor.py driver
+   # mappings now in the Ecowittcustom.py driver
    #  outTempBatteryStatus = wh26batt
 
 ##############################################################################
 
-# Options for extension 'ecowitt-client' = interceptor (or gw1000 too) 
+# Options for extension 'ecowitt-client' = ecowittcustom (or gw1000 too) 
 [Accumulator]
    [[model]]
         accumulator = firstlast
