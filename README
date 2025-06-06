@@ -1,5 +1,7 @@
 # Driver Ecowittcustom
 This driver fully supports all currently available data from Ecowitt Wi-Fi stations and/or gateways.
+It supports both the Ecowitt Protocol and the Wunderground Protocol
+
 
 If you also use Oliver's FOSHKplugin, and the corresponding Wi-Fi station also provides the signals, 
 or the gateways always provide the signals, the Ecowitt Custom function in the Ecowitt protocol sends 
