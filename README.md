@@ -1,6 +1,8 @@
 # Driver Ecowittcustom
 This driver fully supports all currently available data from Ecowitt Wi-Fi stations and/or gateways.
 It supports both the Ecowitt Protocol and the Wunderground Protocol
+![Ecowitt_ecowitt](https://github.com/user-attachments/assets/bbc8312e-f51c-4e47-aebf-d29fb8353d73)
+![Ecowitt_wunderground](https://github.com/user-attachments/assets/333c1192-edc7-41c6-9ecf-50521fa526fb)
 
 
 If you also use Oliver's FOSHKplugin, and the corresponding Wi-Fi station also provides the signals, 
@@ -88,7 +90,7 @@ Ecowitt (Ecowittcustom: ecowitt-client) or GW1000 driver, VantagePro, Davis Weat
 In order to get all data from the Ecowitt stations/devices, you have to use my 
 Ecowittcustom driver
 or GW1000 driver.
-
+```
 My array offers these possibilities:
   at current.inc example for outside temperature:
   ('outTemp', '#e85d0d', 'current', '1')
@@ -125,7 +127,7 @@ In addition, the skin also takes into account that the Ecowitt stations / device
   #set $usefontcolor = 0
   be switched off
   The order in the array is also the display position. 
-
+```
 Files for this
   weewx/skins/SeasonsEcowitt
  
