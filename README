@@ -152,7 +152,7 @@ Code:
 Since the installation routine does not change any existing entries, one must in weewx.conf
 adapt a few entries
 
-Signal assignment with GW1000 driver (the interceptor cannot evaluate the signals)
+Signal assignment with GW1000 driver (the Ecowittcustom driver can evaluate the signals with the foshkplugin )
 
 But if you use FOSHKplugin, the interceptor can also evalute the signals and all
 this other data (and more), which are only available via gw1000
@@ -226,7 +226,7 @@ Code:
 
 # Set to type of station hardware. There must be a corresponding stanza
 # in this file with a 'driver' parameter indicating the driver to be used.
-  station_type = Interceptor		# with interceptor driver
+  station_type = Ecowittcustom		# with Ecowittcustom driver
   #station_type = gw1000			# with GW1000 driver
 
 [[SeasonsReport]]
@@ -462,7 +462,7 @@ Code:
 ##############################################################################
 
 [Ecowittcustom]
-    # This section is for the network traffic interceptor driver.
+    # This section is for the network traffic ecowittcustom driver.
     # The driver to use:
     driver = user.ecowittcustom
     device_type = ecowitt-client
@@ -471,7 +471,7 @@ Code:
     #iface = wlan0 
 
   [[sensor_map_extensions]]
-   # mappings now in the Ecowittcustom.py driver
+   # mappings now in the ecowittcustom.py driver
    #  outTempBatteryStatus = wh26batt
 
 ##############################################################################
