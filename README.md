@@ -137,14 +137,15 @@ Example for the skin:
 
 WeatherLinkLiveUDP: 	https://www.pc-wetterstation.de/wetter/weewx
 
-Ecowittcustom & GW1000: https://www.pc-wetterstation.de/wetter/weewx1
+Ecowittcustom & FOSHKplugin (GW3000): https://www.pc-wetterstation.de/wetter/weewx1
 
-Ecowittcustom & FOSHKplugin: 	https://www.pc-wetterstation.de/wetter/weewx2
+Ecowittcustom & FOSHKplugin (HP2550): 	https://www.pc-wetterstation.de/wetter/weewx2
 
 VantagePro: https://www.pc-wetterstation.de/wetter/weewx3
 
-Ecowittcustom & FOSHKplugin:  https://www.pc-wetterstation.de/wetter/weewx4
+Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx4
 
+Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx5
 
 Calculation of the sunshine duration and now too rain duration:
 
