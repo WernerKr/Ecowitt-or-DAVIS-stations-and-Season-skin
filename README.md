@@ -131,7 +131,7 @@ In addition, the skin also takes into account that the Ecowitt stations / device
   The order in the array is also the display position. 
 ```
 Files for this
-  weewx/skins/SeasonsEcowitt
+  weewx/skins/SeasonsEcowitt or weewx/skins/SeasonsDavis
  
 Example for the skin:
 
@@ -146,6 +146,7 @@ VantagePro: https://www.pc-wetterstation.de/wetter/weewx3
 Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx4
 
 Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx5
+
 
 Calculation of the sunshine duration and now too rain duration:
 
@@ -164,8 +165,6 @@ Code:
     rainDur_log = 0        # no logging for rain duration
     hailDur_log = 0        # no logging for piezo-rain duration
 ``` 
-... and if you want to rummage through the files, there are even more changes from me:
-https://www.pc-wetterstation.de/weewx
 
 ################################################# ###############################################
 
