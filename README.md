@@ -1,4 +1,4 @@
-# Driver Ecowittcustom
+## Driver Ecowittcustom
    This driver fully supports all currently available data from Ecowitt Wi-Fi stations and/or gateways.
    
    It supports both the Ecowitt Protocol and the Wunderground Protocol
@@ -82,7 +82,7 @@ FWD_EXEC =
 ```
 
 
-# Skin SeasonsEcowitt or SeasonDavis too
+## Skin SeasonsEcowitt or SeasonsDavis too
 Based on the new structure of the Seasons skin (sensor management in array) I have the Seasons Skin
 extended accordingly so that all possible sensor data of the Ecowitt stations/devices are displayed.
 There is also the option of displaying the air quality index for AQI EPA (US) or AQI EEA (EU).
@@ -135,20 +135,15 @@ Files for this
  
 Example for the skin:
 
-WeatherLinkLiveUDP: 	https://www.pc-wetterstation.de/wetter/weewx
-
-Ecowittcustom & FOSHKplugin (GW3000): https://www.pc-wetterstation.de/wetter/weewx1
-
-Ecowittcustom & FOSHKplugin (HP2550): 	https://www.pc-wetterstation.de/wetter/weewx2
-
-VantagePro: https://www.pc-wetterstation.de/wetter/weewx3
-
-Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx4
-
-Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx5
+- WeatherLinkLiveUDP: 	https://www.pc-wetterstation.de/wetter/weewx
+- Ecowittcustom & FOSHKplugin (GW3000): https://www.pc-wetterstation.de/wetter/weewx1
+- Ecowittcustom & FOSHKplugin (HP2550): 	https://www.pc-wetterstation.de/wetter/weewx2
+- VantagePro: https://www.pc-wetterstation.de/wetter/weewx3
+- Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx4
+- Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx5
 
 
-Calculation of the sunshine duration and now too rain duration:
+#### Calculation of the sunshine duration and now too rain duration:
 
 Which, however, was modified by me weewx/user/sunrainduration.py
 and the configuration is done via the weewx.conf and this entry:
@@ -178,7 +173,7 @@ Only Ecowittcustom (former Interceptor):
 Jan 2024:
  - supports soilad1 - soilad16 and heap
  - If you will track the heap values - I use the unused value "pb" from the extended database for this
- - 
+
  So add this in the weeewx.conf file to
 ``` 
 [StdCalibrate]
@@ -188,7 +183,6 @@ Jan 2024:
 May/June 2024:
  - Support Co2in, PM1, PM4
  - WS85
-
 Jan-Mar 2025:
 - all data from FOSHKplugin
 - vpd
@@ -222,7 +216,7 @@ Version 4
   If you don't work with the standard configuration (/etc/weewx/weewx.conf), you have to
   adjust the --config=/etc/weewx/weewx.conf entry accordingly.
 
-################################################# ################################################
+#################################################
 
 In weewx.conf you can/should use the existing entry (only useful with a completely new installation) for 
 ``` 
