@@ -1,6 +1,7 @@
 # Driver Ecowittcustom
-This driver fully supports all currently available data from Ecowitt Wi-Fi stations and/or gateways.
-It supports both the Ecowitt Protocol and the Wunderground Protocol
+   This driver fully supports all currently available data from Ecowitt Wi-Fi stations and/or gateways.
+   
+   It supports both the Ecowitt Protocol and the Wunderground Protocol
 
 ![Ecowitt_ecowitt](https://github.com/user-attachments/assets/bbc8312e-f51c-4e47-aebf-d29fb8353d73)
 ![Ecowitt_wunderground](https://github.com/user-attachments/assets/333c1192-edc7-41c6-9ecf-50521fa526fb)
@@ -46,10 +47,10 @@ foshkplugin.conf
 Ecowitt protocol:
   - Ecowitt Gateways GW1000, GW1100, GW1200, GW2000, GW3000, WS38xx, WS39xx, WS1900, WN1980, WN1900, WH2650 
   - Ecowitt wifi consoles HP2560, HP2550, HP3500, WS39xx, WS38xx, WN1980, WN1900, WS1900 
-
+``` 
 ** FOSHKplugin ADD_More 
 = radcompensation,newVersion,upgrade,rainFallPriority,rainGain,piezo,rstRainDay,rstRainWeek,rstRainYear,rain1_gain,rain2_gain,rain3_gain,rain4_gain,rain5_gain
-
+``` 
 ```
 [Export]
 EVAL_VALUES = True
@@ -133,11 +134,17 @@ Files for this
   weewx/skins/SeasonsEcowitt
  
 Example for the skin:
+
 WeatherLinkLiveUDP: 	https://www.pc-wetterstation.de/wetter/weewx
+
 GW1000: 		https://www.pc-wetterstation.de/wetter/weewx1
+
 ecowitt-client: 	https://www.pc-wetterstation.de/wetter/weewx2
+
 VantagePro: https://www.pc-wetterstation.de/wetter/weewx3
+
 Ecowittcustom&GW1000:  https://www.pc-wetterstation.de/wetter/weewx4
+
 
 Calculation of the sunshine duration and now too rain duration:
 
@@ -155,54 +162,60 @@ Code:
     sunshine_log = 0       # should not be logged when sunshine is recorded
     rainDur_log = 0        # no logging for rain duration
     hailDur_log = 0        # no logging for piezo-rain duration
-
+``` 
 ... and if you want to rummage through the files, there are even more changes from me:
 https://www.pc-wetterstation.de/weewx
 
 ################################################# ###############################################
+
 May 2025: 
 Under [Accumulator] all "*.sig" removed, as not necessary
+
 In sensors.inc the assignment of the signals (0..4) to percentage values ??(in the weewx.conf) is now automatically recognized and displayed correctly.
 
 Only Ecowittcustom (former Interceptor): 
+
 Jan 2024:
-supports soilad1 - soilad16 and heap
-If you will track the heap values - I use the unused value "pb" from the extended database for this
-So add this in the weeewx.conf file to
+ - supports soilad1 - soilad16 and heap
+ - If you will track the heap values - I use the unused value "pb" from the extended database for this
+ - 
+ So add this in the weeewx.conf file to
+``` 
 [StdCalibrate]
     [[Corrections]]
       pb = heap if heap is not None else None 
-
+``` 
 May/June 2024:
-Support Co2in, PM1, PM4
-WS85
+ - Support Co2in, PM1, PM4
+ - WS85
 
 Jan-Mar 2025:
-all data from FOSHKplugin
-vpd
-LDS01 - LDS04
+- all data from FOSHKplugin
+- vpd
+- LDS01 - LDS04
 
-weewx-ecowittcustom.zip
-V4: sudo wee_extension --install=weewx-ecowittcustom.zip
-V5: sudo weectl extension install weewx-ecowittcustom.zip
+weewx-ecowittcustom.zip 
+ - V4: sudo wee_extension --install=weewx-ecowittcustom.zip
+ - V5: sudo weectl extension install weewx-ecowittcustom.zip
 
  or
-V4: sudo wee_extension --install=/%path_where_file_located%/weewx-???.zip
+ - V4: sudo wee_extension --install=/%path_where_file_located%/weewx-???.zip
 to install.
 
-Both use a new database schema: 
+Both use a new database schema:
+
 wview_ecowitt.py
 
 An existing database can also be expanded with these shell scripts:
   -> is very likely the easiest way
 
 Version 5
-add_ecowitt_data_v5.sh
-add_ecowitt_allsignaldata_v5.sh
+- add_ecowitt_data_v5.sh
+- add_ecowitt_allsignaldata_v5.sh
 
 Version 4
-add_ecowitt_to_wview_database.sh
-add_ecowitt_to_wview_extended_database.sh
+- add_ecowitt_to_wview_database.sh
+- add_ecowitt_to_wview_extended_database.sh
 
   The new data fields are added to the existing database and the old ones
   Data are retained.
@@ -210,7 +223,9 @@ add_ecowitt_to_wview_extended_database.sh
   adjust the --config=/etc/weewx/weewx.conf entry accordingly.
 
 ################################################# ################################################
+
 In weewx.conf you can/should use the existing entry (only useful with a completely new installation) for 
+``` 
 Code:
 [DataBindings]
      [[wx_binding]]
@@ -311,7 +326,7 @@ Code:
 # Set to type of station hardware. There must be a corresponding stanza
 # in this file with a 'driver' parameter indicating the driver to be used.
   station_type = Ecowittcustom		# with Ecowittcustom driver
-  #station_type = gw1000			# with GW1000 driver
+  #station_type = GW1000			# with GW1000 driver
 
 [[SeasonsReport]]
   skin = Seasons
