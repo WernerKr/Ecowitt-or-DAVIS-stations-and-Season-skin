@@ -9,10 +9,11 @@ the data to the FOSHKplugin, and FOSHKplugin forwards the data to the Ecowittcus
 
 This provides the functionality of the GW1000 driver with all newer data (e.g., LDS sensor WH54, VPD) 
 that is no longer provided by the Ecowitt API (last Telnet v1.7.0).
-
+```
 Ecowitt protocol:
   - Ecowitt Gateways GW1000, GW1100, GW1200, GW2000, GW3000, WS38xx, WS39xx, WS1900, WN1980, WN1900, WH2650 
-  - Ecowitt wifi consoles HP2560, HP2550, HP3500, WS39xx, WS38xx, WN1980, WN1900, WS1900 
+  - Ecowitt wifi consoles HP2560, HP2550, HP3500, WS39xx, WS38xx, WN1980, WN1900, WS1900
+``` 
 All mapping and unit assignments are done in the Ecowittcustom driver
 
 The wview_extended database schema has been extended for Ecowitt data and is provided as wview_ecowitt schema.
@@ -25,12 +26,13 @@ This allows you to compare both data if a WH40 rain sensor is also present.
 
 If you want the signal values (0-4) provided by the FOSHKplugin to be expressed as percentages, 
 you can do so in the weewx.conf file in the section
+```
 [StdCalibrate]
 [[Corrections]]
 ws90_sig = ws90_sig * 25 if ws90_sig is not None else None
 ws85_sig = ws85_sig * 25 if ws85_sig is not None else None
 wh54_ch1_sig = wh54_ch1_sig * 25 if wh54_ch1_sig is not None else None
-
+```
 This will then be automatically taken into account in the SeasonsEcowitt skin (sensors.inc).
 
 FOSHKplugin:
@@ -45,7 +47,7 @@ Ecowitt protocol:
 ** FOSHKplugin ADD_More 
 = radcompensation,newVersion,upgrade,rainFallPriority,rainGain,piezo,rstRainDay,rstRainWeek,rstRainYear,rain1_gain,rain2_gain,rain3_gain,rain4_gain,rain5_gain
 
-
+```
 [Export]
 EVAL_VALUES = True
 ADD_ITEMS = 
@@ -73,7 +75,7 @@ FWD_PWD =
 FWD_STATUS = False
 FWD_MQTTCYCLE = 0
 FWD_EXEC = 
-
+```
 
 
 # Skin SeasonsEcowitt
@@ -138,12 +140,12 @@ Calculation of the sunshine duration and now too rain duration:
 
 Which, however, was modified by me weewx/user/sunrainduration.py
 and the configuration is done via the weewx.conf and this entry:
-
+```
 Code:
 [RadiationDays]
     min_sunshine = 120     	# Entry of extension radiationhours.py, if is installed (= limit value)
     sunshine_coeff = 0.8   	# Factor from which value sunshine is counted - the higher the later
-    sunshine_min = 18     	# below this value (W/m²), sunshine is not taken into account.
+    sunshine_min = 18     	# below this value (W/mÂ²), sunshine is not taken into account.
     sunshine_loop = 1      # use for sunshine loop packet (or archive: sunshine_loop = 0)
     rainDur_loop = 0       # use for rain duration loop packet - default is not       
     hailDur_loop = 0       # use for piezo-rain duration loop packet - default is not
