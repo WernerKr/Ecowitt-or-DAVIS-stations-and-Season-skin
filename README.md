@@ -82,7 +82,7 @@ FWD_EXEC =
 ```
 
 
-# Skin SeasonsEcowitt
+# Skin SeasonsEcowitt or SeasonDavis too
 Based on the new structure of the Seasons skin (sensor management in array) I have the Seasons Skin
 extended accordingly so that all possible sensor data of the Ecowitt stations/devices are displayed.
 There is also the option of displaying the air quality index for AQI EPA (US) or AQI EEA (EU).
