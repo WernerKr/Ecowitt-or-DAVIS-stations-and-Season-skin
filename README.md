@@ -1,5 +1,5 @@
 ## Driver Ecowittcustom
-   This driver fully supports all currently available data from Ecowitt Wi-Fi stations and/or gateways.
+   This driver fully supports all currently available data from Ecowitt Wi-Fi consoles and/or gateways.
    
    It supports both the Ecowitt Protocol and the Wunderground Protocol
 
@@ -11,7 +11,7 @@ If you also use Oliver's FOSHKplugin, and the corresponding Wi-Fi station also p
 or the gateways always provide the signals, the Ecowitt Custom function in the Ecowitt protocol sends 
 the data to the FOSHKplugin, and FOSHKplugin forwards the data to the Ecowittcustom driver for WeeWx.
 
-This provides the functionality of the GW1000 driver with all newer data (e.g., LDS sensor WH54, VPD) 
+This provides the functionality of the GW1000 driver with all newer data (e.g. inbuilt WS3910 CO2 sensor, LDS sensor WH54, VPD) 
 that is no longer provided by the Ecowitt API (last Telnet v1.7.0).
 ```
 Ecowitt protocol:
