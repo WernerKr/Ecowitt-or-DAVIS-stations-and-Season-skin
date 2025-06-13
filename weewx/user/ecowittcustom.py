@@ -168,7 +168,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Ecowittcustom'
-DRIVER_VERSION = '0.1.0'
+DRIVER_VERSION = '0.1.1'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -450,6 +450,8 @@ weewx.units.obs_group_dict['ldsheat_ch2'] = 'group_count'
 weewx.units.obs_group_dict['ldsheat_ch3'] = 'group_count'
 weewx.units.obs_group_dict['ldsheat_ch4'] = 'group_count'
 
+weewx.units.obs_group_dict['co2_batt6'] = 'group_count'
+
 weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['heap'] = 'group_data'
@@ -668,6 +670,7 @@ class Consumer(object):
         'co2_Temp': 'tf_co2',
         'co2_Hum': 'humi_co2',
         'co2_Batt': 'co2_batt',
+        'co2_batt6': 'co2_batt6',
         'pm1_0': 'pm1_co2',
         'pm4_0': 'pm4_co2',
         'pm10_0': 'pm10_co2',
@@ -1607,6 +1610,7 @@ class EcowittClient(Consumer):
             'co2in': 'co2in',
             'co2in_24h': 'co2in_24h',
             'co2_batt': 'co2_batt',
+            'co2_batt6': 'co2_batt6',
             'tf_co2': 'tf_co2',
             'humi_co2': 'humi_co2',
             'pm1_co2': 'pm1_co2',
