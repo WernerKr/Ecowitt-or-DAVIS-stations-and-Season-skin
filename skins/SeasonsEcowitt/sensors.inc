@@ -42,7 +42,7 @@
   #if $last_ts
     #set $delta = int($now - $last_ts)
     ##set $delta = 80
-    #if $delta < 70
+    #if $delta < 90
    
     #elif $delta < 3600
      #set $minutes = int($delta / 60)
@@ -482,7 +482,8 @@ $gettext('never')
  #for $x in $conns
   #if ($getattr($recent, $x).has_data and $userecentcon == 1) or $getattr($current, $x).has_data
     #set $sstate = $getattr($current, $x).raw
-    ##set $unitxx = $unit.label[$x]
+    #if $sstate != None
+
     #if ($sstate > 4) or ($ecowitt == 0)
     <tr>
       #set $xv = $getattr($current, $x)
@@ -496,8 +497,8 @@ $gettext('never')
       #elif $ecowitt == 0
        <td class="data">$get_conn_status($xv.raw)</td>
       #else
-       #set $xv = $getattr($current, $x).format("%.0f")
-        <td class="data">$xv</td>
+       #set $xv = $getattr($current, $x).format("%.0f", add_label=False)
+        <td class="data">$xv%</td>
       #end if
       #if $x != 'signal1_2' 
        #if $getattr($recent, $x).has_data
@@ -506,6 +507,8 @@ $gettext('never')
        #end if
       #end if
     </tr>
+    #end if
+
     #end if
   #end if
  #end for
