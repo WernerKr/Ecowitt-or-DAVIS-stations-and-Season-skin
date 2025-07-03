@@ -73,8 +73,6 @@ and
     #wn32_indoor = True
     #wn32_outdoor = True
 
-    #firmware_update_check_interval = 0
-
     #former debug_logging (here for wind) not more supported!:
     # provide additional log information to help debug wind issues
     #debug_wind = False
