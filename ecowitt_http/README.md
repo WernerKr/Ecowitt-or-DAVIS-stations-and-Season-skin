@@ -33,6 +33,12 @@ Not working:
 ```
 PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW3000% --test-service
 ```
+and
+```
+[Engine]
+    [[Services]]
+        data_services = user.ecowitt_http.EcowittHttpService
+```
 
 ### Settings in weewx.conf
 
@@ -91,12 +97,7 @@ All mapping and unit assignments are done now in the driver
 
 # Problem at the moment:
 ## Loop packets are captured but not used
-and
-```
-[Engine]
-    [[Services]]
-        data_services = user.ecowitt_http.EcowittHttpService
-```
+
 
 #### log from this driver:
 ```
