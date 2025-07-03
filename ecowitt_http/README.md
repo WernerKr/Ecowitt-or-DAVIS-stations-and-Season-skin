@@ -197,4 +197,4 @@ weewxd[647060]: INFO user.ecowitt_http: Problem with key Timestamp
 weewxd[647060]: INFO user.ecowitt_http: Processing history file '202507Allsensors_A.csv' from  GW3000A_V1.0.9 at 192.168.0.110
 
 ```
-
+None of the provided configuration options (weectl station reconfigure --driver=user.ecowitt_http --config=/etc/weewx/weewx4.conf) have been tested!
