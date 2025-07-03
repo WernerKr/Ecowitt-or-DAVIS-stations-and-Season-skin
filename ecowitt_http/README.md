@@ -91,6 +91,12 @@ All mapping and unit assignments are done now in the driver
 
 # Problem at the moment:
 ## Loop packets are captured but not used
+and
+```
+[Engine]
+    [[Services]]
+        data_services = user.ecowitt_http.EcowittHttpService
+```
 
 #### log from this driver:
 ```
