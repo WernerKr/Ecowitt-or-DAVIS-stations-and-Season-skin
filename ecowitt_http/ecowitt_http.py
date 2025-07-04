@@ -38,9 +38,8 @@ Revision History
         - corrected wh51 - forget to add sensors wh51 at sensors
         - corrected signal to None if signal id is "FFFFFFFE" or "FFFFFFFF"
         - add some unit-settings
-        not correct:
-        rain, piezo_rain
-        lightning_count 
+        - corrected rain, piezo_rain, lightning_count for loop packets
+        not yet verified: rain, piezo_rain, lightning_count from sdcard and cloud
 
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
@@ -675,6 +674,9 @@ DEFAULT_GROUPS = {
     'ws80.signal': 'group_count',
     'ws85.signal': 'group_count',
     'ws90.signal': 'group_count',
+    'ws85.version': 'group_count',
+    'ws90.version': 'group_count',
+
 }
 
 
@@ -1160,6 +1162,7 @@ class HttpMapper(FieldMapper):
         'lightning_distance': 'lightning.distance',
         'lightning_disturber_count': 'lightning.timestamp',
         #'lightning_num': 'lightning.count',
+        'lightningcount': 'lightning.count',
         'lightning_strike_count': 'lightning.count',
         'extraTemp1': 'ch_aisle.1.temp',
         'extraHumid1': 'ch_aisle.1.humidity',
@@ -1270,24 +1273,26 @@ class HttpMapper(FieldMapper):
     # modular rain map
     default_rain_map = {
         #'t_rainevent': 'rain.0x0D.val',
-        'eventRain': 'rain.0x0D.val',
+        'rain': 'rain.0x0D.val',
         #'t_rainRate': 'rain.0x0E.val',
         'rainrate': 'rain.0x0E.val',
         #'t_rainhour': 't_rainhour',
-        't_rainhour': 't_rainhour',
+        'hourRain': 't_rainhour',
         #'t_rainday': 'rain.0x10.val',
-        't_rainday': 'rain.0x10.val',
+        'dayRain': 'rain.0x10.val',
         #'t_rainweek': 'rain.0x11.val',
         'weekRain': 'rain.0x11.val',
         #'t_rainmonth': 'rain.0x12.val',
-        't_rainmonth': 'rain.0x12.val',
+        'monthRain': 'rain.0x12.val',
         #'t_rainyear': 'rain.0x13.val',
-        't_rainyear': 'rain.0x13.val',
+        'yearRain': 'rain.0x13.val',
         'srain_piezo': 'piezoRain.srain_piezo.val',
         #'p_rainevent': 'piezoRain.0x0D.val',
         'p_rain': 'piezoRain.0x0D.val',
+        'hail': 'piezoRain.0x0D.val',
         #'p_rainrate': 'piezoRain.0x0E.val',
         'rrain_piezo': 'piezoRain.0x0E.val',
+        'hailRate': 'piezoRain.0x0E.val',
         #'p_rainhour': 'p_rainhour',
         'hrain_piezo': 'p_rainhour',
         #'p_rainday': 'piezoRain.0x10.val',
@@ -1309,7 +1314,9 @@ class HttpMapper(FieldMapper):
     # modular sensor state map
     default_sensor_state_map = {
         'wh25_batt': 'wh25.battery',
+        'inTempBatteryStatus': 'wh25.battery',
         'wh26_batt': 'wh26.battery',
+        'outTempBatteryStatus': 'wh65.battery',
         'batteryStatus1': 'wn31.ch1.battery',
         'batteryStatus2': 'wn31.ch2.battery',
         'batteryStatus3': 'wn31.ch3.battery',
@@ -1448,6 +1455,10 @@ class HttpMapper(FieldMapper):
         'ws80_sig': 'ws80.signal',
         'ws85_sig': 'ws85.signal',
         'ws90_sig': 'ws90.signal',
+        
+        'ws85_ver': 'ws85.version',
+        'ws90_ver': 'ws90.version',
+
     }
     # construct the default map based on the modular maps
     default_map = (dict(default_obs_map))
@@ -1910,10 +1921,14 @@ class EcowittCommon:
                                               fw_update_check_interval=fw_update_check_interval,
                                               debug=self.driver_debug)
         self.last_lightning = None
+        self.lightning_mapping_confirmed = False
+        self.last_lightningcount = None
+
         self.last_rain = None
-        self.piezo_last_rain = None
         self.rain_mapping_confirmed = False
         self.rain_total_field = None
+
+        self.piezo_last_rain = None
         self.piezo_rain_mapping_confirmed = False
         self.piezo_rain_total_field = None
 
@@ -1981,6 +1996,212 @@ class EcowittCommon:
             log.info('%s%s' % (label, ' '.join(msg_list)))
         else:
             log.info('%sno wind data found' % (label,))
+
+# ==Neu ! ==========================================================================
+
+    def get_cumulative_rain_field(self, data):
+        """Determine the cumulative rain field used to derive field 'rain'.
+
+        Ecowitt gateway devices emit various rain totals but WeeWX needs a per
+        period value for field rain. Try the 'big' (four byte) counters
+        starting at the longest period and working our way down. This should
+        only need be done once.
+
+        This is further complicated by the introduction of 'piezo' rain with
+        the WS90. Do a second round of checks on the piezo rain equivalents and
+        create piezo equivalent properties.
+
+        data: dic of parsed device API data
+        """
+
+        # Do we have a confirmed field to use for calculating rain? If we do we
+        # can skip this otherwise we need to look for one.
+        if not self.rain_mapping_confirmed:
+            # We have no field for calculating rain so look for one, if device
+            # field 't_rainyear' is present used that as our first choice.
+            # Otherwise, work down the list in order of descending period.
+            if 'rain.0x13.val' in data:
+                self.rain_total_field = 'rain.0x13.val'
+                self.rain_mapping_confirmed = True
+            # rain.0x13.val is not present so now try rainmonth
+            elif 'rain.0x12.val' in data:
+                self.rain_total_field = 'rain.0x12.val'
+                self.rain_mapping_confirmed = True
+            # do nothing, we can try again next packet
+            else:
+                self.rain_total_field = None
+            # if we found a field log what we are using
+            if self.rain_mapping_confirmed:
+                log.info("Using '%s' for rain total" % self.rain_total_field)
+            elif self.driver_debug.rain:
+                # if debug_rain is set log that we had nothing
+                log.info("No suitable field found for rain")
+
+        # now do the same for piezo rain
+
+        # Do we have a confirmed field to use for calculating piezo rain? If we
+        # do we can skip this otherwise we need to look for one.
+        if not self.piezo_rain_mapping_confirmed:
+            # We have no field for calculating piezo rain so look for one, if
+            # device field 'p_rainyear' is present used that as our first
+            # choice. Otherwise, work down the list in order of descending
+            # period.
+            if 'piezoRain.0x13.val' in data:
+                self.piezo_rain_total_field = 'piezoRain.0x13.val'
+                self.piezo_rain_mapping_confirmed = True
+            # rainyear is not present so now try rainmonth
+            elif 'piezoRain.0x12.val' in data:
+                self.piezo_rain_total_field = 'piezoRain.0x12.val'
+                self.piezo_rain_mapping_confirmed = True
+            # do nothing, we can try again next packet
+            else:
+                self.piezo_rain_total_field = None
+            # if we found a field log what we are using
+            if self.piezo_rain_mapping_confirmed:
+                log.info("Using '%s' for piezo rain total" % self.piezo_rain_total_field)
+            elif self.driver_debug.rain:
+                # if debug_rain is set log that we had nothing
+                log.info("No suitable field found for piezo rain")
+
+    def calculate_rain(self, data):
+        """Calculate total rainfall for a period.
+
+        'rain' is calculated as the change in a user designated cumulative rain
+        field between successive periods. 'rain' is only calculated if the
+        field to be used has been selected and the designated field exists.
+
+        This is further complicated by the introduction of 'piezo' rain with
+        the WS90. Do a second round of calculations on the piezo rain
+        equivalents and calculate the piezo rain field.
+
+        data: dict of parsed device API data
+        """
+
+        # have we decided on a field to use and is the field present
+        if self.rain_mapping_confirmed and self.rain_total_field in data:
+            # yes on both counts, so get the new total
+            new_total = data[self.rain_total_field]
+            # now calculate field rain as the difference between the new and
+            # old totals
+            data['rain.0x0D.val'] = self.delta_rain(new_total, self.last_rain)
+            # if debug_rain is set log some pertinent values
+            if self.driver_debug.rain:
+                log.info("calculate_rain: last_rain=%s new_total=%s calculated rain=%s" % (self.last_rain,
+                                                                                         new_total,
+                                                                                         data['rain.0x0D.val']))
+            # save the new total as the old total for next time
+            self.last_rain = new_total
+
+        # now do the same for piezo rain
+
+        # have we decided on a field to use for piezo rain and is the field
+        # present
+        if self.piezo_rain_mapping_confirmed and self.piezo_rain_total_field in data:
+            # yes on both counts, so get the new total
+            piezo_new_total = data[self.piezo_rain_total_field]
+            # now calculate field p_rain as the difference between the new and
+            # old totals
+            data['piezoRain.0x0D.val'] = self.delta_rain(piezo_new_total,
+                                             self.piezo_last_rain,
+                                             descriptor='piezo rain')
+            # if debug_rain is set log some pertinent values
+            if self.driver_debug.rain:
+                log.info("calculate_rain: piezo_last_rain=%s piezo_new_total=%s "
+                       "calculated p_rain=%s" % (self.piezo_last_rain,
+                                                 piezo_new_total,
+                                                 data['piezoRain.0x0D.val']))
+            # save the new total as the old total for next time
+            self.piezo_last_rain = piezo_new_total
+
+    def calculate_lightning_count(self, data):
+        """Calculate total lightning strike count for a period.
+
+        'lightning_strike_count' is calculated as the change in field
+        'lightning.count' between successive periods. 'lightning_strike_count'
+        is only calculated if 'lightning.count' exists.
+
+        data: dict of parsed device API data
+        """
+
+        # is the lightningcount field present
+        if 'lightning.count' in data:
+            # yes, so get the new total
+            new_total = data['lightning.count']
+            #log.info('lightning.count %s', new_total)
+            # now calculate field lightning_strike_count as the difference
+            # between the new and old totals
+            data['lightning_strike_count'] = self.delta_lightning(new_total,
+                                                                  self.last_lightning)
+            # save the new total as the old total for next time
+            self.last_lightning = new_total
+
+    @staticmethod
+    def delta_rain(rain, last_rain, descriptor='rain'):
+        """Calculate rainfall from successive cumulative values.
+
+        Rainfall is calculated as the difference between two cumulative values.
+        If either value is None the value None is returned. If the previous
+        value is greater than the latest value a counter wrap around is assumed
+        and the latest value is returned.
+
+        rain:       current cumulative rain value
+        last_rain:  last cumulative rain value
+        descriptor: string to indicate what rain data we are working with
+        """
+
+        # do we have a last rain value
+        if last_rain is None:
+            # no, log it and return None
+            log.info("skipping %s measurement of %s: no last rain" % (descriptor, rain))
+            return None
+        # do we have a non-None current rain value
+        if rain is None:
+            # no, log it and return None
+            log.info("skipping %s measurement: no current rain data" % descriptor)
+            return None
+        # is the last rain value greater than the current rain value
+        if rain < last_rain:
+            # it is, assume a counter wrap around/reset, log it and return the
+            # latest rain value
+            log.info("%s counter wraparound detected: new=%s last=%s" % (descriptor, rain, last_rain))
+            if (rain) > 2:										#KW
+               log.info("%s too high rain detected: new=%s last=%s" % (descriptor, rain, last_rain))
+               return 0
+            return rain
+        # return the difference between the counts
+        return rain - last_rain
+
+    @staticmethod
+    def delta_lightning(count, last_count):
+        """Calculate lightning strike count from successive cumulative values.
+
+        Lightning strike count is calculated as the difference between two
+        cumulative values. If either value is None the value None is returned.
+        If the previous value is greater than the latest value a counter wrap
+        around is assumed and the latest value is returned.
+
+        count:      current cumulative lightning count
+        last_count: last cumulative lightning count
+        """
+
+        # do we have a last count
+        if last_count is None:
+            # no, log it and return None
+            log.info("Skipping lightning count of %s: no last count" % count)
+            return None
+        # do we have a non-None current count
+        if count is None:
+            # no, log it and return None
+            log.info("Skipping lightning count: no current count")
+            return None
+        # is the last count greater than the current count
+        if count < last_count:
+            # it is, assume a counter wrap around/reset, log it and return the
+            # latest count
+            log.info("Lightning counter wraparound detected: new=%s last=%s" % (count, last_count))
+            return count
+        # otherwise return the difference between the counts
+        return count - last_count
 
 
 # ============================================================================
@@ -2185,6 +2406,18 @@ class EcowittHttpService(weewx.engine.StdService, EcowittCommon):
         # packet to add to the loop packet
         if self.latest_sensor_data is not None:
             # we have a sensor data packet
+
+            # Krenn Werner - hier Regen und Blitz Änderungen
+
+            ## if not already done so determine which cumulative rain field will
+            ## be used to determine the per period rain field
+            #if not self.rain_mapping_confirmed or not self.piezo_rain_mapping_confirmed:
+            #    self.get_cumulative_rain_field(self.latest_sensor_data)
+            ## get the rainfall this period from total
+            #self.calculate_rain(self.latest_sensor_data)
+            ## get the lightning strike count this period from total
+            #self.calculate_lightning_count(self.latest_sensor_data)
+
             # map the raw data to WeeWX loop packet fields
             mapped_data = self.mapper.map_data(self.latest_sensor_data)
             # add 'usUnits' to the packet
@@ -4975,7 +5208,22 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                     packet['usUnits'] = self.unit_system
                     # use our mapper to map the raw data to WeeWX loop packet
                     # fields
+
+                    # Krenn Werner - hier korrigieren Regen und Blitz
+
+                    ## if not already determined, determine which cumulative rain
+                    ## field will be used to determine the per period rain field
+                    if not self.rain_mapping_confirmed or not self.piezo_rain_mapping_confirmed:
+                        self.get_cumulative_rain_field(queue_data)
+                    ## get the rainfall this period from total
+                    self.calculate_rain(queue_data)
+                    ## get the lightning strike count this period from total
+                    #log.info('queue_data %s' , queue_data)
+                    self.calculate_lightning_count(queue_data)
+
+                    ## map the raw data to WeeWX loop packet fields
                     mapped_data = self.mapper.map_data(queue_data)
+
                     # log the mapped data if necessary
                     if self.driver_debug.loop:
                         if 'datetime' in mapped_data:
@@ -10346,7 +10594,8 @@ class EcowittSensors:
     batt_volt = ('wh68', 'wh51', 'wh54', 'wn34', 'wn35', 'ws80', 'ws85', 'ws90')
     # map of 'dotted' get_livedata_info sensor voltage fields to sensor address
     sensor_with_voltage = {
-        'piezoRain.0x13.voltage': 48,
+        'piezoRain.0x13.voltage': 48,     #WH90
+        #'piezoRain.0x13.voltage': 49,	#WH85
         'ch_soil.1.voltage': 14,
         'ch_soil.2.voltage': 15,
         'ch_soil.3.voltage': 16,
