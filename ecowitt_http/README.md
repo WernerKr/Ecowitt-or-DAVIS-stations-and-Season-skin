@@ -18,9 +18,9 @@ Modified by me!
         - corrected wh51 - forget to add sensors wh51 at sensors
         - corrected signal to None if signal id is "FFFFFFFE" or "FFFFFFFF"
         - add some unit-settings
-        not correct:
-        rain, piezo_rain
-        lightning_count 
+        - corrected rain, piezo_rain, lightning_count for loop packets
+        not yet verified: rain, piezo_rain, lightning_count from sdcard and cloud
+
 
 Tested and completed:
 ```
@@ -214,6 +214,13 @@ weewxd[647060]: INFO user.ecowitt_http: Processing history file '202507A.csv' fr
 weewxd[647060]: INFO user.ecowitt_http: Problem with key Time
 weewxd[647060]: INFO user.ecowitt_http: Problem with key Timestamp
 weewxd[647060]: INFO user.ecowitt_http: Processing history file '202507Allsensors_A.csv' from  GW3000A_V1.0.9 at 192.168.0.110
+new:
+weewxd[790259]: INFO user.ecowitt_http: Using 'rain.0x13.val' for rain total
+weewxd[790259]: INFO user.ecowitt_http: Using 'piezoRain.0x13.val' for piezo rain total
+weewxd[790259]: INFO user.ecowitt_http: skipping rain measurement of 353.3: no last rain
+weewxd[790259]: INFO user.ecowitt_http: skipping piezo rain measurement of 345.9: no last rain
+weewxd[790259]: INFO user.ecowitt_http: Skipping lightning count of 11: no last count
+
 
 ```
 None of the provided configuration options (weectl station reconfigure --driver=user.ecowitt_http --config=/etc/weewx/weewx4.conf) have been tested!
