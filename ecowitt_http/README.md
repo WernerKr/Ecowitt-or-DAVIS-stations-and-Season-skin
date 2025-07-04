@@ -12,6 +12,16 @@ Modified by me!
         - completed all data from the SDcard GW3000
         - completed all data from the device 
 
+        4 July 2025           
+        - corrected radiation
+        - corrected co2_Temp
+        - corrected wh51 - forget to add sensors wh51 at sensors
+        - corrected signal to None if signal id is "FFFFFFFE" or "FFFFFFFF"
+        - add some unit-settings
+        not correct:
+        rain, piezo_rain
+        lightning_count 
+
 Tested and completed:
 ```
 PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW3000% --live-data
@@ -95,7 +105,11 @@ All mapping and unit assignments are done now in the driver
 
 # Problem at the moment:
 ## Loop packets are captured but not used
-
+Found the problem: to use the loop packets, this setting in weewx.conf is necessary
+```
+[StdArchive]
+    record_generation = software
+```
 
 #### log from this driver:
 ```
