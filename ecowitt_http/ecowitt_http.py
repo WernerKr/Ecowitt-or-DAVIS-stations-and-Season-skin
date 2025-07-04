@@ -21,17 +21,26 @@ this program.  If not, see https://www.gnu.org/licenses/.
 Modified Werner Krenn
 
 
-Version: 0.1.0a28x                                  Date: X July 2025
+Version: 0.1.0x                                  Date: x July 2025
 
 Revision History
-    X May 2025            v0.1.0
+    X May 2025            v0.1.x
         - initial release
-    x July 2025            v0.1.x
+    3 July 2025            v0.1.0x
         - WH45/WH46 = co2 missed - added
         - changed some keys that are the same as my ecowittcustom driver
         - add some keys
         - completed all data from the SDcard GW3000
         - completed all data from the device 
+    4 July 2025            v0.1.0x
+        - corrected radiation
+        - corrected co2_Temp
+        - corrected wh51 - forget to add sensors wh51 at sensors
+        - corrected signal to None if signal id is "FFFFFFFE" or "FFFFFFFF"
+        - add some unit-settings
+        not correct:
+        rain, piezo_rain
+        lightning_count 
 
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
@@ -144,7 +153,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.1.0_test'
+DRIVER_VERSION = '0.1.1'
 
 # device models that are supported by the driver
 SUPPORTED_DEVICES = ('GW1100', 'GW1200', 'GW2000',
@@ -190,7 +199,8 @@ DEFAULT_LOST_CONTACT_LOG_PERIOD = 21600
 DEFAULT_UNIT_SYSTEM = weewx.METRICWX
 # default battery state filtering (whether to only display battery state data
 # for connected sensors)
-DEFAULT_FILTER_BATTERY = True
+DEFAULT_FILTER_BATTERY = False
+
 # default firmware update check interval
 DEFAULT_FW_CHECK_INTERVAL = 86400
 # The HTTP API will return some sensor data (usually meta data) for sensors
@@ -223,6 +233,15 @@ weewx.units.obs_group_dict['soilMoist13'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist14'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist15'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist16'] = 'group_percent'
+
+weewx.units.obs_group_dict['pm1_24h_co2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm4_24h_co2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_24h_co2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm10_24h_co2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_avg_24h_ch1'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_avg_24h_ch2'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_avg_24h_ch3'] = 'group_concentration'
+weewx.units.obs_group_dict['pm25_avg_24h_ch4'] = 'group_concentration'
 
 weewx.units.obs_group_dict['rainrate'] = 'group_rainrate'
 weewx.units.obs_group_dict['eventRain'] = 'group_rain'
@@ -261,6 +280,7 @@ weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
 weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
 weewx.units.obs_group_dict['runtime'] = 'group_deltatime'
 weewx.units.obs_group_dict['heap'] = 'group_data'
+weewx.units.obs_group_dict['pb'] = 'group_data'
 weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['ldsbatt1'] = 'group_volt'
@@ -378,6 +398,7 @@ DEFAULT_GROUPS = {
     'lightning.timestamp': 'group_time',
     'lightning.count': 'group_count',
     'co2.temperature': 'group_temperature',
+    'co2.temp': 'group_temperature',
     'co2.humidity': 'group_percent',
     'co2.PM25': 'group_concentration',
     'co2.PM25_RealAQI': 'group_count',
@@ -1168,7 +1189,7 @@ class HttpMapper(FieldMapper):
         'co2in_24h': 'wh25.CO2_24H',
         'co2': 'co2.CO2',
         'co2_24h': 'co2.CO2_24H',
-        'co2_Temp': 'co2.temperature',
+        'co2_Temp': 'co2.temp',
         'co2_Hum': 'co2.humidity',
         'pm2_5': 'co2.PM25',
         'pm25_24h_co2': 'co2.PM25_24H',
@@ -1603,7 +1624,7 @@ class SdMapper(FieldMapper):
         'lightning.timestamp': 'Thunder time',
         'lightning.count': 'Thunder count',
         'lightning.distance': 'Thunder distance',
-        'co2.temperature': 'AQIN Temperature',
+        'co2.temp': 'AQIN Temperature',
         'co2.humidity': 'AQIN Humidity',
         'co2.CO2': 'AQIN CO2',
         'co2.PM25': 'AQIN PM2.5',
@@ -4181,7 +4202,7 @@ class EcowittDeviceCatchup:
                               'heatindex5', 'heatindex6', 'heatindex7', 'heatindex8',
                               'ch_temp.1.temp', 'ch_temp.2.temp', 'ch_temp.3.temp', 'ch_temp.4.temp',
                               'ch_temp.5.temp', 'ch_temp.6.temp', 'ch_temp.7.temp', 'ch_temp.8.temp',
-                              'co2.temperature'),
+                              'co2.temperature', 'co2.temp'),
         'group_speed' : ('common_list.0x0B.val', 'common_list.0x0C.val'),
         'group_pressure': ('wh25.abs', 'wh25.rel', 'common_list.5.val'),
         'group_pressurevpd': ('common_list.5.val'),
@@ -9331,13 +9352,16 @@ class EcowittHttpParser:
                 data['battery'] = None
             # attempt to obtain the sensor signal state, be prepared to catch
             # any exceptions encountered when parsing the data
-            try:
+            if sensor.get('id').lower() in self.not_registered:
+              data['signal'] = None
+            else:
+             try:
                 # obtain the sensor signal state as an integer
                 data['signal'] = int(sensor.get('signal'))
-            except (TypeError, ValueError):
+             except (TypeError, ValueError):
                 data['signal'] = None
-            # attempt to determine if the sensor is enabled, be prepared to
-            # catch any exceptions encountered when parsing the data
+             # attempt to determine if the sensor is enabled, be prepared to
+             # catch any exceptions encountered when parsing the data
             try:
                 # obtain the sensor enabled state as an integer
                 data['enabled'] = int(sensor.get('idst')) == 1
@@ -9942,7 +9966,7 @@ class EcowittHttpParser:
         # problem
         try:
             # first obtain the light as a ValueTuple
-            light_vt = self.parse_obs_value('val', item, 'group_illuminance')
+            light_vt = self.parse_obs_value('val', item, 'group_radiation')
         except (KeyError, UnitError) as e:
             # Either the 'val' key does not exist or there was some other
             # problem processing the data, irrespective we cannot continue.
@@ -9956,7 +9980,7 @@ class EcowittHttpParser:
             # we have a numeric value, convert it to the unit system used by the
             # driver and save against the 'val' key
             _item['val'] = weewx.units.convert(light_vt,
-                                               weewx.units.std_groups[self.unit_system]['group_illuminance']).value
+                                               weewx.units.std_groups[self.unit_system]['group_radiation']).value
         # process the 'voltage' key/value if it exists, wrap in a try.. except
         # in case there is a problem
         try:
@@ -11767,7 +11791,7 @@ class DirectEcowittDevice:
                     'common_list.0x15.val', 'common_list.0x15.voltage',
                     'common_list.0x16.val', 'common_list.0x16.voltage',
                     'common_list.0x17.val', 'common_list.0x17.voltage',
-                    'co2.temperature', 'co2.humidity', 'co2.CO2', 'co2.CO2_24H', 'co2.battery',
+                    'co2.temperature', 'co2.temp', 'co2.humidity', 'co2.CO2', 'co2.CO2_24H', 'co2.battery',
                     'co2.PM25', 'co2.PM25_RealAQI', 'co2.PM25_24HAQI', 'co2.PM25_24H',
                     'co2.PM10', 'co2.PM10_RealAQI', 'co2.PM10_24HAQI', 'co2.PM10_24H',
                     'co2.PM1', 'co2.PM1_RealAQI', 'co2.PM1_24HAQI', 'co2.PM1_24H',
@@ -11819,6 +11843,10 @@ class DirectEcowittDevice:
                     'wh51.ch3.battery', 'wh51.ch3.signal', 'wh51.ch4.battery', 'wh51.ch4.signal',
                     'wh51.ch5.battery', 'wh51.ch5.signal', 'wh51.ch6.battery', 'wh51.ch6.signal',
                     'wh51.ch7.battery', 'wh51.ch7.signal', 'wh51.ch8.battery', 'wh51.ch8.signal',
+                    'wh51.ch9.battery', 'wh51.ch9.signal', 'wh51.ch10.battery', 'wh51.ch10.signal',
+                    'wh51.ch11.battery', 'wh51.ch11.signal', 'wh51.ch12.battery', 'wh51.ch12.signal',
+                    'wh51.ch13.battery', 'wh53.ch11.signal', 'wh51.ch14.battery', 'wh51.ch14.signal',
+                    'wh51.ch15.battery', 'wh51.ch15.signal', 'wh51.ch16.battery', 'wh51.ch16.signal',
                     'wh54.ch1.battery', 'wh54.ch1.signal', 'wh54.ch2.battery', 'wh54.ch2.signal',
                     'wh54.ch3.battery', 'wh54.ch3.signal', 'wh54.ch4.battery', 'wh54.ch4.signal',
                     'wh55.ch1.battery', 'wh55.ch1.signal', 'wh55.ch2.battery', 'wh55.ch2.signal',
@@ -11830,7 +11858,7 @@ class DirectEcowittDevice:
                     ]
 
     sensor_display_order = ( 'wh25', 'wh26', 'wn31', 'wn34', 'wn35', 'wh40', 
-                             'wh41', 'wh45', 'wh54', 'wh55', 'wh57',
+                             'wh41', 'wh45', 'wh51', 'wh54', 'wh55', 'wh57',
                              'ws68', 'ws69', 'ws80', 'ws85', 'ws90')
     def __init__(self, namespace, arg_parser, stn_dict, **kwargs):
         """Initialise a DirectEcowittDevice object."""
