@@ -53,6 +53,9 @@ and
 ### Settings in weewx.conf
 
 ```
+# The WeeWX 'loop_on_init' setting can be used to mitigate such
+# problems by having WeeWX retry startup indefinitely. Set to '0' to attempt
+# startup once only or '1' to attempt startup indefinitely.
 # Whether to try indefinitely to load the driver
 loop_on_init = 1
 
