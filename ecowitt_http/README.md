@@ -53,6 +53,9 @@ and
 ### Settings in weewx.conf
 
 ```
+# Whether to try indefinitely to load the driver
+loop_on_init = 1
+
 [EcowittHttp]
     # the driver to use
     driver = user.ecowitt_http
@@ -93,7 +96,6 @@ and
     debug = parser, sensors, catchup  
 
     catchup_grace = 0
-    #loop_on_init = 1    # ??????
 
     ip_address = 192.168.0.110
     api_key = 00000000-1111-2222-3333-444444444444
