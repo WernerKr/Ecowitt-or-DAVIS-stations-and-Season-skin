@@ -68,9 +68,9 @@ loop_on_init = 1
     # how many attempts to contact the device before giving up
     max_tries = 3
     # wait time in seconds between retries to contact the device
-    retry_wait = 2
+    retry_wait = 5
     # max wait for device to respond to a HTTP request
-    url_timeout = 3
+    url_timeout = 10
     
     # whether to show all battery state data including nonsense data and 
     # sensors that are disabled sensors and connecting
@@ -94,7 +94,7 @@ loop_on_init = 1
     #debug_wind = False
 
     #debug_logging new with list:
-    #debug = rain, wind, loop, sensors, parser, catchup, collector
+    #debug = rain, wind, loop, sensors, parser, catchup, collector, archive
 
     debug = parser, sensors, catchup  
 
