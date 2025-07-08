@@ -1,4 +1,4 @@
-[ecott_net_api.txt](https://github.com/user-attachments/files/21118659/ecott_net_api.txt)## Driver ecowitt_http
+## Driver ecowitt_http
 forked from 
 https://github.com/gjr80/weewx-ecowitt_local_http/blob/master
 
@@ -230,5 +230,6 @@ weewxd[790259]: INFO user.ecowitt_http: Skipping lightning count of 11: no last 
 ```
 # Example Data from ecowitt.net:
 
-ecowitt_net_api.txt
+ecowitt_net_api.txt -> 634.420 Byte !!!
+
 https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/edit/main/ecowitt_http/ecowitt_api.txt
