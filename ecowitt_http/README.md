@@ -59,6 +59,9 @@ and
 # Whether to try indefinitely to load the driver
 loop_on_init = 1
 
+[Station]
+    station_type = EcowittHttp
+
 [EcowittHttp]
     # the driver to use
     driver = user.ecowitt_http
@@ -104,6 +107,369 @@ loop_on_init = 1
     api_key = 00000000-1111-2222-3333-444444444444
     app_key = DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
     mac = 5C:01:3B:46:C3:FF
+
+[StdCalibrate]
+    
+    [[Corrections]]
+        foo = foo + 0.2
+        luminosity = radiation * 126.7
+        # radiation = luminosity / 126.7 if luminosity is not None else None
+        
+        rxCheckPercent = ws80_sig * 25 if ws80_sig is not None else None
+        
+        # rxCheckPercent = wh25_sig * 25 if wh25_sig is not None else None
+        # rxCheckPercent = wh68_sig * 25 if wh68_sig is not None else None
+        # rxCheckPercent = wh65_sig * 25 if wh65_sig is not None else None
+        
+        hail = p_rain if p_rain is not None else None
+        hailRate = p_rainrate if p_rainrate is not None else None
+        pb = heap if heap is not None else None
+        
+        lightning_distance_save = lightning_distance if lightning_distance is not None else None
+        lightning_distance = lightning_distance if lightning_strike_count > 0 else None
+        lightning_noise_count = lightning_strike_count if lightning_strike_count > 0 else None
+
+        #example: 
+        #signal1 = ws80_sig * 25 if ws80_sig is not None else None
+        #signal2 = wh31_ch1_sig * 25 if wh31_ch1_sig is not None else None
+        #signal3 = wn34_ch1_sig * 25 if wn34_ch1_sig is not None else None
+        #signal4 = wh40_sig * 25 if wh40_sig is not None else None
+        #signal5 = wh45_sig * 25 if wh45_sig is not None else None
+        #signal6 = wh57_sig * 25 if wh57_sig is not None else None
+        #signal7 = wh51_ch1_sig * 25 if wh51_ch1_sig is not None else None
+        #signal8 = wn35_ch1_sig * 25 if wn35_ch1_sig is not None else None
+        
+        ws90_sig = ws90_sig * 25 if ws90_sig is not None else None
+        ws85_sig = ws85_sig * 25 if ws85_sig is not None else None
+        wh54_ch1_sig = wh54_ch1_sig * 25 if wh54_ch1_sig is not None else None
+
+        #wh31_ch1_sig = wh31_ch1_sig *25 if wh31_ch1_sig is not None else None
+        #wh31_ch2_sig = wh31_ch2_sig *25 if wh31_ch2_sig is not None else None
+        #wh31_ch3_sig = wh31_ch3_sig *25 if wh31_ch3_sig is not None else None
+        #wh31_ch4_sig = wh31_ch4_sig *25 if wh31_ch4_sig is not None else None
+        #wh31_ch5_sig = wh31_ch5_sig *25 if wh31_ch5_sig is not None else None
+        #wh31_ch6_sig = wh31_ch6_sig *25 if wh31_ch6_sig is not None else None
+        #wh31_ch7_sig = wh31_ch7_sig *25 if wh31_ch7_sig is not None else None
+        #wh31_ch8_sig = wh31_ch8_sig *25 if wh31_ch8_sig is not None else None
+
+##############################################################################
+#   This section controls the origin of derived values.
+[StdWXCalculate]
+    
+    [[Calculations]]
+        # How to calculate derived quantities.  Possible values are:
+        #  hardware        - use the value provided by hardware
+        #  software        - use the value calculated by weewx
+        #  prefer_hardware - use value provide by hardware if available,
+        #                      otherwise use value calculated by weewx
+        
+        pressure = prefer_hardware
+        altimeter = prefer_hardware
+        appTemp = prefer_hardware
+        barometer = prefer_hardware
+        cloudbase = prefer_hardware
+        dewpoint = prefer_hardware
+        ET = prefer_hardware
+        heatindex = prefer_hardware
+        humidex = prefer_hardware
+        inDewpoint = prefer_hardware
+        maxSolarRad = prefer_hardware
+        rainRate = prefer_hardware
+        windchill = prefer_hardware
+        windrun = prefer_hardware
+        GTS = "software,archive"
+        GTSdate = "software,archive"
+        utcoffsetLMT = "software,archive"
+        dayET = "prefer_hardware,archive"
+        ET24 = "prefer_hardware,archive"
+        yearGDD = "software,archive"
+        seasonGDD = "software,archive"
+        rain = prefer_hardware
+        hail = prefer_hardware
+
+    #  [[WXXTypes]]
+    #    [[[windDir]]]
+    #       force_null = True
+    #    [[[maxSolarRad]]]
+    #      algorithm = rs
+    #      atc = 0.8
+    #      nfac = 2
+    #    [[[ET]]]
+    #      wind_height = 2.0
+    #      et_period = 3600
+    #    [[[heatindex]]]
+    #      algorithm = new
+    #  [[PressureCooker]]
+    #    max_delta_12h = 1800
+    #    [[[altimeter]]]
+    #      algorithm = aaASOS    # Case-sensitive!
+    #  [[RainRater]]
+    #    rain_period = 900
+    #    retain_period = 930
+    #  [[Delta]]
+    #    [[[rain]]]
+    #      input = totalRain
+    
+    [[WXXTypes]]
+        [[[maxSolarRad]]]
+            algorithm = rs
+            atc = 0.9
+
+##############################################################################
+#   This section binds a data store to a database.
+[DataBindings]
+    [[wx_binding]]
+        # The database must match one of the sections in [Databases].
+        # This is likely to be the only option you would want to change.
+        database = archive_sqlite
+        # The name of the table within the database.
+        table_name = archive
+        # The manager handles aggregation of data for historical summaries.
+        manager = weewx.manager.DaySummaryManager
+        # The schema defines the structure of the database.
+        # It is *only* used when the database is created.
+        schema = schemas.wview_ecowitt.schema
+##############################################################################
+# Options for extension Ecowittcustom, GW1000, Interceptor or EcowittHttp
+[Accumulator]
+    
+    [[model]]
+        accumulator = firstlast
+        extractor = last
+    [[stationtype]]
+        accumulator = firstlast
+        extractor = last
+    
+    [[gain0]]
+        extractor = last
+    [[gain1]]
+        extractor = last
+    [[gain2]]
+        extractor = last
+    [[gain3]]
+        extractor = last
+    [[gain4]]
+        extractor = last
+    [[gain5]]
+        extractor = last
+    
+    [[lightning_distance]]
+        extractor = last
+    [[lightning_strike_count]]
+        extractor = sum
+    [[lightning_last_det_time]]
+        extractor = last
+    [[lightningcount]]
+        extractor = last
+    
+    [[maxdailygust]]
+        extractor = last
+    [[daymaxwind]]
+        extractor = last
+    [[windspdmph_avg10m]]
+        extractor = last
+    [[winddir_avg10m]]
+        extractor = last
+    
+    [[rainRate]]
+        extractor = max
+    [[stormRain]]
+        extractor = last
+    [[hourRain]]
+        extractor = last
+    [[dayRain]]
+        extractor = last
+    [[weekRain]]
+        extractor = last
+    [[monthRain]]
+        extractor = last
+    [[yearRain]]
+        extractor = last
+    [[totalRain]]
+        extractor = last
+    
+    [[rrain_piezo]]
+        extractor = max
+    [[erain_piezo]]
+        extractor = last
+    [[hrain_piezo]]
+        extractor = last
+    [[drain_piezo]]
+        extractor = last
+    [[wrain_piezo]]
+        extractor = last
+    [[mrain_piezo]]
+        extractor = last
+    [[yrain_piezo]]
+        extractor = last
+    
+    [[p_rainrate]]
+        extractor = max
+    [[p_eventrain]]
+        extractor = last
+    [[p_hourrain]]
+        extractor = last
+    [[p_dayrain]]
+        extractor = last
+    [[p_weekrain]]
+        extractor = last
+    [[p_monthrain]]
+        extractor = last
+    [[p_yearrain]]
+        extractor = last
+    
+    [[dayHail]]
+        extractor = last
+    [[hail]]
+        extractor = sum
+    
+    [[vpd]]
+        extractor = last
+    [[depth_ch1]]
+        extractor = last
+    [[depth_ch2]]
+        extractor = last
+    [[depth_ch3]]
+        extractor = last
+    [[depth_ch4]]
+        extractor = last
+    
+    [[pm2_51_24hav]]
+        extractor = last
+    [[pm2_52_24hav]]
+        extractor = last
+    [[pm2_53_24hav]]
+        extractor = last
+    [[pm2_54_24hav]]
+        extractor = last
+    [[24havpm255]]
+        extractor = last
+    
+    [[pm2_51_24h_avg]]
+        extractor = last
+    [[pm2_52_24h_avg]]
+        extractor = last
+    [[pm2_53_24h_avg]]
+        extractor = last
+    [[pm2_54_24h_avg]]
+        extractor = last
+    [[pm2_55_24h_avg]]
+        extractor = last
+    [[pm10_24h_avg]]
+        extractor = last
+    [[co2_24h_avg]]
+        extractor = last
+    
+    [[wh25_batt]]
+        extractor = last
+    [[wh26_batt]]
+        extractor = last
+    [[wh31_ch1_batt]]
+        extractor = last
+    [[wh31_ch2_batt]]
+        extractor = last
+    [[wh31_ch3_batt]]
+        extractor = last
+    [[wh31_ch4_batt]]
+        extractor = last
+    [[wh31_ch5_batt]]
+        extractor = last
+    [[wh31_ch6_batt]]
+        extractor = last
+    [[wh31_ch7_batt]]
+        extractor = last
+    [[wh31_ch8_batt]]
+        extractor = last
+    [[wn35_ch1_batt]]
+        extractor = last
+    [[wn35_ch2_batt]]
+        extractor = last
+    [[wn35_ch3_batt]]
+        extractor = last
+    [[wn35_ch4_batt]]
+        extractor = last
+    [[wn35_ch5_batt]]
+        extractor = last
+    [[wn35_ch6_batt]]
+        extractor = last
+    [[wn35_ch7_batt]]
+        extractor = last
+    [[wn35_ch8_batt]]
+        extractor = last
+    [[wh40_batt]]
+        extractor = last
+    [[wh41_ch1_batt]]
+        extractor = last
+    [[wh41_ch2_batt]]
+        extractor = last
+    [[wh41_ch3_batt]]
+        extractor = last
+    [[wh41_ch4_batt]]
+        extractor = last
+    [[wh45_batt]]
+        extractor = last
+    [[wh51_ch1_batt]]
+        extractor = last
+    [[wh51_ch2_batt]]
+        extractor = last
+    [[wh51_ch3_batt]]
+        extractor = last
+    [[wh51_ch4_batt]]
+        extractor = last
+    [[wh51_ch5_batt]]
+        extractor = last
+    [[wh51_ch6_batt]]
+        extractor = last
+    [[wh51_ch7_batt]]
+        extractor = last
+    [[wh51_ch8_batt]]
+        extractor = last
+    [[wh51_ch9_batt]]
+        extractor = last
+    [[wh51_ch10_batt]]
+        extractor = last
+    [[wh51_ch11_batt]]
+        extractor = last
+    [[wh51_ch12_batt]]
+        extractor = last
+    [[wh51_ch13_batt]]
+        extractor = last
+    [[wh51_ch14_batt]]
+        extractor = last
+    [[wh51_ch15_batt]]
+        extractor = last
+    [[wh51_ch16_batt]]
+        extractor = last
+    [[wh55_ch1_batt]]
+        extractor = last
+    [[wh55_ch2_batt]]
+        extractor = last
+    [[wh55_ch3_batt]]
+        extractor = last
+    [[wh55_ch4_batt]]
+        extractor = last
+    [[wh57_batt]]
+        extractor = last
+    [[wh65_batt]]
+        extractor = last
+    [[wh68_batt]]
+        extractor = last
+    [[ws80_batt]]
+        extractor = last
+    [[ws85_batt]]
+        extractor = last
+    [[ws90_batt]]
+        extractor = last
+    [[ws85cap_volt]]
+        extractor = last
+    [[ws90cap_volt]]
+        extractor = last
+    [[ws1900batt]]
+        extractor = last
+    [[console_batt]]
+        extractor = last
+
+
 
 ```
 All mapping and unit assignments are done now in the driver
