@@ -146,7 +146,7 @@ loop_on_init = 1
         lightning_distance = lightning_distance if lightning_strike_count > 0 else None
         lightning_noise_count = lightning_strike_count if lightning_strike_count > 0 else None
 
-        #example: 
+        #example to get signals in procent: 
         #signal1 = ws80_sig * 25 if ws80_sig is not None else None
         #signal2 = wh31_ch1_sig * 25 if wh31_ch1_sig is not None else None
         #signal3 = wn34_ch1_sig * 25 if wn34_ch1_sig is not None else None
