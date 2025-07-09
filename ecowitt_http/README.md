@@ -11,16 +11,33 @@ Modified by me!
         - add some keys
         - completed all data from the SDcard GW3000
         - completed all data from the device 
-
-        4 July 2025           
+    4 July 2025           
         - corrected radiation
         - corrected co2_Temp
         - corrected wh51 - forget to add sensors wh51 at sensors
         - corrected signal to None if signal id is "FFFFFFFE" or "FFFFFFFF"
         - add some unit-settings
         - corrected rain, piezo_rain, lightning_count for loop packets
-        not yet verified: rain, piezo_rain, lightning_count from sdcard and cloud
-
+    5 July 2025
+        - add missed wh40_sig
+        - changed daymaxwind to maxdailygust (because customecowitt driver)
+        - hail, hailrate is Piezo Rain too
+        - add wh40_batt, wh80_batt, wh85_batt, wh95_bat
+        - now is 'hailBatteryStatus': 'piezoRain.0x13.voltage',
+        - add correction for rain, piezo_rain, lightning_count with data from sdcard
+    6 July 2025
+        - added more values (soilmoist9..soilmoist16, ...) to history data
+          added debug option "archive"
+    7 July 2025 
+        - added voltage for/from leaf sensors
+        - increased the default url_timeout to 10 - but seems do be better with 20 
+        - corrected history - mapping from ecowitt.net
+    8 July 2025
+        - added ws85_ver, ws90_ver, radiationcompensation, upgrade, newVersion,
+                rain_source, rain_priority, rain_day_reset, rain_week_reset, rain_annual_reset,
+                piezo, raingain, gain0, gain1, gain2, gain3, gain4
+                to the supported fields, because compatible with Ecowitt Custom Driver and the GW1000 Driver
+       - if app_key, api_key or mac are not set, no further attempts will be made to retrieve data from Ecowitt.net
 
 Tested and completed:
 ```
