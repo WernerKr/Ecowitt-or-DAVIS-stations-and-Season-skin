@@ -139,6 +139,12 @@ loop_on_init = 1
     app_key = DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
     mac = 5C:01:3B:46:C3:FF
 
+##########################################################################
+
+[StdArchive]
+    record_generation = software
+
+###########################################################################
 [StdCalibrate]
     
     [[Corrections]]
@@ -505,12 +511,27 @@ loop_on_init = 1
 ```
 All mapping and unit assignments are done now in the driver
 
-# Problem at the moment:
 ## Loop packets are captured but not used
 Found the problem: to use the loop packets, this setting in weewx.conf is necessary
 ```
 [StdArchive]
     record_generation = software
+```
+#### Inconsistent data handling between Ecowitt cloud (ecowitt.net), SDCard (GW3000) and local http-Api
+This data can you get via ecowitt.net, but not from SDCard and the local http-Api
+```
+This data applies to (battery are in Volt):
+ch_lds?.ldsheat_ch1 ... ch4
+battery.rainfall_sensor
+battery.wind_sensor
+battery.haptic_array_capacitor
+
+from the displays:
+battery.console
+battery.ws1900
+battery.ws1800
+battery.ws6006
+
 ```
 
 #### log from this driver:
