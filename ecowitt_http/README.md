@@ -67,6 +67,20 @@ and
         data_services = user.ecowitt_http.EcowittHttpService
 ```
 
+### To get api_key, app_key for Ecowitt.net:
+https://doc.ecowitt.net/web/#/apiv3en?page_id=11
+```
+Getting Started
+1. Register for developer’s account
+Please go to Ecowitt.net platform, Register and Login.
+
+2. Create Application Key and API key
+Go to “Private Center”, and generate your:
+
+Application Key: key for identifying application scenario, and it must be used together with API key together.
+API Key: key for identifying user profile, interface privilege, and must work with Application Key.
+```
+
 ### Settings in weewx.conf
 
 ```
