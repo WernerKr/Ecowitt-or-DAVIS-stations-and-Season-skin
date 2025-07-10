@@ -8,6 +8,7 @@
 ## battery status, and various voltages.  if there are no data available,
 ## then this degenerates to nothing displayed.
 
+## 2025-07-05	new wh40_batt, wh80_batt, wh85_batt, wh90_batt -> Ecowitt_Http driver
 
 ## remember the current time - we will use it more than once.
 #import time
@@ -100,7 +101,11 @@ $gettext('never')
                           ('leak_Batt2', 'get_multi_battery_status'),
                           ('leak_Batt3', 'get_multi_battery_status'),
                           ('leak_Batt4', 'get_multi_battery_status'),
-                          ('lightning_Batt', 'get_multi_battery_status')
+                          ('lightning_Batt', 'get_multi_battery_status'),
+                          ('wh40_batt', 'get_multi_battery_status'),
+                          ('wh80_batt', 'get_multi_battery_status'),
+                          ('wh85_batt', 'get_multi_battery_status'),
+                          ('wh90_batt', 'get_multi_battery_status'),
                          ]
 ##
 #set $signal_data = [('wh24_sig'),
@@ -328,7 +333,6 @@ $gettext('never')
 #set $testvoltage = True
 #if $testvoltage
 #set $voltagesno = [("ws1900batt",2.4),
-("wh85_batt",2.4),
 ("ws85_batt",2.4),
 ("ws85cap_volt",2.4),
 ]
@@ -371,7 +375,7 @@ $gettext('never')
 
 #set $have_conn = 0
 #for $x in $conns
-  #if $getattr($current, $x).has_data
+  #if $getattr($latest, $x).has_data
     #set $have_conn = 1
   #end if
 #end for
@@ -413,7 +417,7 @@ $gettext('never')
 #set $have_signal = 0
 #set $have_signalx = 0
 #for $x in $signal_data
-  #if $getattr($current, $x).has_data
+  #if $getattr($latest, $x).has_data
     #set $have_signalx = 1
     #for $xx in $signal_data_not
       #if $x in $xx
@@ -480,13 +484,13 @@ $gettext('never')
     #end try
 
  #for $x in $conns
-  #if ($getattr($recent, $x).has_data and $userecentcon == 1) or $getattr($current, $x).has_data
-    #set $sstate = $getattr($current, $x).raw
+  #if ($getattr($recent, $x).has_data and $userecentcon == 1) or $getattr($latest, $x).has_data
+    #set $sstate = $getattr($latest, $x).raw
     #if $sstate != None
 
     #if ($sstate > 4) or ($ecowitt == 0)
     <tr>
-      #set $xv = $getattr($current, $x)
+      #set $xv = $getattr($latest, $x)
       #if $sstate <= 25
       <td class="label"><font color='red'>$obs.label[$x]</font></td>     
        #else
@@ -697,8 +701,8 @@ $gettext('never')
     #end for
     #end if
     #try
-      #if ($getattr($current, $signal).has_data or ($getattr($recent, $signal).has_data and $userecentsig == 1)) and $useit == 1
-        #set $sstate = $getattr($current, $signal).raw
+      #if ($getattr($latest, $signal).has_data or ($getattr($recent, $signal).has_data and $userecentsig == 1)) and $useit == 1
+        #set $sstate = $getattr($latest, $signal).raw
 
         #if $sstate <= 4
         <tr>

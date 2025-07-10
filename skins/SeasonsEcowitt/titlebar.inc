@@ -3,22 +3,33 @@
 ## See LICENSE.txt for your rights
 #errorCatcher Echo
 #encoding UTF-8
+## 2025-07-07 add $station.hardware to header if Ecowitt_http driver
 
 #set $show_rss = $to_bool($DisplayOptions.get('show_rss', True))
 #set $show_reports = $to_bool($DisplayOptions.get('show_reports', True))
 
 #set $xt = ''
+#set $xx = ''
 #if $current.stationtype.has_data
  #if '_' in $current.stationtype.raw
   #set $xt = $current.stationtype.raw
+  #set $xx = '-'
  #elif $current.model.has_data
-  #set $xt = $current.model.raw 
+  #set $xt = $current.model.raw
+  #set $xx = '-' 
  #end if
 #end if
 
+#if $xt == '' and  'V' in $station.hardware
+  #set $xt = $station.hardware
+  #set $xx = '-'
+#end if
+
+
+
 <div id="title_bar">
   <div id="title">
-    <h1 class="page_title">$station.location - $xt</h1>
+    <h1 class="page_title">$station.location $xx $xt</h1>
     <p class="lastupdate">$current.dateTime</p>
   </div>
 #if $show_rss
