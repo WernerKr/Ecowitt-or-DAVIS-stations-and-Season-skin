@@ -118,9 +118,12 @@ loop_on_init = 1
     # update checks. Available firmware updates are logged.
     firmware_update_check_interval = 86400
 
+    # do we show registered sensor data only
     only_registered = False
-    
+
+    # Is a WN32P used for indoor temperature, humidity and pressure - default = False   
     #wn32_indoor = True
+    # Is a WN32 used for outdoor temperature and humidity - default = False
     #wn32_outdoor = True
 
     #former debug_logging (here for wind) not more supported!:
