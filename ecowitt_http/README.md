@@ -124,7 +124,6 @@ loop_on_init = 1
     #wn32_outdoor = True
 
     #former debug_logging (here for wind) not more supported!:
-    # provide additional log information to help debug wind issues
     #debug_wind = False
 
     #debug_logging new with list:
@@ -138,6 +137,9 @@ loop_on_init = 1
     api_key = 00000000-1111-2222-3333-444444444444
     app_key = DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
     mac = 5C:01:3B:46:C3:FF
+
+   [[catchup]]
+     # source = either, both, net, device  ## not set = None, default is then either or both
 
 ##########################################################################
 
@@ -518,7 +520,7 @@ Found the problem: to use the loop packets, this setting in weewx.conf is necess
     record_generation = software
 ```
 #### Inconsistent data handling between Ecowitt cloud (ecowitt.net), SDCard (GW3000) and local http-Api
-This data can you get via ecowitt.net, but not from SDCard and the local http-Api
+This data can you get via ecowitt.net, but not from the local http-Api (get_livedata_info)
 ```
 This data applies to (battery are in Volt):
 ch_lds?.ldsheat_ch1 ... ch4
