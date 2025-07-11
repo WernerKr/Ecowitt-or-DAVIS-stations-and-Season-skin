@@ -545,6 +545,14 @@ battery.ws1800
 battery.ws6006
 
 ```
+#### Problem with GW3000 V1.0.9:
+If the driver fails to connect to the GW3000 (even though all settings are correct), a restart of the GW3000 is necessary!
+Another indication that a restart (power off/on) is necessary is that the display of live data via the local web interface is no longer possible!
+
+Picture from Heap Memory:
+
+<img width="500" height="180" alt="weekheap0 (1)" src="https://github.com/user-attachments/assets/76483327-f232-4b53-a7ce-f1d562d5611d" />
+
 
 #### log from this driver:
 ```
