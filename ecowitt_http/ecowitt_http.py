@@ -6,6 +6,9 @@ A WeeWX driver for devices using Ecowitt local HTTP API.
 
 Copyright (C) 2024-25 Gary Roderick                     gjroderick<at>gmail.com
 
+Modified Werner Krenn July 2025
+
+
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
@@ -18,10 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Modified Werner Krenn July 2025
-
-
-Version: 0.1.0                                  Date: 10 July 2025
+Version: 0.1.1                                  Date: 11 July 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -60,6 +60,8 @@ Revision History
     10 July 2025            v0.1.0
         - initial release
         - but not working as service!
+    11 July 2025		v0.1.1
+        -lightning 
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -844,7 +846,7 @@ class ApiResponseError(Exception):
 class DebugOptions:
     """Class to simplify use and handling of device debug options."""
 
-    debug_groups = ('rain', 'wind', 'loop', 'sensors', 'parser',
+    debug_groups = ('rain', 'wind', 'lightning', 'loop', 'sensors', 'parser',
                     'catchup', 'collector', 'archive')
 
     def __init__(self, **config):
@@ -860,6 +862,8 @@ class DebugOptions:
         self._debug_rain = 'rain' in lower_debug_list
         # wind
         self._debug_wind = 'wind' in lower_debug_list
+        # lightning
+        self._debug_lightning = 'lightning' in lower_debug_list
         # loop data
         self._debug_loop = 'loop' in lower_debug_list
         # sensors
@@ -884,6 +888,12 @@ class DebugOptions:
         """Are we debugging wind data processing."""
 
         return self._debug_wind
+
+    @property
+    def lightning(self):
+        """Are we debugging lightning data processing."""
+
+        return self._debug_lightning
 
     @property
     def loop(self):
@@ -1951,11 +1961,17 @@ class EcowittCommon:
             log.info('     rain debug is set')
         else:
             log.info('     rain debug is not set')
+
         if self.driver_debug.wind:
             #debug_list.append(f"wind debug is {self.driver_debug.wind}")
             log.info('     wind debug is set')
         else:
             log.info('     wind debug is not set')
+
+        if self.driver_debug.lightning:
+            log.info('lightning debug is set')
+        else:
+            log.info('lightning debug is not set')
 
         if self.driver_debug.loop:
             #debug_list.append(f"loop debug is {self.driver_debug.loop}")
@@ -2243,8 +2259,14 @@ class EcowittCommon:
             #log.info('lightning.count %s', new_total)
             # now calculate field lightning_strike_count as the difference
             # between the new and old totals
-            data['lightning_strike_count'] = self.delta_lightning(new_total,
+            data['lightning.count'] = self.delta_lightning(new_total,
                                                                   self.last_lightning)
+            if self.driver_debug.lightning:
+                log.info("calculate_lightning: last_lightning_count=%s new_total=%s "
+                       "calculated lightning_count=%s" % (self.last_lightning,
+                                                 new_total,
+                                                 data['lightning.count']))
+
             # save the new total as the old total for next time
             self.last_lightning = new_total
 
@@ -5563,8 +5585,14 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
 
                 if self.lightning_mapping_confirmed_a and 'lightning.count' in rec:
                    new_total = rec['lightning.count']
-                   rec['lightning_strike_count'] = self.delta_lightning(new_total,
+                   rec['lightning.count'] = self.delta_lightning(new_total,
                                                                   self.last_lightning_a)
+                   if self.driver_debug.lightning:
+                      log.info("calculate_lightning: last_lightning_count=%s new_total=%s "
+                               "calculated lightning_count=%s" % (self.last_lightning,
+                                                           new_total,
+                                                           data['lightning.count']))
+
                    self.last_lightning_a = new_total
 
                 if self.driver_debug.archive: 
