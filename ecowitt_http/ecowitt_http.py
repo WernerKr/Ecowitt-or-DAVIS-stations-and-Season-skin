@@ -393,6 +393,7 @@ DEFAULT_GROUPS = {
     'rain.0x12.battery': 'group_count',
     'rain.0x12.voltage': 'group_volt',
     'rain.0x13.val': 'group_rain',
+    'rain.0x13.voltage': 'group_volt',
     't_rain': 'group_rain',
     't_rainhour': 'group_rain',
     #    'rain.0x13.battery': 'group_count',
@@ -427,6 +428,7 @@ DEFAULT_GROUPS = {
     'lightning.distance': 'group_distance',
     'lightning.timestamp': 'group_time',
     'lightning.count': 'group_count',
+    'lightning.num': 'group_count',
     'co2.temperature': 'group_temperature',
     'co2.temp': 'group_temperature',
     'co2.humidity': 'group_percent',
@@ -1210,24 +1212,24 @@ class HttpMapper(FieldMapper):
         'UV': 'common_list.0x17.val',
         'lightning_distance': 'lightning.distance',
         'lightning_disturber_count': 'lightning.timestamp',
-        #'lightning_num': 'lightning.count',
+        'lightning_num': 'lightning.num',
         'lightningcount': 'lightning.count',
         'lightning_strike_count': 'lightning.count',
         'extraTemp1': 'ch_aisle.1.temp',
-        'extraHumid1': 'ch_aisle.1.humidity',
         'extraTemp2': 'ch_aisle.2.temp',
-        'extraHumid2': 'ch_aisle.2.humidity',
         'extraTemp3': 'ch_aisle.3.temp',
-        'extraHumid3': 'ch_aisle.3.humidity',
         'extraTemp4': 'ch_aisle.4.temp',
-        'extraHumid4': 'ch_aisle.4.humidity',
         'extraTemp5': 'ch_aisle.5.temp',
-        'extraHumid5': 'ch_aisle.5.humidity',
         'extraTemp6': 'ch_aisle.6.temp',
-        'extraHumid6': 'ch_aisle.6.humidity',
         'extraTemp7': 'ch_aisle.7.temp',
-        'extraHumid7': 'ch_aisle.7.humidity',
         'extraTemp8': 'ch_aisle.8.temp',
+        'extraHumid1': 'ch_aisle.1.humidity',
+        'extraHumid2': 'ch_aisle.2.humidity',
+        'extraHumid3': 'ch_aisle.3.humidity',
+        'extraHumid4': 'ch_aisle.4.humidity',
+        'extraHumid5': 'ch_aisle.5.humidity',
+        'extraHumid6': 'ch_aisle.6.humidity',
+        'extraHumid7': 'ch_aisle.7.humidity',
         'extraHumid8': 'ch_aisle.8.humidity',
         'soilTemp1': 'ch_temp.1.temp',
         'soilTemp2': 'ch_temp.2.temp',
@@ -1304,16 +1306,16 @@ class HttpMapper(FieldMapper):
         'leak_3': 'ch_leak.3.status',
         'leak_4': 'ch_leak.4.status',
         'thi_ch1': 'ch_lds.1.air',
-        'depth_ch1': 'ch_lds.1.depth',
-        'ldsheat_ch1': 'ch_lds.1.heat',
         'thi_ch2': 'ch_lds.2.air',
-        'depth_ch2': 'ch_lds.2.depth',
-        'ldsheat_ch2': 'ch_lds.2.heat',
         'thi_ch3': 'ch_lds.3.air',
-        'depth_ch3': 'ch_lds.3.depth',
-        'ldsheat_ch3': 'ch_lds.3.heat',
         'thi_ch4': 'ch_lds.4.air',
+        'depth_ch1': 'ch_lds.1.depth',
+        'depth_ch2': 'ch_lds.2.depth',
+        'depth_ch3': 'ch_lds.3.depth',
         'depth_ch4': 'ch_lds.4.depth',
+        'ldsheat_ch1': 'ch_lds.1.heat',
+        'ldsheat_ch2': 'ch_lds.2.heat',
+        'ldsheat_ch3': 'ch_lds.3.heat',
         'ldsheat_ch4': 'ch_lds.4.heat',
         'heap': 'debug.heap',
         'runtime': 'debug.runtime',
@@ -1356,35 +1358,38 @@ class HttpMapper(FieldMapper):
     # modular rain map
     default_rain_map = {
         #'t_rainevent': 'rain.0x0D.val',
-        'rain': 'rain.0x0D.val',
         #'t_rainRate': 'rain.0x0E.val',
-        'rainRate': 'rain.0x0E.val',
         #'t_rainhour': 't_rainhour',
-        'hourRain': 't_rainhour',
         #'t_rainday': 'rain.0x10.val',
-        'dayRain': 'rain.0x10.val',
         #'t_rainweek': 'rain.0x11.val',
-        'weekRain': 'rain.0x11.val',
         #'t_rainmonth': 'rain.0x12.val',
-        'monthRain': 'rain.0x12.val',
         #'t_rainyear': 'rain.0x13.val',
+        'rain': 'rain.0x0D.val',
+        't_rain': 'rain.0x0D.val',
+        'rainRate': 'rain.0x0E.val',
+        't_rainRate': 'rain.0x0E.val',
+        'hourRain': 't_rainhour',
+        'dayRain': 'rain.0x10.val',
+        'weekRain': 'rain.0x11.val',
+        'monthRain': 'rain.0x12.val',
         'yearRain': 'rain.0x13.val',
-        'srain_piezo': 'piezoRain.srain_piezo.val',
         #'p_rainevent': 'piezoRain.0x0D.val',
-        'p_rain': 'piezoRain.0x0D.val',
-        'hail': 'piezoRain.0x0D.val',
         #'p_rainrate': 'piezoRain.0x0E.val',
+        #'p_rainhour': 'p_rainhour',
+        #'p_rainday': 'piezoRain.0x10.val',
+        #'p_rainweek': 'piezoRain.0x11.val',
+        #'p_rainmonth': 'piezoRain.0x12.val',
+        #'p_rainyear': 'piezoRain.0x13.val',
+        'srain_piezo': 'piezoRain.srain_piezo.val',
+        'hail': 'piezoRain.0x0D.val',
+        'p_rain': 'piezoRain.0x0D.val',
         'rrain_piezo': 'piezoRain.0x0E.val',
         'hailRate': 'piezoRain.0x0E.val',
-        #'p_rainhour': 'p_rainhour',
+        'p_rainrate': 'piezoRain.0x0E.val',
         'hrain_piezo': 'p_rainhour',
-        #'p_rainday': 'piezoRain.0x10.val',
         'drain_piezo': 'piezoRain.0x10.val',
-        #'p_rainweek': 'piezoRain.0x11.val',
         'wrain_piezo': 'piezoRain.0x11.val',
-        #'p_rainmonth': 'piezoRain.0x12.val',
         'mrain_piezo': 'piezoRain.0x12.val',
-        #'p_rainyear': 'piezoRain.0x13.val',
         'yrain_piezo': 'piezoRain.0x13.val'
     }
     # modular wind map
@@ -1491,7 +1496,7 @@ class HttpMapper(FieldMapper):
         'ws80_batt': 'ws80.voltage',
         'ws85_batt': 'ws85.voltage',
         'ws90_batt': 'piezoRain.0x13.voltage',
-        'rainBatteryStatus': 'wh40.voltage',
+        'rainBatteryStatus': 'rain.0x13.voltage',
         'hailBatteryStatus': 'piezoRain.0x13.voltage',
         'windBatteryStatus': 'ws80.voltage',
 
@@ -5312,7 +5317,8 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                     if not self.lightning_mapping_confirmed:
                        if 'lightning.count' in queue_data:
                           self.lightning_mapping_confirmed = True
-
+                    if 'lightning.count' in queue_data: 
+                       packet['lightning_num'] = queue_data['lightning.count']
                     self.calculate_lightning_count(queue_data)
 
                     ## map the raw data to WeeWX loop packet fields
@@ -8909,6 +8915,16 @@ class EcowittHttpParser:
             # results for this sensor we should ignore the sensor
             if not(set(_sensor.keys()) & {'air', 'depth'}):
                 continue
+            # add the heat
+            try:
+                _sensor['heat'] = int(sensor['heat'])
+                # process the 'heat' key/value if it exists, wrap in a try.. except
+                # in case there is a problem
+            except (KeyError, TypeError, ValueError):
+                # There is no heat number or we cannot convert the heat
+                # value to an int. Either way we cannot continue with this
+                # sensor. 
+                pass
             # add the sensor name
             _sensor['name'] = sensor.get('name')
             # process the 'voltage' key/value if it exists, wrap in a try.. except
