@@ -68,7 +68,7 @@ except ImportError:
     def log_traceback_error(prefix=''):
         log_traceback(prefix=prefix, loglevel=syslog.LOG_ERR)
 
-VERSION = "0.7"
+VERSION = "0.8"
 
 if weewx.__version__ < "3":
     raise weewx.UnsupportedFeature("WeeWX 3 is required, found %s" %
@@ -126,7 +126,7 @@ class WswinCSV(StdService):
         self.bind(weewx.NEW_ARCHIVE_RECORD, self.handle_new_archive)
         # optionally emit a textheader line as the first line of the file
         self.header = weeutil.weeutil.to_bool(d.get('txtheader', False))
-
+        self.nodata = False
         self.depth = False
         self.depth = weeutil.weeutil.to_bool(d.get('use_depth_ch1', self.depth))
 
@@ -148,9 +148,11 @@ class WswinCSV(StdService):
 
     def handle_data(self, event_data):
         try:
+            self.nodata = False
             dbm = self.engine.db_binder.get_manager('wx_binding')
             data, fields = self.calculate(event_data, dbm)
-            self.write_data(data, fields)
+            if self.nodata is False:
+               self.write_data(data, fields)
         except Exception as e:
             log_traceback_error('wswincsv: **** ')
 
@@ -166,11 +168,13 @@ class WswinCSV(StdService):
           fields.append("%.1f," % float(data['inTemp']))
         else:
            fields.append(",")
+           self.nodata = True
         if testkey('outTemp', packet) is True:
           data['outTemp'] = convert(data['outTemp'], 'outTemp', 'group_temperature', pu, 'degree_C')
           fields.append("%.1f," % float(data['outTemp']))
         else:
           fields.append(",")
+          self.nodata = True
         if testkey('extraTemp1', packet) is True:
           data['extraTemp1'] = convert(data['extraTemp1'], 'extraTemp1', 'group_temperature', pu, 'degree_C')
           fields.append("%.1f," % float(data['extraTemp1']))
