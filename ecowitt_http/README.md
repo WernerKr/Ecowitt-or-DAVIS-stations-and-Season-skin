@@ -38,7 +38,14 @@ Modified by me!
                 piezo, raingain, gain0, gain1, gain2, gain3, gain4
                 to the supported fields, because compatible with Ecowitt Custom Driver and the GW1000 Driver
        - if app_key, api_key or mac are not set, no further attempts will be made to retrieve data from Ecowitt.net
+    10 July 2025            v0.1.0
+        - initial release
+        - but not working as service!
+    11 July 2025	    v0.1.1
+        - corrected lightning 
+        - but not working as service!
 
+        
 Tested and completed:
 ```
 PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW3000% --live-data
