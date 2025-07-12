@@ -276,7 +276,8 @@ Interrogating GW3000 at 192.168.0.110
 
 Displaying data using the WeeWX METRICWX unit group.
 
-GW3000 live sensor data (2025-07-12 12:20:39 CEST (1752315639)): 'air1': '2060 mm', 
+GW3000 live sensor data (2025-07-12 12:20:39 CEST (1752315639)): 
+'air1': '2060 mm', 
 'dateTime': '12-Jul-2025 12:20', 
 'daymaxwind': '4.8 m/s', 
 'depth1': '0 mm', 
