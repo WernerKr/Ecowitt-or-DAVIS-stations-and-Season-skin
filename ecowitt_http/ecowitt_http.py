@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.1.1                                  Date: 11 July 2025
+Version: 0.1.2                                  Date: 12 July 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -62,6 +62,8 @@ Revision History
         - but not working as service!
     11 July 2025		v0.1.1
         -lightning 
+    12 July 2025		v0.1.2
+        - piezo, leak_Batt3, rain, piezo rain wasn't set to new value
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -280,6 +282,8 @@ weewx.units.obs_group_dict['p_rain'] = 'group_rain'
 weewx.units.obs_group_dict['p_rainrate'] = 'group_rainrate'
 #weewx.units.obs_group_dict['hail'] = 'group_rain'
 #weewx.units.obs_group_dict['hailRate'] = 'group_rainrate'
+weewx.units.obs_group_dict['t_rainyear'] = 'group_rain'
+weewx.units.obs_group_dict['p_rainyear'] = 'group_rain'
 
 weewx.units.obs_group_dict['rainBatteryStatus'] = 'group_volt'
 weewx.units.obs_group_dict['hailBatteryStatus'] = 'group_volt'
@@ -304,6 +308,7 @@ weewx.units.obs_group_dict['rain_annual_reset'] = 'group_count'
 weewx.units.obs_group_dict['rain_day_reset'] = 'group_count'
 weewx.units.obs_group_dict['rain_week_reset'] = 'group_count'
 weewx.units.obs_group_dict['rain_source'] = 'group_count'
+weewx.units.obs_group_dict['piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['lightning_distance'] = 'group_count'
 weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
@@ -396,6 +401,7 @@ DEFAULT_GROUPS = {
     'rain.0x13.voltage': 'group_volt',
     't_rain': 'group_rain',
     't_rainhour': 'group_rain',
+    't_rainyear': 'group_rain',
     #    'rain.0x13.battery': 'group_count',
     'rain.0x13.voltage': 'group_volt',
     'piezoRain.srain_piezo.val': 'group_boolean',
@@ -419,6 +425,7 @@ DEFAULT_GROUPS = {
     'piezoRain.srain_piezo': 'group_boolean',
     'p_rain': 'group_rain',
     'p_rainhour': 'group_rain',
+    'p_rainyear': 'group_rain',
     'wh25.intemp': 'group_temperature',
     'wh25.inhumi': 'group_percent',
     'wh25.abs': 'group_pressure',
@@ -1363,8 +1370,7 @@ class HttpMapper(FieldMapper):
         #'t_rainday': 'rain.0x10.val',
         #'t_rainweek': 'rain.0x11.val',
         #'t_rainmonth': 'rain.0x12.val',
-        #'t_rainyear': 'rain.0x13.val',
-        'rain': 'rain.0x0D.val',
+        #'rain': 'rain.0x0D.val',
         't_rain': 'rain.0x0D.val',
         'rainRate': 'rain.0x0E.val',
         't_rainRate': 'rain.0x0E.val',
@@ -1373,15 +1379,15 @@ class HttpMapper(FieldMapper):
         'weekRain': 'rain.0x11.val',
         'monthRain': 'rain.0x12.val',
         'yearRain': 'rain.0x13.val',
+        't_rainyear': 'rain.0x13.val',
         #'p_rainevent': 'piezoRain.0x0D.val',
         #'p_rainrate': 'piezoRain.0x0E.val',
         #'p_rainhour': 'p_rainhour',
         #'p_rainday': 'piezoRain.0x10.val',
         #'p_rainweek': 'piezoRain.0x11.val',
         #'p_rainmonth': 'piezoRain.0x12.val',
-        #'p_rainyear': 'piezoRain.0x13.val',
         'srain_piezo': 'piezoRain.srain_piezo.val',
-        'hail': 'piezoRain.0x0D.val',
+        #'hail': 'piezoRain.0x0D.val',
         'p_rain': 'piezoRain.0x0D.val',
         'rrain_piezo': 'piezoRain.0x0E.val',
         'hailRate': 'piezoRain.0x0E.val',
@@ -1390,7 +1396,8 @@ class HttpMapper(FieldMapper):
         'drain_piezo': 'piezoRain.0x10.val',
         'wrain_piezo': 'piezoRain.0x11.val',
         'mrain_piezo': 'piezoRain.0x12.val',
-        'yrain_piezo': 'piezoRain.0x13.val'
+        'yrain_piezo': 'piezoRain.0x13.val',
+        'p_rainyear': 'piezoRain.0x13.val',
     }
     # modular wind map
     default_wind_map = {
@@ -1446,7 +1453,7 @@ class HttpMapper(FieldMapper):
 
         'leak_Batt1': 'wh55.ch1.battery',
         'leak_Batt2': 'wh55.ch2.battery',
-        'leak Batt3': 'wh55.ch3.battery',
+        'leak_Batt3': 'wh55.ch3.battery',
         'leak_Batt4': 'wh55.ch4.battery',
         'lightning_Batt': 'wh57.battery',
 
@@ -2046,10 +2053,12 @@ class EcowittCommon:
         self.last_rain = None
         self.rain_mapping_confirmed = False
         self.rain_total_field = None
+        self.last_rainnew = None
 
         self.piezo_last_rain = None
         self.piezo_rain_mapping_confirmed = False
         self.piezo_rain_total_field = None
+        self.piezo_last_rainnew = None
 
         self.last_lightning_a = None
         self.lightning_mapping_confirmed_a = False
@@ -2059,11 +2068,12 @@ class EcowittCommon:
         self.last_rain_a = None
         self.rain_mapping_confirmed_a = False
         self.rain_total_field_a = None
+        self.last_rainnew_a = None
 
         self.piezo_last_rain_a = None
         self.piezo_rain_mapping_confirmed_a = False
         self.piezo_rain_total_field_a = None
-
+        self.piezo_last_rainnew_a = None
 
     def log_rain_data(self, data, preamble=None):
         """Log rain related data from the collector.
@@ -2216,12 +2226,12 @@ class EcowittCommon:
             new_total = data[self.rain_total_field]
             # now calculate field rain as the difference between the new and
             # old totals
-            data['rain.0x0D.val'] = self.delta_rain(new_total, self.last_rain)
+            self.last_rainnew = self.delta_rain(new_total, self.last_rain)
             # if debug_rain is set log some pertinent values
             if self.driver_debug.rain:
                 log.info("calculate_rain: last_rain=%s new_total=%s calculated rain=%s" % (self.last_rain,
                                                                                          new_total,
-                                                                                         data['rain.0x0D.val']))
+                                                                                         self.last_rainnew))
             # save the new total as the old total for next time
             self.last_rain = new_total
 
@@ -2234,7 +2244,7 @@ class EcowittCommon:
             piezo_new_total = data[self.piezo_rain_total_field]
             # now calculate field p_rain as the difference between the new and
             # old totals
-            data['piezoRain.0x0D.val'] = self.delta_rain(piezo_new_total,
+            self.piezo_last_rainnew = self.delta_rain(piezo_new_total,
                                              self.piezo_last_rain,
                                              descriptor='piezo rain')
             # if debug_rain is set log some pertinent values
@@ -2242,7 +2252,7 @@ class EcowittCommon:
                 log.info("calculate_rain: piezo_last_rain=%s piezo_new_total=%s "
                        "calculated p_rain=%s" % (self.piezo_last_rain,
                                                  piezo_new_total,
-                                                 data['piezoRain.0x0D.val']))
+                                                 self.piezo_last_rainnew))
             # save the new total as the old total for next time
             self.piezo_last_rain = piezo_new_total
 
@@ -2546,17 +2556,6 @@ class EcowittHttpService(weewx.engine.StdService, EcowittCommon):
         # packet to add to the loop packet
         if self.latest_sensor_data is not None:
             # we have a sensor data packet
-
-            # Krenn Werner - hier Regen und Blitz Änderungen Service !!!
-
-            ## if not already done so determine which cumulative rain field will
-            ## be used to determine the per period rain field
-            #if not self.rain_mapping_confirmed or not self.piezo_rain_mapping_confirmed:
-            #    self.get_cumulative_rain_field(self.latest_sensor_data)
-            ## get the rainfall this period from total
-            #self.calculate_rain(self.latest_sensor_data)
-            ## get the lightning strike count this period from total
-            #self.calculate_lightning_count(self.latest_sensor_data)
 
             # map the raw data to WeeWX loop packet fields
             mapped_data = self.mapper.map_data(self.latest_sensor_data)
@@ -5317,9 +5316,13 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                     if not self.lightning_mapping_confirmed:
                        if 'lightning.count' in queue_data:
                           self.lightning_mapping_confirmed = True
+
                     if 'lightning.count' in queue_data: 
                        packet['lightning_num'] = queue_data['lightning.count']
                     self.calculate_lightning_count(queue_data)
+
+                    packet['rain'] = self.last_rainnew
+                    packet['hail'] = self.piezo_last_rainnew
 
                     ## map the raw data to WeeWX loop packet fields
                     mapped_data = self.mapper.map_data(queue_data)
@@ -5549,24 +5552,24 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
 
                 if self.rain_mapping_confirmed_a and self.rain_total_field_a in rec:
                     new_total = rec[self.rain_total_field]
-                    rec['rain.0x0D.val'] = self.delta_rain(new_total, self.last_rain_a)
+                    self.last_rainnew_a = self.delta_rain(new_total, self.last_rain_a)
                     # if debug_rain is set log some pertinent values
                     if self.driver_debug.rain:
                         log.info("Archive: calculate_rain: last_rain=%s new_total=%s calculated rain=%s" % (self.last_rain_a,
                                                                                          new_total,
-                                                                                         rec['rain.0x0D.val']))
+                                                                                         self.last_rainnew_a))
                     self.last_rain_a = new_total
 
                 if self.piezo_rain_mapping_confirmed_a and self.piezo_rain_total_field_a in rec:
                     piezo_new_total = rec[self.piezo_rain_total_field]
-                    rec['piezoRain.0x0D.val'] = self.delta_rain(piezo_new_total,
+                    self.piezo_last_rainnew_a = self.delta_rain(piezo_new_total,
                                              self.piezo_last_rain_a,
                                              descriptor='piezo rain')
                     if self.driver_debug.rain:
                         log.info("Archive: calculate_rain: piezo_last_rain=%s piezo_new_total=%s "
                                "calculated p_rain=%s" % (self.piezo_last_rain_a,
                                                  piezo_new_total,
-                                                 rec['piezoRain.0x0D.val']))
+                                                 self.piezo_last_rainnew_a))
                     self.piezo_last_rain_a = piezo_new_total
 
                 # self.last_lightning = None
@@ -5600,6 +5603,9 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                                                            data['lightning.count']))
 
                    self.last_lightning_a = new_total
+
+                rec['rain'] = self.last_rainnew_a
+                rec['hail'] = self.piezo_last_rainnew_a
 
                 if self.driver_debug.archive: 
                    log.info('Archive rec data %s' , rec)
