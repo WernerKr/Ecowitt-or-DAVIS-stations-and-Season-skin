@@ -666,6 +666,9 @@ weewxd[790259]: INFO user.ecowitt_http: Skipping lightning count of 11: no last 
 
 
 ```
+## Live data comparison GW3000 original driver V0.1.0a28 with my driver V0.1.1
+https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/compare_%20gw3000_live_data.txt
+
 ## Default Mapping:
 https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/Ecowitt_http_default_mapping.txt
 
