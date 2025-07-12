@@ -40,12 +40,14 @@ Modified by me!
        - if app_key, api_key or mac are not set, no further attempts will be made to retrieve data from Ecowitt.net
     10 July 2025            v0.1.0
         - initial release
-        - but not working as service!
     11 July 2025	    v0.1.1
         - corrected lightning 
-        - but not working as service!
+    12 July 2025		v0.1.2
+        - piezo, leak_Batt3, rain, piezo rain wasn't set to new value
 
-        
+    Service not working !!
+
+    
 Tested and completed:
 ```
 PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW3000% --live-data
@@ -170,8 +172,8 @@ loop_on_init = 1
         # rxCheckPercent = wh68_sig * 25 if wh68_sig is not None else None
         # rxCheckPercent = wh65_sig * 25 if wh65_sig is not None else None
         
-        hail = p_rain if p_rain is not None else None
-        hailRate = p_rainrate if p_rainrate is not None else None
+        # hail = p_rain if p_rain is not None else None                  # mapped in driver
+        # hailRate = p_rainrate if p_rainrate is not None else None      # mapped in driver
         pb = heap if heap is not None else None
         
         lightning_distance_save = lightning_distance if lightning_distance is not None else None
@@ -263,6 +265,17 @@ loop_on_init = 1
         [[[maxSolarRad]]]
             algorithm = rs
             atc = 0.9
+
+   # These settings are not necessary because rain and hail (piezo_rain) are assigned in the driver!
+   # [[Delta]]
+   #     [[[rain]]]
+   #         input = t_rainyear
+   #     [[[hail]]]
+   #         input = p_rainyear
+   #     [[[lightning_strike_count]]]
+   #         input = lightningcount
+   #     [[[lightning_distance]]]
+   #         input = lightning_distance
 
 ##############################################################################
 #   This section binds a data store to a database.
