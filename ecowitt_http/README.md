@@ -44,6 +44,9 @@ Modified by me!
         - corrected lightning 
     12 July 2025		v0.1.2
         - piezo, leak_Batt3, rain, piezo rain wasn't set to new value
+    13 July 2025		v0.1.3
+        - calc vpd if data from Ecowitt.net - because this value is not provided.
+        - changed lighting_distance to lighting_dist 
 
     Service not working !!
 
@@ -175,9 +178,11 @@ loop_on_init = 1
         # hail = p_rain if p_rain is not None else None                  # mapped in driver
         # hailRate = p_rainrate if p_rainrate is not None else None      # mapped in driver
         pb = heap if heap is not None else None
-        
-        lightning_distance_save = lightning_distance if lightning_distance is not None else None
-        lightning_distance = lightning_distance if lightning_strike_count > 0 else None
+
+        lightning_distance_save = lightning_dist if lightning_dist is not None else None
+        lightning_distance = lightning_dist if lightning_strike_count > 0 else None 
+        #lightning_distance_save = lightning_distance if lightning_distance is not None else None        #old setting
+        #lightning_distance = lightning_distance if lightning_strike_count > 0 else None                 #old setting
         lightning_noise_count = lightning_strike_count if lightning_strike_count > 0 else None
 
         #example to get signals in procent: 
