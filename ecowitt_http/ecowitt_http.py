@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.1.2                                  Date: 12 July 2025
+Version: 0.1.3                                  Date: 13 July 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -57,13 +57,19 @@ Revision History
                 piezo, raingain, gain0, gain1, gain2, gain3, gain4
                 to the supported fields, because compatible with Ecowitt Custom Driver and the GW1000 Driver
 
+
     10 July 2025            v0.1.0
         - initial release
-        - but not working as service!
     11 July 2025		v0.1.1
         -lightning 
     12 July 2025		v0.1.2
         - piezo, leak_Batt3, rain, piezo rain wasn't set to new value
+    13 July 2025		v0.1.3
+        - calc vpd if data from Ecowitt.net - because this value is not provided.
+        - changed lighting_distance to lighting_dist 
+
+    Driver not working as service!
+
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -151,6 +157,7 @@ import textwrap
 import threading
 import datetime
 import time
+import math
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -310,6 +317,7 @@ weewx.units.obs_group_dict['rain_week_reset'] = 'group_count'
 weewx.units.obs_group_dict['rain_source'] = 'group_count'
 weewx.units.obs_group_dict['piezo'] = 'group_count'
 
+weewx.units.obs_group_dict['lightning_dist'] = 'group_count'
 weewx.units.obs_group_dict['lightning_distance'] = 'group_count'
 weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
 weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
@@ -1217,7 +1225,7 @@ class HttpMapper(FieldMapper):
         'radiation': 'common_list.0x15.val',
         'uvradiation': 'common_list.0x16.val',
         'UV': 'common_list.0x17.val',
-        'lightning_distance': 'lightning.distance',
+        'lightning_dist': 'lightning.distance',
         'lightning_disturber_count': 'lightning.timestamp',
         'lightning_num': 'lightning.num',
         'lightningcount': 'lightning.count',
@@ -1370,11 +1378,12 @@ class HttpMapper(FieldMapper):
         #'t_rainday': 'rain.0x10.val',
         #'t_rainweek': 'rain.0x11.val',
         #'t_rainmonth': 'rain.0x12.val',
-        #'rain': 'rain.0x0D.val',
         't_rain': 'rain.0x0D.val',
-        'rainRate': 'rain.0x0E.val',
         't_rainRate': 'rain.0x0E.val',
-        'hourRain': 't_rainhour',
+        't_rainyear': 'rain.0x13.val',
+        'rainEvent': 'rain.0x0D.val',
+        'rainRate': 'rain.0x0E.val',
+        'hourRain': 'rain.0x0F.val',
         'dayRain': 'rain.0x10.val',
         'weekRain': 'rain.0x11.val',
         'monthRain': 'rain.0x12.val',
@@ -1387,17 +1396,18 @@ class HttpMapper(FieldMapper):
         #'p_rainweek': 'piezoRain.0x11.val',
         #'p_rainmonth': 'piezoRain.0x12.val',
         'srain_piezo': 'piezoRain.srain_piezo.val',
-        #'hail': 'piezoRain.0x0D.val',
         'p_rain': 'piezoRain.0x0D.val',
+        'p_rainrate': 'piezoRain.0x0E.val',
+        'p_rainyear': 'piezoRain.0x13.val',
+        'erain_piezo': 'piezoRain.0x0D.val',
         'rrain_piezo': 'piezoRain.0x0E.val',
         'hailRate': 'piezoRain.0x0E.val',
-        'p_rainrate': 'piezoRain.0x0E.val',
-        'hrain_piezo': 'p_rainhour',
+        'hrain_piezo': 'piezoRain.0x1F.val',
         'drain_piezo': 'piezoRain.0x10.val',
         'wrain_piezo': 'piezoRain.0x11.val',
         'mrain_piezo': 'piezoRain.0x12.val',
         'yrain_piezo': 'piezoRain.0x13.val',
-        'p_rainyear': 'piezoRain.0x13.val',
+
     }
     # modular wind map
     default_wind_map = {
@@ -2048,7 +2058,7 @@ class EcowittCommon:
         self.last_lightning = None
         self.lightning_mapping_confirmed = False
         self.last_lightningcount = None
-        self.last_lightningtime = None
+        #self.last_lightningtime = None
 
         self.last_rain = None
         self.rain_mapping_confirmed = False
@@ -2063,7 +2073,7 @@ class EcowittCommon:
         self.last_lightning_a = None
         self.lightning_mapping_confirmed_a = False
         self.last_lightningcount_a = None
-        self.last_lightningtime_a = None
+        #self.last_lightningtime_a = None
 
         self.last_rain_a = None
         self.rain_mapping_confirmed_a = False
@@ -5321,6 +5331,9 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                        packet['lightning_num'] = queue_data['lightning.count']
                     self.calculate_lightning_count(queue_data)
 
+                    #if 'common_list.5.val' in queue_data:
+                    #  log.info("loop VPD: %s ", queue_data['common_list.5.val'])
+
                     packet['rain'] = self.last_rainnew
                     packet['hail'] = self.piezo_last_rainnew
 
@@ -5604,6 +5617,25 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
 
                    self.last_lightning_a = new_total
 
+                # is vpd missed?
+                if 'common_list.5.val' not in rec:
+                   #'outTemp': 'common_list.0x02.val',
+                   #'vpd': 'common_list.5.val',
+                   #'outHumidity': 'common_list.0x07.val',
+
+                   try:
+                     # tempc = (float(rec['common_list.0x02.val'])-32)*5/9
+                     tempc = float(rec['common_list.0x02.val'])
+                     humidity = float(rec['common_list.0x07.val'])
+                     vpdtest = round(0.61094 * math.exp((17.625 * tempc) / (tempc + 243.04)) * (1 - humidity/100),2) * 10
+                     #vpdtest = round(vpdtest/3.386,3) 
+                   except:
+                     vpdtest = None
+                   #log.info("calc VPD: %s ", vpdtest)
+                   if not vpdtest == None:
+                      rec['common_list.5.val'] = vpdtest
+ 
+ 
                 rec['rain'] = self.last_rainnew_a
                 rec['hail'] = self.piezo_last_rainnew_a
 
@@ -5679,6 +5711,8 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
             # we cannot make sense of the catchup_source property so raise a
             # CatchupObjectError
             raise CatchupObjectError
+
+
 
 # == Neu Archive ! Krenn Werner =======================================================
 
