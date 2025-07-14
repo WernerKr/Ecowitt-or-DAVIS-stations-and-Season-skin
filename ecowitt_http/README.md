@@ -4,6 +4,9 @@ https://github.com/gjr80/weewx-ecowitt_local_http/blob/master
 
 (C) 2024-25 Gary Roderick                     gjroderick<at>gmail.com
 
+### For this driver there is also a database schema "weewx_ecowitt.py"
+
+
 Modified by me!
 
         - WH45/WH46 = co2 missed - added
