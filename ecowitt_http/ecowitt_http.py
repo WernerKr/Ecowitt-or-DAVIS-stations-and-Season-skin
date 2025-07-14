@@ -67,6 +67,8 @@ Revision History
     13 July 2025		v0.1.3
         - calc vpd if data from Ecowitt.net - because this value is not provided.
         - changed lighting_distance to lighting_dist 
+    14 July 2025		v0.1.4         
+        - 'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4' from Ecowitt.net added
 
     Driver not working as service!
 
@@ -3781,7 +3783,8 @@ class EcowittNetCatchup(Catchup):
                          'temp_ch5', 'temp_ch6', 'temp_ch7', 'temp_ch8',
                          'leaf_ch1', 'leaf_ch2', 'leaf_ch3', 'leaf_ch4',
                          'leaf_ch5', 'leaf_ch6', 'leaf_ch7', 'leaf_ch8',
-                         'battery')
+                         'battery',
+                         'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4')
     # Map from Ecowitt.net history fields to internal driver fields. Map is
     # keyed by Ecowitt.net history 'data set'. Individual key: value pairs are
     # Ecowitt.net field:driver field.
@@ -4001,6 +4004,26 @@ class EcowittNetCatchup(Catchup):
         },
         'leaf_ch8': {
             'leaf_wetness': 'ch_leaf.8.humidity'
+        },
+        'ch_lds1': {
+            'air_ch1': 'ch_lds.1.air',
+            'depth_ch1': 'ch_lds.1.depth',
+            'lds_heat_ch1': 'ch_lds.1.heat'
+        },
+        'ch_lds2': {
+            'air_ch2': 'ch_lds.2.air',
+            'depth_ch2': 'ch_lds.2.depth',
+            'lds_heat_ch2': 'ch_lds.2.heat'
+        },
+        'ch_lds3': {
+            'air_ch3': 'ch_lds.3.air',
+            'depth_ch3': 'ch_lds.3.depth',
+            'lds_heat_ch3': 'ch_lds.3.heat'
+        },
+        'ch_lds4': {
+            'air_ch4': 'ch_lds.4.air',
+            'depth_ch4': 'ch_lds.4.depth',
+            'lds_heat_ch4': 'ch_lds.4.heat'
         },
         'battery': {
             'ws1900_console': 'wh25.ws1900_batt',
