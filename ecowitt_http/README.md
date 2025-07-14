@@ -47,6 +47,8 @@ Modified by me!
     13 July 2025		v0.1.3
         - calc vpd if data from Ecowitt.net - because this value is not provided.
         - changed lighting_distance to lighting_dist 
+    14 July 2025		v0.1.4         
+        - 'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4' from Ecowitt.net added
 
     Service not working !!
 
