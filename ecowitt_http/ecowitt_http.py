@@ -69,6 +69,7 @@ Revision History
         - changed lighting_distance to lighting_dist 
     14 July 2025		v0.1.4         
         - 'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4' from Ecowitt.net added
+        - wh68_batt, wh69_batt
 
     Driver not working as service!
 
@@ -91,6 +92,8 @@ WH46        CO2, PM2.5, PM10, PM1, PM4, signal level, battery state. single devi
 WH54        LDS Sensor	
 WH55        Leak Sensor	
 WH57        Lightning, signal level, battery state. single device only
+WH68        signal level, battery state
+WH69        signal level, battery state
 WS80        temperature, humidity, wind speed, wind direction, illuminance,
             UV index, signal level, battery state. single device only
 WS85        piezo rain, wind speed, wind direction, signal level, battery
@@ -199,7 +202,7 @@ KNOWN_DEVICES = SUPPORTED_DEVICES + UNSUPPORTED_DEVICES
 KNOWN_SENSORS = ('wh25', 'wh26', 'wn31', 'wn34', 'wn35',
                  'wh40', 'wh41', 'wh45',
                  'wh51', 'wh54', 'wh55', 'wh57',
-                 'wh65', 'wh68', 'ws80', 'ws85', 'ws90')
+                 'wh65', 'wh68', 'ws69', 'ws80', 'ws85', 'ws90')
 # default max number of attempts to obtain data from the device
 DEFAULT_MAX_TRIES = 3
 # default wait time between retries when attempting to obtain data from the
@@ -303,6 +306,8 @@ weewx.units.obs_group_dict['ws90_batt'] = 'group_volt'
 
 weewx.units.obs_group_dict['ws1900batt'] = 'group_volt'
 weewx.units.obs_group_dict['console_batt'] = 'group_volt'
+weewx.units.obs_group_dict['wh68_batt'] = 'group_count'
+weewx.units.obs_group_dict['wh69_batt'] = 'group_count'
 weewx.units.obs_group_dict['wh80_batt'] = 'group_count'
 weewx.units.obs_group_dict['wh85_batt'] = 'group_count'
 weewx.units.obs_group_dict['wh90_batt'] = 'group_count'
@@ -646,6 +651,7 @@ DEFAULT_GROUPS = {
     'wh55.ch4.battery': 'group_count',
     'wh57.battery': 'group_count',
     'wh68.battery': 'group_count',
+    'wh69.battery': 'group_count',
     'ws80.battery': 'group_count',
     'ws85.battery': 'group_count',
     'ws90.battery': 'group_count',
@@ -1505,7 +1511,9 @@ class HttpMapper(FieldMapper):
         'ldsbatt2': 'ch_lds.2.voltage',
         'ldsbatt3': 'ch_lds.3.voltage',
         'ldsbatt4': 'ch_lds.4.voltage',
-        'wh80_batt': 'ws85.battery',
+        'wh68_batt': 'wh68.battery',
+        'wh69_batt': 'wh69.battery',
+        'wh80_batt': 'ws80.battery',
         'wh85_batt': 'ws85.battery',
         'wh90_batt': 'ws90.battery',
 
@@ -1863,7 +1871,8 @@ class SdMapper(FieldMapper):
             # iterate over the source data keys
             for field in rec.keys():
                 # strip the units information from the key
-                clean_key = re.sub("\(.*?\)","", field)
+                clean_key = re.sub(r"\(.*?\)","", field)
+                #clean_key = re.sub("\(.*?\)","", field)
                 # now try to map the source data using the sanitised key, but
                 # be prepared to catch any one of a number of exceptions
                 try:
@@ -2979,6 +2988,8 @@ class EcowittHttpDriverConfEditor(weewx.drivers.AbstractConfEditor):
     [[wh65_batt]]
         extractor = last
     [[wh68_batt]]
+        extractor = last
+    [[wh69_batt]]
         extractor = last
     [[ws80_batt]]
         extractor = last
@@ -6109,6 +6120,8 @@ class EcowittHttpApi:
         'wh34': 'wn34',
         'wh35': 'wn35',
         'wh36': 'wn36',
+        #'wh68': 'ws68',
+        #'wh69': 'ws69',
         'wh80': 'ws80',
         'wh85': 'ws85',
         'wh90': 'ws90'
@@ -10193,7 +10206,8 @@ class EcowittHttpParser:
             if _name is not None:
                 # look for a sub-string starting with 'CH' and ending with an
                 # integer
-                _match = re.search('CH\d+', _name)
+                _match = re.search(r'CH\d+', _name)
+                #_match = re.search('CH\d+', _name)
                 # if a 'CH-integer' sub-string was found convert to lower case
                 # and use the sub-string as the channel
                 if _match is not None:
@@ -11148,7 +11162,7 @@ class EcowittSensors:
     # battery state definition
     no_low = ('ws80', 'ws85', 'ws90')
     # sensors whose battery state is determined from a binary value (0|1)
-    batt_binary = ('wh65', 'wh25', 'wh26', 'wn31', 'wn32')
+    batt_binary = ('wh68', 'wh69', 'wh25', 'wh26', 'wn31', 'wn32')
     # sensors whose battery state is determined from an integer value
     batt_int = ('wh40', 'wh41', 'wh43', 'wh45', 'wh55', 'wh57')
     # sensors whose battery state is determined from a battery voltage value
@@ -11197,7 +11211,7 @@ class EcowittSensors:
     # map of sensor address to composite sensor name (ie sensor model and
     # channel (as applicable))
     sensor_address = {
-        0: 'ws69',
+        0: 'wh69',
         1: 'wh68',
         2: 'ws80',
         3: 'wh40',
@@ -11674,7 +11688,7 @@ class EcowittDevice:
                            'wh41': 'integer', 'wh45': 'integer',
                            'wh51': 'integer', 'wh55': 'integer',
                            'wh57': 'integer', 'wh65': 'binary',
-                           'wh68': 'integer', 'ws80': 'integer',
+                           'wh68': 'binary', 'wh69': 'binary', 'ws80': 'integer',
                            'ws85': 'integer', 'ws90': 'integer'}
     # Ecowitt device units to WeeWX unit group/name lookup
     unit_code_to_string = {'temperature': {'group': 'group_temperature',
@@ -12706,13 +12720,14 @@ class DirectEcowittDevice:
                     'wh55.ch3.battery', 'wh55.ch3.signal', 'wh55.ch4.battery', 'wh55.ch4.signal',
                     'wh57.battery', 'wh57.signal',
                     'wh65.battery', 'wh65.signal', 'wh68.battery', 'wh68.signal',
+                    'wh69.battery', 'wh69.signal', 
                     'ws80.battery', 'ws80.signal', 
                     'ws85.battery', 'ws85.signal', 'ws90.battery', 'ws90.signal'
                     ]
 
     sensor_display_order = ( 'wh25', 'wh26', 'wn31', 'wn34', 'wn35', 'wh40', 
                              'wh41', 'wh45', 'wh51', 'wh54', 'wh55', 'wh57',
-                             'ws68', 'ws69', 'ws80', 'ws85', 'ws90')
+                             'wh68', 'wh69', 'ws80', 'ws85', 'ws90')
     def __init__(self, namespace, arg_parser, stn_dict, **kwargs):
         """Initialise a DirectEcowittDevice object."""
 
