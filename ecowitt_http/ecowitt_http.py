@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.1.3                                  Date: 13 July 2025
+Version: 0.1.5                                  Date: 15 July 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -70,6 +70,8 @@ Revision History
     14 July 2025		v0.1.4         
         - 'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4' from Ecowitt.net added
         - wh68_batt, wh69_batt
+    15 July 2025		v0.1.5     
+        - p_rain is back      
 
     Driver not working as service!
 
@@ -328,6 +330,8 @@ weewx.units.obs_group_dict['lightning_dist'] = 'group_count'
 weewx.units.obs_group_dict['lightning_distance'] = 'group_count'
 weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
 weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
+weewx.units.obs_group_dict['lightning_noise_count'] = 'group_count'
+
 weewx.units.obs_group_dict['runtime'] = 'group_deltatime'
 weewx.units.obs_group_dict['heap'] = 'group_data'
 weewx.units.obs_group_dict['pb'] = 'group_data'
@@ -403,6 +407,7 @@ DEFAULT_GROUPS = {
     'rain.0x0E.val': 'group_rainrate',
     'rain.0x0E.battery': 'group_count',
     'rain.0x0E.voltage': 'group_volt',
+    'rain.0x0F.val': 'group_rain',
     'rain.0x10.val': 'group_rain',
     'rain.0x10.battery': 'group_count',
     'rain.0x10.voltage': 'group_volt',
@@ -415,7 +420,6 @@ DEFAULT_GROUPS = {
     'rain.0x13.val': 'group_rain',
     'rain.0x13.voltage': 'group_volt',
     't_rain': 'group_rain',
-    't_rainhour': 'group_rain',
     't_rainyear': 'group_rain',
     #    'rain.0x13.battery': 'group_count',
     'rain.0x13.voltage': 'group_volt',
@@ -426,6 +430,7 @@ DEFAULT_GROUPS = {
     'piezoRain.0x0E.val': 'group_rainrate',
     'piezoRain.0x0E.battery': 'group_count',
     'piezoRain.0x0E.voltage': 'group_volt',
+    'piezoRain.0x0F.val': 'group_rain',
     'piezoRain.0x10.val': 'group_rain',
     'piezoRain.0x10.battery': 'group_count',
     'piezoRain.0x10.voltage': 'group_volt',
@@ -439,7 +444,6 @@ DEFAULT_GROUPS = {
     'piezoRain.0x13.voltage': 'group_volt',
     'piezoRain.srain_piezo': 'group_boolean',
     'p_rain': 'group_rain',
-    'p_rainhour': 'group_rain',
     'p_rainyear': 'group_rain',
     'wh25.intemp': 'group_temperature',
     'wh25.inhumi': 'group_percent',
@@ -1404,7 +1408,7 @@ class HttpMapper(FieldMapper):
         #'p_rainweek': 'piezoRain.0x11.val',
         #'p_rainmonth': 'piezoRain.0x12.val',
         'srain_piezo': 'piezoRain.srain_piezo.val',
-        'p_rain': 'piezoRain.0x0D.val',
+        #'p_rain': 'piezoRain.0x0D.val',
         'p_rainrate': 'piezoRain.0x0E.val',
         'p_rainyear': 'piezoRain.0x13.val',
         'erain_piezo': 'piezoRain.0x0D.val',
@@ -1719,14 +1723,14 @@ class SdMapper(FieldMapper):
         'common_list.0x15.val': 'Solar Rad',
         'common_list.0x17.val': 'UV-Index',
         'rain.0x0E.val': 'Rain Rate',
-        't_rainhour': 'Hourly Rain',
+        'rain.0x0F.val': 'Hourly Rain',
         'rain.0x0D.val': 'Event Rain',
         'rain.0x10.val': 'Daily Rain',
         'rain.0x11.val': 'Weekly Rain',
         'rain.0x12.val': 'Monthly Rain',
         'rain.0x13.val': 'Yearly Rain',
         'piezoRain.0x0E.val': 'Piezo Rate',
-        'p_rainhour': 'Piezo Hourly Rain',
+        'piezoRain.0x0F.val': 'Piezo Hourly Rain',
         'piezoRain.0x0D.val': 'Piezo Event Rain',
         'piezoRain.0x10.val': 'Piezo Daily Rain',
         'piezoRain.0x11.val': 'Piezo Weekly Rain',
@@ -4578,8 +4582,8 @@ class EcowittDeviceCatchup:
         'group_pressure': ('wh25.abs', 'wh25.rel', 'common_list.5.val'),
         'group_pressurevpd': ('common_list.5.val'),
         'group_rain': ('rain.0x0D.val', 'rain.0x10.val', 'rain.0x11.val', 'rain.0x12.val',
-                       'rain.0x13.val', 't_rainhour', 'piezoRain.0x0D.val', 'piezoRain.0x10.val',
-                       'piezoRain.0x11.val', 'piezoRain.0x12.val', 'piezoRain.0x13.val', 'p_rainhour'),
+                       'rain.0x13.val', 'rain.0x0F.val', 'piezoRain.0x0D.val', 'piezoRain.0x10.val',
+                       'piezoRain.0x11.val', 'piezoRain.0x12.val', 'piezoRain.0x13.val', 'piezoRain.0x0F.val'),
         'group_rainrate': ('rain.0x0E.val', 'piezoRain.0x0E.val'),
         'group_radiation': ('common_list.0x15.val', ),
         'group_distance': ('lightning.distance', ),
@@ -5370,6 +5374,7 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
 
                     packet['rain'] = self.last_rainnew
                     packet['hail'] = self.piezo_last_rainnew
+                    packet['p_rain'] = self.piezo_last_rainnew
 
                     ## map the raw data to WeeWX loop packet fields
                     mapped_data = self.mapper.map_data(queue_data)
@@ -5672,6 +5677,7 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
  
                 rec['rain'] = self.last_rainnew_a
                 rec['hail'] = self.piezo_last_rainnew_a
+                rec['p_rain'] = self.piezo_last_rainnew_a
 
                 if self.driver_debug.archive: 
                    log.info('Archive rec data %s' , rec)
