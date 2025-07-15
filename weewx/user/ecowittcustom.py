@@ -168,13 +168,14 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Ecowittcustom'
-DRIVER_VERSION = '0.1.1'
+DRIVER_VERSION = '0.1.3'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
 DEFAULT_IFACE = 'eth0'
 DEFAULT_FILTER = 'dst port 80'
 DEFAULT_DEVICE_TYPE = 'ecowitt-client'
+hardware = DRIVER_NAME
 
 weewx.units.obs_group_dict['co2'] = 'group_fraction'
 weewx.units.obs_group_dict['co2_Temp'] = 'group_temperature'
@@ -780,7 +781,7 @@ class Consumer(object):
         'inTempBatteryStatus': 'wh25batt',
         'rainrate': 'rainratein',
         'totalRain': 'rain_total',
-        'eventRain': 'rainevent',
+        'eventRain': 'eventrainin',
         'hourRain': 'hourlyrainin',
         'dayRain': 'dailyrainin',
         'weekRain': 'weeklyrainin',
@@ -1897,7 +1898,7 @@ class EcowittClient(Consumer):
             self._last_lightning_confirmed = False
             self._model = None
             self._stationtype = None
-
+            self._changed = False
 
         def parse(self, s):
             pkt = dict()
@@ -1917,13 +1918,25 @@ class EcowittClient(Consumer):
                     pkt['stationtype'] = data['stationtype']
                     if self._stationtype != data['stationtype']:
                        self._stationtype = data['stationtype']
+                       self._changed = True
                        loginf("Station_type: %s" % (data['stationtype']))
 
                 if 'model' in data:
                     pkt['model'] = data['model']
                     if self._model != data['model']:
-                       self._model = data['model']  
+                       self._model = data['model']
+                       self._changed = True  
                        loginf("Hardware_model: %s" % (data['model']))
+
+                #if self._changed == True:
+                #   self._changed = False
+                #   if self._model is not None:
+                #     if self._stationtype is not None:
+                #        if 'EasyWeather' not in self._stationtype:
+                #           hardware = self._stationtype
+                #     else: 
+                #        hardware = self._model
+                     
 
                 if 'totalrainin' not in data and 'yearlyrainin' in data:
                     pkt['rainyear'] = self.decode_float(data['yearlyrainin']) if data['yearlyrainin'] != '' else 0
@@ -2005,6 +2018,7 @@ class EcowittClient(Consumer):
             # convert that to a proper None.
             x = Consumer.Parser.decode_float(x)
             return None if x == -9999 else x
+ 
 
 
 class EcowittcustomConfigurationEditor(weewx.drivers.AbstractConfEditor):
@@ -2104,7 +2118,8 @@ class EcowittcustomDriver(weewx.drivers.AbstractDevice):
 
     @property
     def hardware_name(self):
-        return self._device_type
+        return hardware + ' ' + self._device_type
+        #return self._device_type
 
     def genLoopPackets(self):
         last_ts = 0
