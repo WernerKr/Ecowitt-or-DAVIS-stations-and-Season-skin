@@ -1393,7 +1393,7 @@ class HttpMapper(FieldMapper):
         't_rain': 'rain.0x0D.val',
         't_rainRate': 'rain.0x0E.val',
         't_rainyear': 'rain.0x13.val',
-        'rainEvent': 'rain.0x0D.val',
+        'eventRain': 'rain.0x0D.val',
         'rainRate': 'rain.0x0E.val',
         'hourRain': 'rain.0x0F.val',
         'dayRain': 'rain.0x10.val',
@@ -2800,6 +2800,8 @@ class EcowittHttpDriverConfEditor(weewx.drivers.AbstractConfEditor):
         extractor = last
     [[lightningcount]]
         extractor = last
+    [[lightning_noise_count]]
+        extractor = sum
 
     [[maxdailygust]]
         extractor = last
