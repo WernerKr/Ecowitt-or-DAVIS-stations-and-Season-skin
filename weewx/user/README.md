@@ -1,10 +1,11 @@
 ## Collection of my used WeeWx extensions
 
-#### GTS.py
+#### GTS.py https://github.com/roe-dl/weewx-GTS
   barometer.py
   dayboundarystats.py
 
-#### belchertown.py
+
+#### belchertown.py https://github.com/poblabs/weewx-belchertown
 
 #### davisconsolehealthapi.py
 
@@ -16,20 +17,23 @@
 #### gw1000.py
  - interceptor and/or gw1000 supports WS85 too
 
-#### historygenerator.py historygenerator3.py historygenerator4.py
+#### historygenerator.py https://github.com/brewster76/fuzzy-archer
+##### historygenerator3.py historygenerator4.py
   sunevents.py
   jsonengine.py
   largeimagegenerator.py
   gaugeengine.py
   translategenerator.py
 
-#### old: historygenerator_color.py historygenerator_colour.py
+##### old: historygenerator_color.py historygenerator_colour.py
 
-#### mqtt.py
+#### mqtt.py Copyright 2013 Matthew Wall
 
 #### radiationhours.py (very old)
 
 #### sunrainduration.py
+
+#### airlink.py https://github.com/chaunceygardiner/weewx-airlink
 
 #### test_egd.py
 
