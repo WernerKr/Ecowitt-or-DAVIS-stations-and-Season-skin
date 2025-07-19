@@ -274,6 +274,8 @@ weewx.units.obs_group_dict['mrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['yrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['p_rain'] = 'group_rain'
+weewx.units.obs_group_dict['rain24'] = 'group_rain'
+weewx.units.obs_group_dict['rain24_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['p_rainrate'] = 'group_rainrate'
 
 weewx.units.obs_group_dict['ws90cap_volt'] = 'group_volt'
@@ -325,6 +327,8 @@ weewx.units.obs_group_dict['leafWetBatt8'] = 'group_volt'
 
 weewx.units.obs_group_dict['maxdailygust'] = 'group_speed2'
 weewx.units.obs_group_dict['winddir_avg10m'] = 'group_direction'
+weewx.units.obs_group_dict['windDir10'] = 'group_direction'
+
 weewx.units.obs_group_dict['windspdmph_avg10m'] = 'group_speed2'
 
 weewx.units.obs_group_dict['co2_Batt'] = 'group_count'
@@ -755,6 +759,7 @@ class Consumer(object):
         'lightning_Batt': 'wh57batt',
         'maxdailygust': 'maxdailygust',
         'winddir_avg10m': 'winddir_avg10m',
+        'windDir10': 'winddir_avg10m',
         'windspdmph_avg10m': 'windspdmph_avg10m',
         'pm1_24h_co2': 'pm1_24h_co2',
         'pm4_24h_co2': 'pm4_24h_co2',
@@ -784,6 +789,7 @@ class Consumer(object):
         'eventRain': 'eventrainin',
         'hourRain': 'hourlyrainin',
         'dayRain': 'dailyrainin',
+        'rain24': 'last24hrainin',
         'weekRain': 'weeklyrainin',
         'monthRain': 'monthlyrainin',
         'yearRain': 'rainyear',
@@ -796,6 +802,7 @@ class Consumer(object):
         'erain_piezo': 'erain_piezo',
         'hrain_piezo': 'hrain_piezo',
         'drain_piezo': 'drain_piezo',
+        'rain24_piezo': 'last24hrain_piezo',
         'wrain_piezo': 'wrain_piezo',
         'mrain_piezo': 'mrain_piezo',
         'yrain_piezo': 'yrain_piezo',
@@ -1680,6 +1687,7 @@ class EcowittClient(Consumer):
             'eventrainin' : 'eventrainin',
             'hourlyrainin' : 'hourlyrainin',
             'dailyrainin' : 'dailyrainin',
+            'last24hrainin': 'last24hrainin',
             'weeklyrainin' : 'weeklyrainin',
             'monthlyrainin' : 'monthlyrainin',
             'yearlyrainin' : 'yearlyrainin',
@@ -1688,6 +1696,7 @@ class EcowittClient(Consumer):
             'erain_piezo' : 'erain_piezo',
             'hrain_piezo' : 'hrain_piezo',
             'drain_piezo' : 'drain_piezo',
+            'last24hrain_piezo': 'last24hrain_piezo',
             'wrain_piezo' : 'wrain_piezo',
             'mrain_piezo' : 'mrain_piezo',
             'yrain_piezo' : 'yrain_piezo',
@@ -1801,7 +1810,6 @@ class EcowittClient(Consumer):
             'feelslikef': 'feelslikef',
             'heatindexf': 'heatindexf',
             'windspdmph_avg10m': 'windspdmph_avg10m',
-            'winddir_avg10m': 'winddir_avg10m',
             'windgustmph_max10m': 'windgustmph_max10m',
             'windrun': 'windrun',
             'pm25_AQI_ch1': 'pm25_AQI_ch1',
