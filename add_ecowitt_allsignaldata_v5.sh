@@ -1,4 +1,5 @@
 #!/bin/bash
+weectl database add-column wn20_sig --type=REAL -y
 weectl database add-column wh24_sig --type=REAL -y
 weectl database add-column wh25_sig --type=REAL -y
 weectl database add-column wh26_sig --type=REAL -y
@@ -56,10 +57,10 @@ weectl database add-column wh51_ch13_sig --type=REAL -y
 weectl database add-column wh51_ch14_sig --type=REAL -y
 weectl database add-column wh51_ch15_sig --type=REAL -y
 weectl database add-column wh51_ch16_sig --type=REAL -y
-#weectl database add-column wh54_ch1_sig --type=REAL -y
-#weectl database add-column wh54_ch2_sig --type=REAL -y
-#weectl database add-column wh54_ch3_sig --type=REAL -y
-#weectl database add-column wh54_ch4_sig --type=REAL -y
+weectl database add-column wh54_ch1_sig --type=REAL -y
+weectl database add-column wh54_ch2_sig --type=REAL -y
+weectl database add-column wh54_ch3_sig --type=REAL -y
+weectl database add-column wh54_ch4_sig --type=REAL -y
 weectl database add-column wh55_ch1_sig --type=REAL -y
 weectl database add-column wh55_ch2_sig --type=REAL -y
 weectl database add-column wh55_ch3_sig --type=REAL -y
