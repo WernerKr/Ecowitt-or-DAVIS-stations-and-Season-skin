@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.1.5                                  Date: 15 July 2025
+Version: 0.1.6                                  Date: 19 July 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -72,6 +72,9 @@ Revision History
         - wh68_batt, wh69_batt
     15 July 2025		v0.1.5     
         - p_rain is back      
+    19 July 2025		v0.1.6     
+        - new rssi, rain voltage, winddir_avg10m, last24hrainin, last24hrain_piezo, LDS total_heat, wn20 (Mini rain)      
+
 
     Driver not working as service!
 
@@ -201,7 +204,7 @@ UNSUPPORTED_DEVICES = ('GW1000',)
 # device models that we know about
 KNOWN_DEVICES = SUPPORTED_DEVICES + UNSUPPORTED_DEVICES
 # sensors we know about
-KNOWN_SENSORS = ('wh25', 'wh26', 'wn31', 'wn34', 'wn35',
+KNOWN_SENSORS = ('wn20', 'wh25', 'wh26', 'wn31', 'wn34', 'wn35',
                  'wh40', 'wh41', 'wh45',
                  'wh51', 'wh54', 'wh55', 'wh57',
                  'wh65', 'wh68', 'ws69', 'ws80', 'ws85', 'ws90')
@@ -292,12 +295,14 @@ weewx.units.obs_group_dict['wrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['mrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['yrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['rain24_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['p_rain'] = 'group_rain'
 weewx.units.obs_group_dict['p_rainrate'] = 'group_rainrate'
 #weewx.units.obs_group_dict['hail'] = 'group_rain'
 #weewx.units.obs_group_dict['hailRate'] = 'group_rainrate'
 weewx.units.obs_group_dict['t_rainyear'] = 'group_rain'
 weewx.units.obs_group_dict['p_rainyear'] = 'group_rain'
+weewx.units.obs_group_dict['rain24_piezo'] = 'group_rain'
 
 weewx.units.obs_group_dict['rainBatteryStatus'] = 'group_volt'
 weewx.units.obs_group_dict['hailBatteryStatus'] = 'group_volt'
@@ -346,6 +351,9 @@ weewx.units.obs_group_dict['ldsheat_ch2'] = 'group_count'
 weewx.units.obs_group_dict['ldsheat_ch3'] = 'group_count'
 weewx.units.obs_group_dict['ldsheat_ch4'] = 'group_count'
 
+weewx.units.obs_group_dict['windDir10'] = 'group_direction'
+
+#weewx.units.obs_group_dict['wh25_rssi'] = "group_db" 
 
 # define the WeeWX unit group used by each device field
 DEFAULT_GROUPS = {
@@ -575,24 +583,29 @@ DEFAULT_GROUPS = {
     'ch_leaf.8.voltage': 'group_volt',
     'ch_lds.1.air': 'group_depth',
     'ch_lds.1.depth': 'group_depth',
-    'ch_lds.1.heat': 'group_count',
+    'ch_lds.1.total_height': 'group_depth',
+    'ch_lds.1.total_heat': 'group_count',
     'ch_lds.1.voltage': 'group_volt',
     'ch_lds.2.air': 'group_depth',
     'ch_lds.2.depth': 'group_depth',
-    'ch_lds.2.heat': 'group_count',
+    'ch_lds.2.total_height': 'group_depth',
+    'ch_lds.2.total_heat': 'group_count',
     'ch_lds.2.voltage': 'group_volt',
     'ch_lds.3.air': 'group_depth',
     'ch_lds.3.depth': 'group_depth',
-    'ch_lds.3.heat': 'group_count',
+    'ch_lds.3.total_height': 'group_depth',
+    'ch_lds.3.total_heat': 'group_count',
     'ch_lds.3.voltage': 'group_volt',
     'ch_lds.4.air': 'group_depth',
     'ch_lds.4.depth': 'group_depth',
-    'ch_lds.4.heat': 'group_count',
+    'ch_lds.4.total_heat': 'group_count',
+    'ch_lds.4.total_height': 'group_depth',
     'ch_lds.4.voltage': 'group_volt',
     'debug.heap': 'group_data',
     'debug.runtime': 'group_deltatime',
     'debug.usr_interval': 'group_deltatime',
     'debug.is_cnip': 'group_boolean',
+    'wn20.battery': 'group_count',
     'wh26.battery': 'group_count',
     'wh25.battery': 'group_count',
     'wh24.battery': 'group_count',
@@ -675,6 +688,7 @@ DEFAULT_GROUPS = {
     'wh51.ch14.voltage': 'group_volt',
     'wh51.ch15.voltage': 'group_volt',
     'wh51.ch16.voltage': 'group_volt',
+    'wn20.signal': 'group_count',
     'wh24.signal': 'group_count',
     'wh25.signal': 'group_count',
     'wh26.signal': 'group_count',
@@ -746,6 +760,73 @@ DEFAULT_GROUPS = {
     'radcompensation': 'group_count',
     'upgrade': 'group_count',
     'newVersion': 'group_count',
+    'wn20.rssi': 'group_db',
+    'wh24.rssi': 'group_db',
+    'wh25.rssi': 'group_db',
+    'wh26.rssi': 'group_db',
+    'wn32.rssi': 'group_db',
+    'wn32p.rssi': 'group_db',
+    'wn31.ch1.rssi': 'group_db',
+    'wn31.ch2.rssi': 'group_db',
+    'wn31.ch3.rssi': 'group_db',
+    'wn31.ch4.rssi': 'group_db',
+    'wn31.ch5.rssi': 'group_db',
+    'wn31.ch6.rssi': 'group_db',
+    'wn31.ch7.rssi': 'group_db',
+    'wn31.ch8.rssi': 'group_db',
+    'wn34.ch1.rssi': 'group_db',
+    'wn34.ch2.rssi': 'group_db',
+    'wn34.ch3.rssi': 'group_db',
+    'wn34.ch4.rssi': 'group_db',
+    'wn34.ch5.rssi': 'group_db',
+    'wn34.ch6.rssi': 'group_db',
+    'wn34.ch7.rssi': 'group_db',
+    'wn34.ch8.rssi': 'group_db',
+    'wn35.ch1.rssi': 'group_db',
+    'wn35.ch2.rssi': 'group_db',
+    'wn35.ch3.rssi': 'group_db',
+    'wn35.ch4.rssi': 'group_db',
+    'wn35.ch5.rssi': 'group_db',
+    'wn35.ch6.rssi': 'group_db',
+    'wn35.ch7.rssi': 'group_db',
+    'wn35.ch8.rssi': 'group_db',
+    'wh40.rssi': 'group_db',
+    'wh41.ch1.rssi': 'group_db',
+    'wh41.ch2.rssi': 'group_db',
+    'wh41.ch3.rssi': 'group_db',
+    'wh41.ch4.rssi': 'group_db',
+    'wh45.rssi': 'group_db',
+    'wh51.ch1.rssi': 'group_db',
+    'wh51.ch2.rssi': 'group_db',
+    'wh51.ch3.rssi': 'group_db',
+    'wh51.ch4.rssi': 'group_db',
+    'wh51.ch5.rssi': 'group_db',
+    'wh51.ch6.rssi': 'group_db',
+    'wh51.ch7.rssi': 'group_db',
+    'wh51.ch8.rssi': 'group_db',
+    'wh51.ch9.rssi': 'group_db',
+    'wh51.ch10.rssi': 'group_db',
+    'wh51.ch11.rssi': 'group_db',
+    'wh51.ch12.rssi': 'group_db',
+    'wh51.ch13.rssi': 'group_db',
+    'wh51.ch14.rssi': 'group_db',
+    'wh51.ch15.rssi': 'group_db',
+    'wh51.ch16.rssi': 'group_db',
+    'wh54.ch1.rssi': 'group_db',
+    'wh54.ch2.rssi': 'group_db',
+    'wh54.ch3.rssi': 'group_db',
+    'wh54.ch4.rssi': 'group_db',
+    'wh55.ch1.rssi': 'group_db',
+    'wh55.ch2.rssi': 'group_db',
+    'wh55.ch3.rssi': 'group_db',
+    'wh55.ch4.rssi': 'group_db',
+    'wh57.rssi': 'group_db',
+    'wh65.rssi': 'group_db',
+    'wh68.rssi': 'group_db',
+    'wh69.rssi': 'group_db',
+    'ws80.rssi': 'group_db',
+    'ws85.rssi': 'group_db',
+    'ws90.rssi': 'group_db',
 }
 
 
@@ -1340,10 +1421,14 @@ class HttpMapper(FieldMapper):
         'depth_ch2': 'ch_lds.2.depth',
         'depth_ch3': 'ch_lds.3.depth',
         'depth_ch4': 'ch_lds.4.depth',
-        'ldsheat_ch1': 'ch_lds.1.heat',
-        'ldsheat_ch2': 'ch_lds.2.heat',
-        'ldsheat_ch3': 'ch_lds.3.heat',
-        'ldsheat_ch4': 'ch_lds.4.heat',
+        'ldsheat_ch1': 'ch_lds.1.total_heat',
+        'ldsheat_ch2': 'ch_lds.2.total_heat',
+        'ldsheat_ch3': 'ch_lds.3.total_heat',
+        'ldsheat_ch4': 'ch_lds.4.total_heat',
+        'height_ch1': 'ch_lds.1.total_height',
+        'height_ch2': 'ch_lds.2.total_height',
+        'height_ch3': 'ch_lds.3.total_height',
+        'height_ch4': 'ch_lds.4.total_height',
         'heap': 'debug.heap',
         'runtime': 'debug.runtime',
         'ws_interval': 'debug.usr_interval',
@@ -1401,6 +1486,7 @@ class HttpMapper(FieldMapper):
         'monthRain': 'rain.0x12.val',
         'yearRain': 'rain.0x13.val',
         't_rainyear': 'rain.0x13.val',
+        'rain24': 'rain.0x7C.val',
         #'p_rainevent': 'piezoRain.0x0D.val',
         #'p_rainrate': 'piezoRain.0x0E.val',
         #'p_rainhour': 'p_rainhour',
@@ -1419,11 +1505,12 @@ class HttpMapper(FieldMapper):
         'wrain_piezo': 'piezoRain.0x11.val',
         'mrain_piezo': 'piezoRain.0x12.val',
         'yrain_piezo': 'piezoRain.0x13.val',
-
+        'rain24_piezo': 'piezoRain.0x7C.val',
     }
     # modular wind map
     default_wind_map = {
         'windDir': 'common_list.0x0A.val',
+        'windDir10': 'common_list.0x6D.val',
         'windSpeed': 'common_list.0x0B.val',
         'windGust': 'common_list.0x0C.val',
         'maxdailygust': 'common_list.0x19.val',
@@ -1432,6 +1519,7 @@ class HttpMapper(FieldMapper):
     default_sensor_state_map = {
         'inTempBatteryStatus': 'wh25.battery',
         'outTempBatteryStatus': 'wh65.battery',
+        'wn20_batt': 'wn20.battery',
         'wh25_batt': 'wh25.battery',
         'wh26_batt': 'wh26.battery',
         'batteryStatus1': 'wn31.ch1.battery',
@@ -1472,6 +1560,7 @@ class HttpMapper(FieldMapper):
         'soilMoistBatt16s': 'wh51.ch16.battery',
         'co2_Batt': 'co2.battery',
         'wh40_batt': 'wh40.battery',
+        'wn20_batt': 'wn20.battery',
 
         'leak_Batt1': 'wh55.ch1.battery',
         'leak_Batt2': 'wh55.ch2.battery',
@@ -1539,6 +1628,7 @@ class HttpMapper(FieldMapper):
         'ws85_ver': 'ws85.version',
         'ws90_ver': 'ws90.version',
 
+        'wn20_sig': 'wn20.signal',
         'wh25_sig': 'wh25.signal',
         'wh26_sig': 'wh26.signal',
         'wn31_ch1_sig': 'wn31.ch1.signal',
@@ -1602,6 +1692,71 @@ class HttpMapper(FieldMapper):
         'ws80_sig': 'ws80.signal',
         'ws85_sig': 'ws85.signal',
         'ws90_sig': 'ws90.signal',
+
+        'wn20_rssi': 'wn20.rssi',
+        'wh25_rssi': 'wh25.rssi',
+        'wh26_rssi': 'wh26.rssi',
+        'wn31_ch1_rssi': 'wn31.ch1.rssi',
+        'wn31_ch2_rssi': 'wn31.ch2.rssi',
+        'wn31_ch3_rssi': 'wn31.ch3.rssi',
+        'wn31_ch4_rssi': 'wn31.ch4.rssi',
+        'wn31_ch5_rssi': 'wn31.ch5.rssi',
+        'wn31_ch6_rssi': 'wn31.ch6.rssi',
+        'wn31_ch7_rssi': 'wn31.ch7.rssi',
+        'wn31_ch8_rssi': 'wn31.ch8.rssi',
+        'wn34_ch1_rssi': 'wn34.ch1.rssi',
+        'wn34_ch2_rssi': 'wn34.ch2.rssi',
+        'wn34_ch3_rssi': 'wn34.ch3.rssi',
+        'wn34_ch4_rssi': 'wn34.ch4.rssi',
+        'wn34_ch5_rssi': 'wn34.ch5.rssi',
+        'wn34_ch6_rssi': 'wn34.ch6.rssi',
+        'wn34_ch7_rssi': 'wn34.ch7.rssi',
+        'wn34_ch8_rssi': 'wn34.ch8.rssi',
+        'wn35_ch1_rssi': 'wn35.ch1.rssi',
+        'wn35_ch2_rssi': 'wn35.ch2.rssi',
+        'wn35_ch3_rssi': 'wn35.ch3.rssi',
+        'wn35_ch4_rssi': 'wn35.ch4.rssi',
+        'wn35_ch5_rssi': 'wn35.ch5.rssi',
+        'wn35_ch6_rssi': 'wn35.ch6.rssi',
+        'wn35_ch7_rssi': 'wn35.ch7.rssi',
+        'wn35_ch8_rssi': 'wn35.ch8.rssi',
+        'wh40_rssi': 'wh40.rssi',
+        'wh41_ch1_rssi': 'wh41.ch1.rssi',
+        'wh41_ch2_rssi': 'wh41.ch2.rssi',
+        'wh41_ch3_rssi': 'wh41.ch3.rssi',
+        'wh41_ch4_rssi': 'wh41.ch4.rssi',
+        'wh45_rssi': 'co2.rssi',
+        'wh51_ch1_rssi': 'wh51.ch1.rssi',
+        'wh51_ch2_rssi': 'wh51.ch2.rssi',
+        'wh51_ch3_rssi': 'wh51.ch3.rssi',
+        'wh51_ch4_rssi': 'wh51.ch4.rssi',
+        'wh51_ch5_rssi': 'wh51.ch5.rssi',
+        'wh51_ch6_rssi': 'wh51.ch6.rssi',
+        'wh51_ch7_rssi': 'wh51.ch7.rssi',
+        'wh51_ch8_rssi': 'wh51.ch8.rssi',
+        'wh51_ch9_rssi': 'wh51.ch9.rssi',
+        'wh51_ch10_rssi': 'wh51.ch10.rssi',
+        'wh51_ch11_rssi': 'wh51.ch11.rssi',
+        'wh51_ch12_rssi': 'wh51.ch12.rssi',
+        'wh51_ch13_rssi': 'wh51.ch13.rssi',
+        'wh51_ch14_rssi': 'wh51.ch14.rssi',
+        'wh51_ch15_rssi': 'wh51.ch15.rssi',
+        'wh51_ch16_rssi': 'wh51.ch16.rssi',
+        'wh54_ch1_rssi': 'wh54.ch1.rssi',
+        'wh54_ch2_rssi': 'wh54.ch2.rssi',
+        'wh54_ch3_rssi': 'wh54.ch3.rssi',
+        'wh54_ch4_rssi': 'wh54.ch4.rssi',
+        'wh55_ch1_rssi': 'wh55.ch1.rssi',
+        'wh55_ch2_rssi': 'wh55.ch2.rssi',
+        'wh55_ch3_rssi': 'wh55.ch3.rssi',
+        'wh55_ch4_rssi': 'wh55.ch4.rssi',
+
+        'wh57_rssi': 'wh57.rssi',
+        'wh68_rssi': 'wh68.rssi',
+        'wh69_rssi': 'wh69.rssi',
+        'ws80_rssi': 'ws80.rssi',
+        'ws85_rssi': 'ws85.rssi',
+        'ws90_rssi': 'ws90.rssi',
 
     }
     # construct the default map based on the modular maps
@@ -1820,16 +1975,16 @@ class SdMapper(FieldMapper):
         'ch_temp.8.temp': 'WN34 CH8',
         'ch_lds.1.air': 'LDS_Air CH1',
         'ch_lds.1.depth': 'LDS_Depth CH1',
-        'ch_lds.1.heat': 'LDS_Heat CH1',
+        'ch_lds.1.total_heat': 'LDS_Heat CH1',
         'ch_lds.2.air': 'LDS_Air CH2',
         'ch_lds.2.depth': 'LDS_Depth CH2',
-        'ch_lds.2.heat': 'LDS_Heat CH2',
+        'ch_lds.2.total_heat': 'LDS_Heat CH2',
         'ch_lds.3.air': 'LDS_Air CH3',
         'ch_lds.3.depth': 'LDS_Depth CH3',
-        'ch_lds.3.heat': 'LDS_Heat CH3',
+        'ch_lds.3.total_heat': 'LDS_Heat CH3',
         'ch_lds.4.air': 'LDS_Air CH4',
         'ch_lds.4.depth': 'LDS_Depth CH4',
-        'ch_lds.4.heat': 'LDS_Heat CH4'
+        'ch_lds.4.total_heat': 'LDS_Heat CH4'
     }
 
     def __init__(self, driver_debug=None, default_map=None, **mapper_config):
@@ -2939,6 +3094,8 @@ class EcowittHttpDriverConfEditor(weewx.drivers.AbstractConfEditor):
         extractor = last
     [[wh40_batt]]
         extractor = last
+    [[wn20_batt]]
+        extractor = last
     [[wh41_ch1_batt]]
         extractor = last
     [[wh41_ch2_batt]]
@@ -4025,22 +4182,22 @@ class EcowittNetCatchup(Catchup):
         'ch_lds1': {
             'air_ch1': 'ch_lds.1.air',
             'depth_ch1': 'ch_lds.1.depth',
-            'lds_heat_ch1': 'ch_lds.1.heat'
+            'lds_heat_ch1': 'ch_lds.1.total_heat'
         },
         'ch_lds2': {
             'air_ch2': 'ch_lds.2.air',
             'depth_ch2': 'ch_lds.2.depth',
-            'lds_heat_ch2': 'ch_lds.2.heat'
+            'lds_heat_ch2': 'ch_lds.2.total_heat'
         },
         'ch_lds3': {
             'air_ch3': 'ch_lds.3.air',
             'depth_ch3': 'ch_lds.3.depth',
-            'lds_heat_ch3': 'ch_lds.3.heat'
+            'lds_heat_ch3': 'ch_lds.3.total_heat'
         },
         'ch_lds4': {
             'air_ch4': 'ch_lds.4.air',
             'depth_ch4': 'ch_lds.4.depth',
-            'lds_heat_ch4': 'ch_lds.4.heat'
+            'lds_heat_ch4': 'ch_lds.4.total_heat'
         },
         'battery': {
             'ws1900_console': 'wh25.ws1900_batt',
@@ -4052,6 +4209,7 @@ class EcowittNetCatchup(Catchup):
             'haptic_array_capacitor': 'ws90cap_volt',
             'sonic_array': 'ws80.battery',
             'rainfall_sensor': 'wh40.voltage',
+            #'rainfall_sensor': 'wn20.voltage',
             'soilmoisture_sensor_ch1': 'ch_soil.1.voltage',
             'soilmoisture_sensor_ch2': 'ch_soil.2.voltage',
             'soilmoisture_sensor_ch3': 'ch_soil.3.voltage',
@@ -4590,7 +4748,8 @@ class EcowittDeviceCatchup:
         'group_radiation': ('common_list.0x15.val', ),
         'group_distance': ('lightning.distance', ),
         'group_depth': ('ch_lds.1.air', 'ch_lds.2.air', 'ch_lds.3.air', 'ch_lds.4.air',
-                        'ch_lds.1.depth', 'ch_lds.2.depth', 'ch_lds.3.depth', 'ch_lds.4.depth')
+                        'ch_lds.1.depth', 'ch_lds.2.depth', 'ch_lds.3.depth', 'ch_lds.4.depth'
+                        'ch_lds.1.total_height', 'ch_lds.2.total_height', 'ch_lds.3.total_height', 'ch_lds.4.total_height')
     }
 
     def __init__(self, **options):
@@ -6559,16 +6718,20 @@ class EcowittHttpParser:
         '0x17': 'process_index_object', # uv index
         '0x18': 'process_noop_object', # date and time
         '0x19': 'process_speed_object', # day max wind speed
+        '0x6D': 'process_direction_object', # wind direction 10min
+        '0x7C': 'process_rainfall_object', # rain 24h
         'srain_piezo': 'process_boolean_object' # is raining (?)
     }
     rain_map = {
         'day_rain': 'rainDay',
+        '24h_rain': 'rain24',
         'week_rain': 'rainWeek',
         'month_rain': 'rainMonth',
         'year_rain': 'rainYear'
     }
     piezo_rain_map = {
         'day_rain': 'drain_piezo',
+        '24h_rain': 'rain24_piezo',
         'week_rain': 'wrain_piezo',
         'month_rain': 'mrain_piezo',
         'year_rain': 'yrain_piezo'
@@ -8922,7 +9085,10 @@ class EcowittHttpParser:
                     "battery": "4",
                     "voltage": "3.23",
                     "air": "735 mm",
-                    "depth": "341 mm"}]
+                    "depth": "341 mm"
+                    "total_height": "2050",
+                    "total_heat": "504" }]
+
 
         Returns a list of dicts where each dict contains the data from a single
         sensor. Each dict includes a 'channel' key and other keys depending on
@@ -8995,13 +9161,33 @@ class EcowittHttpParser:
                 # the driver and save against the 'depth' key
                 _sensor['depth'] = weewx.units.convert(depth_vt,
                                                        weewx.units.std_groups[self.unit_system]['group_depth']).value
+
+            try:
+                # first obtain the 'total_height' key/value as a ValueTuple
+                total_height_vt = self.parse_obs_value(key='total_height',
+                                                json_object=sensor,
+                                                unit_group='group_depth')
+            except KeyError as e:
+                # the 'total_height' key does not exist, we cannot continue with this
+                # sensor
+                pass
+            except  ParseError as e:
+                # the 'depth' key exists but there was a problem processing the
+                # data, set the 'depth' key/value to None
+                _sensor['total_height'] = None
+            else:
+                # we have a numeric value, convert it to the unit system used by
+                # the driver and save against the 'depth' key
+                _sensor['total_height'] = weewx.units.convert(total_height_vt,
+                                                       weewx.units.std_groups[self.unit_system]['group_depth']).value
+
             # if we don't have either an 'air' or 'depth' key/value pair in our
             # results for this sensor we should ignore the sensor
             if not(set(_sensor.keys()) & {'air', 'depth'}):
                 continue
-            # add the heat
+            # add the total_heat
             try:
-                _sensor['heat'] = int(sensor['heat'])
+                _sensor['total_heat'] = int(sensor['total_heat'])
                 # process the 'heat' key/value if it exists, wrap in a try.. except
                 # in case there is a problem
             except (KeyError, TypeError, ValueError):
@@ -10147,6 +10333,7 @@ class EcowittHttpParser:
                             address: sensor address. Integer.
                             id: sensor ID. String.
                             battery: sensor battery state. Integer.
+                            rssi: sensor rssi state. Integer
                             signal: sensor signal state. Integer.
                             enabled: whether sensor is enabled. Boolean.
                             version: sensor firmware version. String, None if
@@ -10168,6 +10355,7 @@ class EcowittHttpParser:
             except (TypeError, ValueError):
                 # could not convert field 'type' to an integer so use None
                 data['address'] = None
+
             # obtain the sensor ID, it is a straight copy of field 'id'
             data['id'] = sensor.get('id')
             # attempt to obtain the sensor battery state, be prepared to catch
@@ -10180,6 +10368,16 @@ class EcowittHttpParser:
                     data['battery'] = int(sensor.get('batt'))
             except (TypeError, ValueError):
                 data['battery'] = None
+
+            if sensor.get('id').lower() in self.not_registered:
+              data['rssi'] = None
+            else:
+             try:
+                # obtain the sensor rssi state as an integer
+                data['rssi'] = int(sensor.get('rssi'))
+             except (TypeError, ValueError):
+                data['rssi'] = None
+
             # attempt to obtain the sensor signal state, be prepared to catch
             # any exceptions encountered when parsing the data
             if sensor.get('id').lower() in self.not_registered:
@@ -10190,6 +10388,8 @@ class EcowittHttpParser:
                 data['signal'] = int(sensor.get('signal'))
              except (TypeError, ValueError):
                 data['signal'] = None
+
+
              # attempt to determine if the sensor is enabled, be prepared to
              # catch any exceptions encountered when parsing the data
             try:
@@ -11172,13 +11372,15 @@ class EcowittSensors:
     # sensors whose battery state is determined from a binary value (0|1)
     batt_binary = ('wh68', 'wh69', 'wh25', 'wh26', 'wn31', 'wn32')
     # sensors whose battery state is determined from an integer value
-    batt_int = ('wh40', 'wh41', 'wh43', 'wh45', 'wh55', 'wh57')
+    batt_int = ('wn20', 'wh40', 'wh41', 'wh43', 'wh45', 'wh55', 'wh57')
     # sensors whose battery state is determined from a battery voltage value
     batt_volt = ('wh68', 'wh51', 'wh54', 'wn34', 'wn35', 'ws80', 'ws85', 'ws90')
     # map of 'dotted' get_livedata_info sensor voltage fields to sensor address
     sensor_with_voltage = {
+        'rain.0x13.voltage': 3,		#wh40 
+        'rain.0x13.voltage': 70,		#wn20 
         'piezoRain.0x13.voltage': 48,     #WH90
-        #'piezoRain.0x13.voltage': 49,	#WH85
+        'piezoRain.0x13.voltage': 49,	#WH85
         'ch_soil.1.voltage': 14,
         'ch_soil.2.voltage': 15,
         'ch_soil.3.voltage': 16,
@@ -11281,6 +11483,7 @@ class EcowittSensors:
         67: 'wh54_ch2',
         68: 'wh54_ch3',
         69: 'wh54_ch4',
+        70: 'wn20',
     }
 
     def __init__(self, all_sensor_data=None, live_data=None):
@@ -11589,7 +11792,10 @@ class EcowittSensors:
                     # known sensor so return 'unknown'
                     return '--'
             elif model in self.batt_int:
-                if sensor_data['battery'] <= 1:
+                if sensor_data['battery'] == None:
+                    # no valid data
+                    return "--"
+                elif sensor_data['battery'] <= 1:
                     # 0 or 1 is considered low
                     return "low"
                 elif sensor_data['battery'] == 6:
@@ -11692,7 +11898,7 @@ class EcowittDevice:
     # lookup for the type of battery state data provided for each sensor type
     sensor_battery_type = {'wh25': 'binary', 'wh26': 'binary',
                            'wn31': 'binary', 'wn34': 'integer',
-                           'wn35': 'integer', 'wh40': 'integer',
+                           'wn35': 'integer', 'wh40': 'integer', 'wn20': 'integer',
                            'wh41': 'integer', 'wh45': 'integer',
                            'wh51': 'integer', 'wh55': 'integer',
                            'wh57': 'integer', 'wh65': 'binary',
@@ -12647,6 +12853,7 @@ class DirectEcowittDevice:
                     'rain.0x11.val', 'rain.0x11.voltage',
                     'rain.0x12.val', 'rain.0x12.voltage',
                     'rain.0x13.val', 'rain.0x13.voltage',
+                    'rain.0x7C.val',
                     'piezoRain.srain_piezo.val',
                     'piezoRain.0x0D.val', 'piezoRain.0x0D.voltage',
                     'piezoRain.0x0E.val', 'piezoRain.0x0E.voltage',
@@ -12654,6 +12861,7 @@ class DirectEcowittDevice:
                     'piezoRain.0x11.val', 'piezoRain.0x11.voltage',
                     'piezoRain.0x12.val', 'piezoRain.0x12.voltage',
                     'piezoRain.0x13.val', 'piezoRain.0x13.voltage',
+                    'piezoRain.0x7C.val',
                     'wh25.intemp', 'wh25.inhumi', 'wh25.abs', 'wh25.rel',
                     'wh25.CO2', 'wh25.CO2_24H',
                     'common_list.0x02.val', 'common_list.0x02.voltage',
@@ -12666,6 +12874,7 @@ class DirectEcowittDevice:
                     'common_list.0x15.val', 'common_list.0x15.voltage',
                     'common_list.0x16.val', 'common_list.0x16.voltage',
                     'common_list.0x17.val', 'common_list.0x17.voltage',
+                    'common_list.0x6D.val',
                     'co2.temperature', 'co2.temp', 'co2.humidity', 'co2.CO2', 'co2.CO2_24H', 'co2.battery',
                     'co2.PM25', 'co2.PM25_RealAQI', 'co2.PM25_24HAQI', 'co2.PM25_24H',
                     'co2.PM10', 'co2.PM10_RealAQI', 'co2.PM10_24HAQI', 'co2.PM10_24H',
@@ -12688,52 +12897,53 @@ class DirectEcowittDevice:
                     'ch_temp.3.temp', 'ch_temp.3.voltage', 'ch_temp.4.temp', 'ch_temp.4.voltage',
                     'ch_temp.5.temp', 'ch_temp.5.voltage', 'ch_temp.6.temp', 'ch_temp.6.voltage',
                     'ch_temp.7.temp', 'ch_temp.7.voltage', 'ch_temp.8.temp', 'ch_temp.8.voltage',
-                    'ch_lds.1.air', 'ch_lds.1.depth', 'ch_lds.1.battery', 'ch_lds.1.voltage',
-                    'ch_lds.2.air', 'ch_lds.2.depth', 'ch_lds.2.battery', 'ch_lds.2.voltage',
-                    'ch_lds.3.air', 'ch_lds.3.depth', 'ch_lds.3.battery', 'ch_lds.3.voltage',
-                    'ch_lds.4.air', 'ch_lds.4.depth', 'ch_lds.4.battery', 'ch_lds.4.voltage',
+                    'ch_lds.1.air', 'ch_lds.1.depth', 'ch_lds.1.battery', 'ch_lds.1.voltage', 'ch_lds.1.total_height', 'ch_lds.1.total_heat',
+                    'ch_lds.2.air', 'ch_lds.2.depth', 'ch_lds.2.battery', 'ch_lds.2.voltage', 'ch_lds.2.total_height', 'ch_lds.2.total_heat',
+                    'ch_lds.3.air', 'ch_lds.3.depth', 'ch_lds.3.battery', 'ch_lds.3.voltage', 'ch_lds.3.total_height', 'ch_lds.3.total_heat',
+                    'ch_lds.4.air', 'ch_lds.4.depth', 'ch_lds.4.battery', 'ch_lds.4.voltage', 'ch_lds.4.total_height', 'ch_lds.4.total_heat',
                     'ch_leak.1.status', 'ch_leak.1.voltage', 'ch_leak.2.status', 'ch_leak.2.voltage',
                     'ch_leak.3.status', 'ch_leak.3.voltage', 'ch_leak.4.status', 'ch_leak.4.voltage',
                     'debug.heap', 'debug.runtime', 'debug.is_cnip', 'debug.usr_interval',
-                    'wh24.battery', 'wh24.signal', 'wh25.battery', 'wh25.signal',
-                    'wh26.battery', 'wh26.signal',
-                    'wn31.ch1.battery', 'wn31.ch1.signal', 'wn31.ch2.battery', 'wn31.ch2.signal',
-                    'wn31.ch3.battery', 'wn31.ch3.signal', 'wn31.ch4.battery', 'wn31.ch4.signal',
-                    'wn31.ch5.battery', 'wn31.ch5.signal', 'wn31.ch6.battery', 'wn31.ch6.signal',
-                    'wn31.ch7.battery', 'wn31.ch7.signal', 'wn31.ch8.battery', 'wn31.ch8.signal',
-                    'wn32.battery', 'wn32.signal',
-                    'wn34.ch1.battery', 'wn34.ch1.signal', 'wn34.ch2.battery', 'wn34.ch2.signal',
-                    'wn34.ch3.battery', 'wn34.ch3.signal', 'wn34.ch4.battery', 'wn34.ch4.signal',
-                    'wn34.ch5.battery', 'wn34.ch5.signal', 'wn34.ch6.battery', 'wn34.ch6.signal',
-                    'wn34.ch7.battery', 'wn34.ch7.signal', 'wn34.ch8.battery', 'wn34.ch8.signal',
-                    'wn35.ch1.battery', 'wn35.ch1.signal', 'wn35.ch2.battery', 'wn35.ch2.signal',
-                    'wn35.ch3.battery', 'wn35.ch3.signal', 'wn35.ch4.battery', 'wn35.ch4.signal',
-                    'wn35.ch5.battery', 'wn35.ch5.signal', 'wn35.ch6.battery', 'wn35.ch6.signal',
-                    'wn35.ch7.battery', 'wn35.ch7.signal', 'wn35.ch8.battery', 'wn35.ch8.signal',
-                    'wh40.battery', 'wh40.signal',
-                    'wh41.ch1.battery', 'wh41.ch1.signal', 'wh41.ch2.battery', 'wh41.ch2.signal',
-                    'wh41.ch3.battery', 'wh41.ch3.signal', 'wh41.ch4.battery', 'wh41.ch4.signal',
-                    'wh45.battery', 'wh45.signal', 'wh46.battery', 'wh46.signal',
-                    'wh51.ch1.battery', 'wh51.ch1.signal', 'wh51.ch2.battery', 'wh51.ch2.signal',
-                    'wh51.ch3.battery', 'wh51.ch3.signal', 'wh51.ch4.battery', 'wh51.ch4.signal',
-                    'wh51.ch5.battery', 'wh51.ch5.signal', 'wh51.ch6.battery', 'wh51.ch6.signal',
-                    'wh51.ch7.battery', 'wh51.ch7.signal', 'wh51.ch8.battery', 'wh51.ch8.signal',
-                    'wh51.ch9.battery', 'wh51.ch9.signal', 'wh51.ch10.battery', 'wh51.ch10.signal',
-                    'wh51.ch11.battery', 'wh51.ch11.signal', 'wh51.ch12.battery', 'wh51.ch12.signal',
-                    'wh51.ch13.battery', 'wh53.ch11.signal', 'wh51.ch14.battery', 'wh51.ch14.signal',
-                    'wh51.ch15.battery', 'wh51.ch15.signal', 'wh51.ch16.battery', 'wh51.ch16.signal',
-                    'wh54.ch1.battery', 'wh54.ch1.signal', 'wh54.ch2.battery', 'wh54.ch2.signal',
-                    'wh54.ch3.battery', 'wh54.ch3.signal', 'wh54.ch4.battery', 'wh54.ch4.signal',
-                    'wh55.ch1.battery', 'wh55.ch1.signal', 'wh55.ch2.battery', 'wh55.ch2.signal',
-                    'wh55.ch3.battery', 'wh55.ch3.signal', 'wh55.ch4.battery', 'wh55.ch4.signal',
-                    'wh57.battery', 'wh57.signal',
-                    'wh65.battery', 'wh65.signal', 'wh68.battery', 'wh68.signal',
-                    'wh69.battery', 'wh69.signal', 
-                    'ws80.battery', 'ws80.signal', 
-                    'ws85.battery', 'ws85.signal', 'ws90.battery', 'ws90.signal'
+                    'wh24.battery', 'wh24.signal', 'wh25.battery', 'wh25.signal', 'wh25.rssi',
+                    'wh26.battery', 'wh26.signal', 'wh26.rssi',
+                    'wn20.battery', 'wn20.signal', 'wn20.rssi',
+                    'wn31.ch1.battery', 'wn31.ch1.signal', 'wn31.ch2.battery', 'wn31.ch2.signal', 'wn31.ch1.rssi', 'wn31.ch2.rssi',
+                    'wn31.ch3.battery', 'wn31.ch3.signal', 'wn31.ch4.battery', 'wn31.ch4.signal', 'wn31.ch3.rssi', 'wn31.ch4.rssi',
+                    'wn31.ch5.battery', 'wn31.ch5.signal', 'wn31.ch6.battery', 'wn31.ch6.signal', 'wn31.ch5.rssi', 'wn31.ch5.rssi',
+                    'wn31.ch7.battery', 'wn31.ch7.signal', 'wn31.ch8.battery', 'wn31.ch8.signal', 'wn31.ch7.rssi', 'wn31.ch8.rssi',
+                    'wn32.battery', 'wn32.signal', 'wn32.rssi',
+                    'wn34.ch1.battery', 'wn34.ch1.signal', 'wn34.ch2.battery', 'wn34.ch2.signal', 'wn34.ch1.rssi', 'wn34.ch2.rssi',
+                    'wn34.ch3.battery', 'wn34.ch3.signal', 'wn34.ch4.battery', 'wn34.ch4.signal', 'wn34.ch3.rssi', 'wn34.ch4.rssi',
+                    'wn34.ch5.battery', 'wn34.ch5.signal', 'wn34.ch6.battery', 'wn34.ch6.signal', 'wn34.ch5.rssi', 'wn34.ch6.rssi',
+                    'wn34.ch7.battery', 'wn34.ch7.signal', 'wn34.ch8.battery', 'wn34.ch8.signal', 'wn34.ch7.rssi', 'wn34.ch8.rssi',
+                    'wn35.ch1.battery', 'wn35.ch1.signal', 'wn35.ch2.battery', 'wn35.ch2.signal', 'wn34.ch9.rssi', 'wn34.ch10.rssi',
+                    'wn35.ch3.battery', 'wn35.ch3.signal', 'wn35.ch4.battery', 'wn35.ch4.signal', 'wn34.ch11.rssi', 'wn34.ch12.rssi',
+                    'wn35.ch5.battery', 'wn35.ch5.signal', 'wn35.ch6.battery', 'wn35.ch6.signal', 'wn34.ch13.rssi', 'wn34.ch14.rssi',
+                    'wn35.ch7.battery', 'wn35.ch7.signal', 'wn35.ch8.battery', 'wn35.ch8.signal', 'wn34.ch15.rssi', 'wn34.ch16.rssi',
+                    'wh40.battery', 'wh40.signal', 'wh40.rssi',
+                    'wh41.ch1.battery', 'wh41.ch1.signal', 'wh41.ch2.battery', 'wh41.ch2.signal', 'wh41.ch1.rssi', 'wh41.ch2.rssi',
+                    'wh41.ch3.battery', 'wh41.ch3.signal', 'wh41.ch4.battery', 'wh41.ch4.signal', 'wh41.ch3.rssi', 'wh41.ch4.rssi',
+                    'wh45.battery', 'wh45.signal', 'wh46.battery', 'wh46.signal', 'wh45.rssi', 'wh46.rssi',
+                    'wh51.ch1.battery', 'wh51.ch1.signal', 'wh51.ch2.battery', 'wh51.ch2.signal', 'wh51.ch1.rssi', 'wh51.ch2.rssi',
+                    'wh51.ch3.battery', 'wh51.ch3.signal', 'wh51.ch4.battery', 'wh51.ch4.signal', 'wh51.ch3.rssi', 'wh51.ch4.rssi',
+                    'wh51.ch5.battery', 'wh51.ch5.signal', 'wh51.ch6.battery', 'wh51.ch6.signal', 'wh51.ch5.rssi', 'wh51.ch6.rssi',
+                    'wh51.ch7.battery', 'wh51.ch7.signal', 'wh51.ch8.battery', 'wh51.ch8.signal', 'wh51.ch7.rssi', 'wh51.ch8.rssi',
+                    'wh51.ch9.battery', 'wh51.ch9.signal', 'wh51.ch10.battery', 'wh51.ch10.signal', 'wh51.ch9.rssi', 'wh51.ch10.rssi',
+                    'wh51.ch11.battery', 'wh51.ch11.signal', 'wh51.ch12.battery', 'wh51.ch12.signal', 'wh51.ch11.rssi', 'wh51.ch12.rssi',
+                    'wh51.ch13.battery', 'wh53.ch11.signal', 'wh51.ch14.battery', 'wh51.ch14.signal', 'wh51.ch13.rssi', 'wh51.ch14.rssi',
+                    'wh51.ch15.battery', 'wh51.ch15.signal', 'wh51.ch16.battery', 'wh51.ch16.signal', 'wh51.ch15.rssi', 'wh51.ch16.rssi',
+                    'wh54.ch1.battery', 'wh54.ch1.signal', 'wh54.ch2.battery', 'wh54.ch2.signal', 'wh54.ch1.rssi', 'wh54.ch2.rssi',
+                    'wh54.ch3.battery', 'wh54.ch3.signal', 'wh54.ch4.battery', 'wh54.ch4.signal', 'wh54.ch3.rssi', 'wh54.ch4.rssi',
+                    'wh55.ch1.battery', 'wh55.ch1.signal', 'wh55.ch2.battery', 'wh55.ch2.signal', 'wh55.ch1.rssi', 'wh55.ch2.rssi',
+                    'wh55.ch3.battery', 'wh55.ch3.signal', 'wh55.ch4.battery', 'wh55.ch4.signal', 'wh55.ch3.rssi', 'wh55.ch4.rssi',
+                    'wh57.battery', 'wh57.signal', 'wh57.rssi',
+                    'wh65.battery', 'wh65.signal', 'wh68.battery', 'wh68.signal', 'wh65.rssi', 'wh68.rssi',
+                    'wh69.battery', 'wh69.signal', 'wh69.rssi',
+                    'ws80.battery', 'ws80.signal', 'ws80.rssi',
+                    'ws85.battery', 'ws85.signal', 'ws90.battery', 'ws90.signal', 'ws85.rssi', 'ws90.rssi'
                     ]
 
-    sensor_display_order = ( 'wh25', 'wh26', 'wn31', 'wn34', 'wn35', 'wh40', 
+    sensor_display_order = ( 'wn20', 'wh25', 'wh26', 'wn31', 'wn34', 'wn35', 'wh40', 
                              'wh41', 'wh45', 'wh51', 'wh54', 'wh55', 'wh57',
                              'wh68', 'wh69', 'ws80', 'ws85', 'ws90')
     def __init__(self, namespace, arg_parser, stn_dict, **kwargs):
@@ -13129,6 +13339,10 @@ class DirectEcowittDevice:
                 print(f'  Traditional gauge rain data:')
                 _vh = weewx.units.ValueHelper(rain_totals_data['day_rain'], formatter=f, converter=c)
                 print(f'{"Day rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
+
+                #_vh = weewx.units.ValueHelper(rain_totals_data['24h_rain'], formatter=f, converter=c)
+                #print(f'{"24h rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
+
                 _vh = weewx.units.ValueHelper(rain_totals_data['week_rain'], formatter=f, converter=c)
                 print(f'{"Week rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
                 _vh = weewx.units.ValueHelper(rain_totals_data['month_rain'], formatter=f, converter=c)
@@ -13142,6 +13356,10 @@ class DirectEcowittDevice:
                 print(f'  Piezo gauge rain data:')
                 _vh = weewx.units.ValueHelper(rain_piezo_data['day_rain'], formatter=f, converter=c)
                 print(f'{"Day rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
+
+                #_vh = weewx.units.ValueHelper(rain_piezo_data['24h_rain'], formatter=f, converter=c)
+                #print(f'{"24h rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
+
                 _vh = weewx.units.ValueHelper(rain_piezo_data['week_rain'], formatter=f, converter=c)
                 print(f'{"Week rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
                 _vh = weewx.units.ValueHelper(rain_piezo_data['month_rain'], formatter=f, converter=c)
@@ -14086,13 +14304,21 @@ class DirectEcowittDevice:
                     return
                 signal_str = ''
                 battery_str = ''
+                rssi_str = ''
             else:
                 # the sensor is registered
                 # create the signal strength text
                 signal_str = f"signal: {sensor_data.get('signal', '--')}"
+                # create rssi  strength text
+                rssi_str = f"rssi: {sensor_data.get('rssi', '--')}"
+
                 # create suitable descriptive battery state text
                 desc_str = device.sensors.batt_state_desc(model=model,
                                                           sensor_data=sensor_data)
+
+                # create rssi  strength text
+                rssi_str = f"rssi: {sensor_data.get('rssi', '--')}"
+
                 # create a suitable voltage string
                 volt_str = f" ({sensor_data['voltage']}V)" if 'voltage' in sensor_data else ""
                 if sensor_data.get('battery', '--') is None:
@@ -14109,7 +14335,7 @@ class DirectEcowittDevice:
             # sensor's connection based on the sensor ID
             sensor_id_str = get_sensor_id_string(sensor_data)
             # print the overall sensor metadata text
-            print(f'{sensor_name_str.upper():<10} {sensor_id_str:<25} {signal_str} {battery_str}')
+            print(f'{sensor_name_str.upper():<10} {sensor_id_str:<25} {signal_str} {rssi_str} {battery_str}')
 
         # obtain an EcowittDevice object
         device = self.get_device()
