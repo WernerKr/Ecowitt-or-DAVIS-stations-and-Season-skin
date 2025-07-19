@@ -60,6 +60,8 @@ Modified by me!
         - wh68_batt, wh69_batt
     15 July 2025		v0.1.5     
         - p_rain is back  (for people who used this field )
+    19 July 2025		v0.1.6     
+        - new rssi, rain voltage, winddir_avg10m, last24hrainin, last24hrain_piezo, LDS total_heat, wn20 (Mini rain)      
         
     Service not working !!
 
