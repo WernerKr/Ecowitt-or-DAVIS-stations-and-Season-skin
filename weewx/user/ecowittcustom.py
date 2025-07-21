@@ -446,6 +446,82 @@ weewx.units.obs_group_dict['ws85_sig'] = 'group_percent'
 weewx.units.obs_group_dict['wh85_sig'] = 'group_count'
 """
 
+weewx.units.obs_group_dict['wn20_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh24_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh25_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh26_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh31_ch1_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh31_ch2_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh31_ch3_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh31_ch4_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh31_ch5_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh31_ch6_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh31_ch7_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh31_ch8_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch1_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch2_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch3_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch4_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch5_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch6_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch7_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch8_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch9_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch10_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch11_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch12_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch13_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch14_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch15_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn34_ch16_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn35_ch1_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn35_ch2_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn35_ch3_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn35_ch4_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn35_ch5_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn35_ch6_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn35_ch7_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wn35_ch8_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh40_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh41_ch1_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh41_ch2_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh41_ch3_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh41_ch4_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh45_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch1_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch2_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch3_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch4_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch5_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch6_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch7_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch8_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch9_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch10_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch11_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch12_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch13_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch14_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch15_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh51_ch16_rssi'] = 'group_db'
+
+weewx.units.obs_group_dict['wh54_ch1_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh54_ch2_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh54_ch3_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh54_ch4_rssi'] = 'group_db'
+
+weewx.units.obs_group_dict['wh55_ch1_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh55_ch2_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh55_ch3_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh55_ch4_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh57_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh65_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh68_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh69_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh80_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh85_rssi'] = 'group_db'
+weewx.units.obs_group_dict['wh90_rssi'] = 'group_db'
+
 weewx.units.obs_group_dict['ldsbatt1'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt2'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt3'] = 'group_volt'
@@ -908,12 +984,88 @@ class Consumer(object):
         'wh68_sig': 'wh68sig',
         'wh69_sig': 'wh69sig',
         'ws80_sig': 'wh80sig',
-        'ws90_sig': 'wh90sig',
         'ws85_sig': 'wh85sig',
+        'ws90_sig': 'wh90sig',
+        #'wh80_sig': 'wh80sig',
+        #'wh90_sig': 'wh90sig',
+        #'wh85_sig': 'wh85sig',
         'wh54_ch1_sig': 'wh54sig1',
         'wh54_ch2_sig': 'wh54sig2',
         'wh54_ch3_sig': 'wh54sig3',
         'wh54_ch4_sig': 'wh54sig4',
+        'wn20_rssi': 'wn20rssi',
+        'wh24_rssi': 'wh24rssi',
+        'wh25_rssi': 'wh25rssi',
+        'wh26_rssi': 'wh26rssi',
+        'wh31_ch1_rssi': 'wh31rssi1',
+        'wh31_ch2_rssi': 'wh31rssi2',
+        'wh31_ch3_rssi': 'wh31rssi3',
+        'wh31_ch4_rssi': 'wh31rssi4',
+        'wh31_ch5_rssi': 'wh31rssi5',
+        'wh31_ch6_rssi': 'wh31rssi6',
+        'wh31_ch7_rssi': 'wh31rssi7',
+        'wh31_ch8_rssi': 'wh31rssi8',
+        'wn34_ch1_rssi': 'wh34rssi1',
+        'wn34_ch2_rssi': 'wh34rssi2',
+        'wn34_ch3_rssi': 'wh34rssi3',
+        'wn34_ch4_rssi': 'wh34rssi4',
+        'wn34_ch5_rssi': 'wh34rssi5',
+        'wn34_ch6_rssi': 'wh34rssi6',
+        'wn34_ch7_rssi': 'wh34rssi7',
+        'wn34_ch8_rssi': 'wh34rssi8',
+        'wn34_ch9_rssi': 'wh34rssi9',
+        'wn34_ch10_rssi': 'wh34rssi10',
+        'wn34_ch11_rssi': 'wh34rssi11',
+        'wn34_ch12_rssi': 'wh34rssi12',
+        'wn34_ch13_rssi': 'wh34rssi13',
+        'wn34_ch14_rssi': 'wh34rssi14',
+        'wn34_ch15_rssi': 'wh34rssi15',
+        'wn34_ch16_rssi': 'wh34rssi16',
+        'wn35_ch1_rssi': 'wh35rssi1',
+        'wn35_ch2_rssi': 'wh35rssi2',
+        'wn35_ch3_rssi': 'wh35rssi3',
+        'wn35_ch4_rssi': 'wh35rssi4',
+        'wn35_ch5_rssi': 'wh35rssi5',
+        'wn35_ch6_rssi': 'wh35rssi6',
+        'wn35_ch7_rssi': 'wh35rssi7',
+        'wn35_ch8_rssi': 'wh35rssi8',
+        'wh40_rssi': 'wh40rssi',
+        'wh41_ch1_rssi': 'wh41rssi1',
+        'wh41_ch2_rssi': 'wh41rssi2',
+        'wh41_ch3_rssi': 'wh41rssi3',
+        'wh41_ch4_rssi': 'wh41rssi4',
+        'wh45_rssi': 'wh45rssi',
+        'wh51_ch1_rssi': 'wh51rssi1',
+        'wh51_ch2_rssi': 'wh51rssi2',
+        'wh51_ch3_rssi': 'wh51rssi3',
+        'wh51_ch4_rssi': 'wh51rssi4',
+        'wh51_ch5_rssi': 'wh51rssi5',
+        'wh51_ch6_rssi': 'wh51rssi6',
+        'wh51_ch7_rssi': 'wh51rssi7',
+        'wh51_ch8_rssi': 'wh51rssi8',
+        'wh51_ch9_rssi': 'wh51rssi9',
+        'wh51_ch10_rssi': 'wh51rssi10',
+        'wh51_ch11_rssi': 'wh51rssi11',
+        'wh51_ch12_rssi': 'wh51rssi12',
+        'wh51_ch13_rssi': 'wh51rssi13',
+        'wh51_ch14_rssi': 'wh51rssi14',
+        'wh51_ch15_rssi': 'wh51rssi15',
+        'wh51_ch16_rssi': 'wh51rssi16',
+        'wh54_ch1_rssi': 'wh54rssi1',
+        'wh54_ch2_rssi': 'wh54rssi2',
+        'wh54_ch3_rssi': 'wh54rssi3',
+        'wh54_ch4_rssi': 'wh54rssi4',
+        'wh55_ch1_rssi': 'wh55rssi1',
+        'wh55_ch2_rssi': 'wh55rssi2',
+        'wh55_ch3_rssi': 'wh55rssi3',
+        'wh55_ch4_rssi': 'wh55rssi4',
+        'wh57_rssi': 'wh57rssi',
+        'wh65_rssi': 'wh65rssi',
+        'wh68_rssi': 'wh68rssi',
+        'wh69_rssi': 'wh69rssi',
+        'wh80_rssi': 'wh80rssi',
+        'wh90_rssi': 'wh90rssi',
+        'wh85_rssi': 'wh85rssi',
         'thi_ch1': 'thi_ch1',
         'thi_ch2': 'thi_ch2',
         'thi_ch3': 'thi_ch3',
@@ -1471,7 +1623,7 @@ class WUClient(Consumer):
                     if n in self.LABEL_MAP:
                         #pkt[self.LABEL_MAP[n]] = self.decode_float(data[n])
                         if n != 'stationtype' and n != 'softwaretype':
-                           pkt[self.LABEL_MAP[n]] = self.decode_float(data[n]) if data[n] != '' else 0
+                           pkt[self.LABEL_MAP[n]] = self.decode_float(data[n]) if ((data[n] != '') and (data[n] != '--')) else 0
                     elif n in self.IGNORED_LABELS:
                         val = data[n]
                         if n == 'PASSWORD':
@@ -1805,6 +1957,79 @@ class EcowittClient(Consumer):
             'wh54sig2': 'wh54sig2',
             'wh54sig3': 'wh54sig3',
             'wh54sig4': 'wh54sig4',
+            'wn20rssi': 'wh20rssi',
+            'wh24rssi': 'wh24rssi',
+            'wh25rssi': 'wh25rssi',
+            'wh26rssi': 'wh26rssi',
+            'wh31rssi1': 'wh31rssi1',
+            'wh31rssi2': 'wh31rssi2',
+            'wh31rssi3': 'wh31rssi3',
+            'wh31rssi4': 'wh31rssi4',
+            'wh31rssi5': 'wh31rssi5',
+            'wh31rssi6': 'wh31rssi6',
+            'wh31rssi7': 'wh31rssi7',
+            'wh31rssi8': 'wh31rssi8',
+            'wh34rssi1': 'wh34rssi1',
+            'wh34rssi2': 'wh34rssi2',
+            'wh34rssi3': 'wh34rssi3',
+            'wh34rssi4': 'wh34rssi4',
+            'wh34rssi5': 'wh34rssi5',
+            'wh34rssi6': 'wh34rssi6',
+            'wh34rssi7': 'wh34rssi7',
+            'wh34rssi8': 'wh34rssi8',
+            'wh34rssi9': 'wh34rssi9',
+            'wh34rssi10': 'wh34rssi10',
+            'wh34rssi11': 'wh34rssi10',
+            'wh34rssi12': 'wh34rssi11',
+            'wh34rssi13': 'wh34rssi13',
+            'wh34rssi14': 'wh34rssi14',
+            'wh34rssi15': 'wh34rssi15',
+            'wh34rssi16': 'wh34rssi16',
+            'wh35rssi1': 'wh35rssi1',
+            'wh35rssi2': 'wh35rssi2',
+            'wh35rssi3': 'wh35rssi3',
+            'wh35rssi4': 'wh35rssi4',
+            'wh35rssi5': 'wh35rssi5',
+            'wh35rssi6': 'wh35rssi6',
+            'wh35rssi7': 'wh35rssi7',
+            'wh35rssi8': 'wh35rssi8',
+            'wh40rssi': 'wh40rssi',
+            'wh41rssi1': 'wh41rssi1',
+            'wh41rssi2': 'wh41rssi2',
+            'wh41rssi3': 'wh41rssi3',
+            'wh41rssi4': 'wh41rssi4',
+            'wh45rssi': 'wh45rssi',
+            'wh51rssi1': 'wh51rssi1',
+            'wh51rssi2': 'wh51rssi2',
+            'wh51rssi3': 'wh51rssi3',
+            'wh51rssi4': 'wh51rssi4',
+            'wh51rssi5': 'wh51rssi5',
+            'wh51rssi6': 'wh51rssi6',
+            'wh51rssi7': 'wh51rssi7',
+            'wh51rssi8': 'wh51rssi8',
+            'wh51rssi9': 'wh51rssi9',
+            'wh51rssi10': 'wh51rssi10',
+            'wh51rssi11': 'wh51rssi11',
+            'wh51rssi12': 'wh51rssi12',
+            'wh51rssi13': 'wh51rssi13',
+            'wh51rssi14': 'wh51rssi14',
+            'wh51rssi15': 'wh51rssi15',
+            'wh51rssi16': 'wh51rssi16',
+            'wh54rssi1': 'wh54rssi1',
+            'wh54rssi2': 'wh54rssi2',
+            'wh54rssi3': 'wh54rssi3',
+            'wh54rssi4': 'wh54rssi4',
+            'wh55rssi1': 'wh55rssi1',
+            'wh55rssi2': 'wh55rssi2',
+            'wh55rssi3': 'wh55rssi3',
+            'wh55rssi4': 'wh55rssi4',
+            'wh57rssi': 'wh57rssi',
+            'wh65rssi': 'wh65rssi',
+            'wh68rssi': 'wh68rssi',
+            'wh69rssi': 'wh69rssi',
+            'wh80rssi': 'wh80rssi',
+            'wh85rssi': 'wh85rssi',
+            'wh90rssi': 'wh90rssi',
             'dewptf': 'dewptf',
             'windchillf': 'windchillf',
             'feelslikef': 'feelslikef',
