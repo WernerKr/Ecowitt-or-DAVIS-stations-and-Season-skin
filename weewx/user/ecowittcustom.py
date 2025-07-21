@@ -1572,7 +1572,7 @@ class WUClient(Consumer):
         IGNORED_LABELS = [
             'ID', 'PASSWORD', 'dateutc',
             'action', 'realtime',
-            'weather', 'clouds',
+            'weather', 'clouds', 'osunhours', 'nsunhours',
             'windspdmph_avg2m', 'winddir_avg2m',
             'windgustmph_10m', 'windgustdir_10m',
         ]
@@ -2115,7 +2115,7 @@ class EcowittClient(Consumer):
             'pm25_AQIlvl_co2','pm25_AQIlvl_24h_co2',
             'pm10_AQIlvl_co2','pm10_AQIlvl_24h_co2',
             #'windspdmph_avg10m','winddir_avg10m','windgustmph_max10m','windrun',
-            'brightness','cloudf','srsum',
+            'brightness','cloudf','srsum', 'osunhours', 'nsunhours',
             #'sunhours','sunshine',
             'ptrend1','pchange1','ptrend3','pchange3',
             'running','wswarning','sensorwarning','batterywarning','stormwarning','tswarning','updatewarning','leakwarning','co2warning','intvlwarning','time',
