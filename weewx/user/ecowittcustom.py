@@ -521,6 +521,9 @@ weewx.units.obs_group_dict['wh69_rssi'] = 'group_db'
 weewx.units.obs_group_dict['wh80_rssi'] = 'group_db'
 weewx.units.obs_group_dict['wh85_rssi'] = 'group_db'
 weewx.units.obs_group_dict['wh90_rssi'] = 'group_db'
+weewx.units.obs_group_dict['ws80_rssi'] = 'group_db'
+weewx.units.obs_group_dict['ws85_rssi'] = 'group_db'
+weewx.units.obs_group_dict['ws90_rssi'] = 'group_db'
 
 weewx.units.obs_group_dict['ldsbatt1'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt2'] = 'group_volt'
@@ -1066,6 +1069,9 @@ class Consumer(object):
         'wh80_rssi': 'wh80rssi',
         'wh90_rssi': 'wh90rssi',
         'wh85_rssi': 'wh85rssi',
+        'ws80_rssi': 'wh80rssi',
+        'ws90_rssi': 'wh90rssi',
+        'ws85_rssi': 'wh85rssi',
         'thi_ch1': 'thi_ch1',
         'thi_ch2': 'thi_ch2',
         'thi_ch3': 'thi_ch3',
