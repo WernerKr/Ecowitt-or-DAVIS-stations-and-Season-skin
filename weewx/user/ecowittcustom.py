@@ -168,7 +168,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Ecowittcustom'
-DRIVER_VERSION = '0.1.3'
+DRIVER_VERSION = '0.1.4'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -1628,8 +1628,11 @@ class WUClient(Consumer):
                 for n in data:
                     if n in self.LABEL_MAP:
                         #pkt[self.LABEL_MAP[n]] = self.decode_float(data[n])
-                        if n != 'stationtype' and n != 'softwaretype':
-                           pkt[self.LABEL_MAP[n]] = self.decode_float(data[n]) if ((data[n] != '') and (data[n] != '--')) else 0
+                        if n != 'model' and n != 'stationtype':
+                           if data[n] == '--':
+                              pkt[self.LABEL_MAP[n]] = None
+                           else: 
+                              pkt[self.LABEL_MAP[n]] = self.decode_float(data[n]) if data[n] != '' else 0
                     elif n in self.IGNORED_LABELS:
                         val = data[n]
                         if n == 'PASSWORD':
@@ -1645,7 +1648,8 @@ class WUClient(Consumer):
                     self._last_rain = newtot
 
             except ValueError as e:
-                logerr("parse failed for %s: %s" % (s, e))
+                #logerr("parse failed for %s: %s" % (s, e))
+                logerr("field: %s = %s parse failed for %s: %s" % (n, data[n], s, e))
             return pkt
 
         @staticmethod
@@ -2214,7 +2218,10 @@ class EcowittClient(Consumer):
                         #pkt[self.LABEL_MAP[n]] = self.decode_float(data[n])
                         #pkt[self.LABEL_MAP[n]] = self.decode_float(data[n]) if data[n] != '' else ''
                         if n != 'model' and n != 'stationtype':
-                           pkt[self.LABEL_MAP[n]] = self.decode_float(data[n]) if data[n] != '' else 0
+                           if data[n] == '--':
+                              pkt[self.LABEL_MAP[n]] = None
+                           else: 
+                              pkt[self.LABEL_MAP[n]] = self.decode_float(data[n]) if data[n] != '' else 0
                     elif n in self.IGNORED_LABELS:
                         val = data[n]
                         if n == 'PASSKEY':
@@ -2248,7 +2255,8 @@ class EcowittClient(Consumer):
 
 
             except ValueError as e:
-                logerr("parse failed for %s: %s" % (s, e))
+                #logerr("parse failed for %s: %s" % (s, e))
+                logerr("field: %s = %s parse failed for %s: %s" % (n, data[n], s, e))
             return pkt
 
         @staticmethod
