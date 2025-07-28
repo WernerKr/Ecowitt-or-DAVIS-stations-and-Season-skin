@@ -345,6 +345,8 @@ loop_on_init = 1
         extractor = last
     [[lightningcount]]
         extractor = last
+    [[lightning_noise_count]]
+        extractor = sum
     
     [[maxdailygust]]
         extractor = last
@@ -568,10 +570,7 @@ Found the problem: to use the loop packets, this setting in weewx.conf is necess
 This data can you get via ecowitt.net, but not from the local http-Api (get_livedata_info)
 ```
 This data applies to (battery are in Volt):
-ch_lds?.ldsheat_ch1 ... ch4
-battery.rainfall_sensor
 battery.wind_sensor
-battery.haptic_array_capacitor
 
 from the displays:
 battery.console
