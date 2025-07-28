@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.1.6                                  Date: 19 July 2025
+Version: 0.1.6                                  Date: 25 July 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -72,9 +72,10 @@ Revision History
         - wh68_batt, wh69_batt
     15 July 2025		v0.1.5     
         - p_rain is back      
-    19 July 2025		v0.1.6     
-        - new rssi, rain voltage, winddir_avg10m, last24hrainin, last24hrain_piezo, LDS total_heat, wn20 (Mini rain)      
 
+    25 July 2025		v0.1.6     
+        - new rssi, rain voltage, winddir_avg10m, last24hrainin, last24hrain_piezo, LDS total_heat, wn20 (Mini rain)      
+          ws85cap_volt, ws90cap_volt 
 
     Driver not working as service!
 
@@ -82,6 +83,7 @@ Revision History
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
 
+WN20        Mini Rain Sensor
 WN31        temperature, humidity, signal level, battery state. channels 1-8
             inclusive
 WN32P       temperature, humidity, pressure, signal level, battery state.
@@ -90,6 +92,7 @@ WN32        (non-WH32P models) temperature, humidity, signal level, battery
             state. single device only
 WN34        temperature, signal level, battery state. channels 1-8 inclusive
 WN35        leaf wetness, signal level, battery state. channels 1-8 inclusive
+WH40        Rain Sensor
 WH41/43:    PM2.5, 24-hour average PM2.5, signal level, battery state.
             Channels 1-4 inclusive
 WH45        CO2, PM2.5, PM10, signal level, battery state. single device only
@@ -315,9 +318,11 @@ weewx.units.obs_group_dict['ws1900batt'] = 'group_volt'
 weewx.units.obs_group_dict['console_batt'] = 'group_volt'
 weewx.units.obs_group_dict['wh68_batt'] = 'group_count'
 weewx.units.obs_group_dict['wh69_batt'] = 'group_count'
-weewx.units.obs_group_dict['wh80_batt'] = 'group_count'
-weewx.units.obs_group_dict['wh85_batt'] = 'group_count'
-weewx.units.obs_group_dict['wh90_batt'] = 'group_count'
+#weewx.units.obs_group_dict['wh80_batt'] = 'group_count'
+#weewx.units.obs_group_dict['wh85_batt'] = 'group_count'
+#weewx.units.obs_group_dict['wh90_batt'] = 'group_count'
+weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
+
 
 weewx.units.obs_group_dict['maxdailygust'] = 'group_speed2'
 
@@ -340,7 +345,6 @@ weewx.units.obs_group_dict['lightning_noise_count'] = 'group_count'
 weewx.units.obs_group_dict['runtime'] = 'group_deltatime'
 weewx.units.obs_group_dict['heap'] = 'group_data'
 weewx.units.obs_group_dict['pb'] = 'group_data'
-weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['ldsbatt1'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt2'] = 'group_volt'
@@ -451,6 +455,10 @@ DEFAULT_GROUPS = {
     'piezoRain.0x13.val': 'group_rain',
     'piezoRain.0x13.voltage': 'group_volt',
     'piezoRain.srain_piezo': 'group_boolean',
+    'piezoRain.0x13.ws85cap_volt': 'group_volt',
+    'piezoRain.0x13.ws90cap_volt': 'group_volt',
+    'piezoRain.0x13.ws85_ver': 'group_count',
+    'piezoRain.0x13.ws90_ver': 'group_count',
     'p_rain': 'group_rain',
     'p_rainyear': 'group_rain',
     'wh25.intemp': 'group_temperature',
@@ -1519,7 +1527,6 @@ class HttpMapper(FieldMapper):
     default_sensor_state_map = {
         'inTempBatteryStatus': 'wh25.battery',
         'outTempBatteryStatus': 'wh65.battery',
-        'wn20_batt': 'wn20.battery',
         'wh25_batt': 'wh25.battery',
         'wh26_batt': 'wh26.battery',
         'batteryStatus1': 'wn31.ch1.battery',
@@ -1610,12 +1617,12 @@ class HttpMapper(FieldMapper):
         'wh85_batt': 'ws85.battery',
         'wh90_batt': 'ws90.battery',
 
-        'ws85cap_volt': 'ws85.capvoltage',
-        'ws90cap_volt': 'ws90.capvoltage',
+        'ws85cap_volt': 'piezoRain.0x13.ws85cap_volt',
+        'ws90cap_volt': 'piezoRain.0x13.ws90cap_volt',
 
         'ws80_batt': 'ws80.voltage',
         'ws85_batt': 'ws85.voltage',
-        'ws90_batt': 'piezoRain.0x13.voltage',
+        'ws90_batt': 'ws90.voltage',
         'rainBatteryStatus': 'rain.0x13.voltage',
         'hailBatteryStatus': 'piezoRain.0x13.voltage',
         'windBatteryStatus': 'ws80.voltage',
@@ -1625,8 +1632,8 @@ class HttpMapper(FieldMapper):
         'ws1800batt': 'wh25.ws1800_batt',
         'ws6006batt': 'wh25.ws6006_batt',
 
-        'ws85_ver': 'ws85.version',
-        'ws90_ver': 'ws90.version',
+        'ws85_ver': 'piezoRain.0x13.ws85_ver',
+        'ws90_ver': 'piezoRain.0x13.ws90_ver',
 
         'wn20_sig': 'wn20.signal',
         'wh25_sig': 'wh25.signal',
@@ -1873,6 +1880,7 @@ class SdMapper(FieldMapper):
         'common_list.0x0B.val': 'Wind',
         'common_list.0x0C.val': 'Gust',
         'common_list.0x0A.val': 'Wind Direction',
+        'common_list.0x6D.val': 'windDir_10min_avg',
         'wh25.abs': 'ABS Pressure',
         'wh25.rel': 'REL Pressure',
         'common_list.0x15.val': 'Solar Rad',
@@ -1881,6 +1889,7 @@ class SdMapper(FieldMapper):
         'rain.0x0F.val': 'Hourly Rain',
         'rain.0x0D.val': 'Event Rain',
         'rain.0x10.val': 'Daily Rain',
+        'rain.0x7C.val': '24h Rain',
         'rain.0x11.val': 'Weekly Rain',
         'rain.0x12.val': 'Monthly Rain',
         'rain.0x13.val': 'Yearly Rain',
@@ -1888,6 +1897,7 @@ class SdMapper(FieldMapper):
         'piezoRain.0x0F.val': 'Piezo Hourly Rain',
         'piezoRain.0x0D.val': 'Piezo Event Rain',
         'piezoRain.0x10.val': 'Piezo Daily Rain',
+        'piezoRain.0x7C.val': 'Piezo 24h Rain',
         'piezoRain.0x11.val': 'Piezo Weekly Rain',
         'piezoRain.0x12.val': 'Piezo Monthly Rain',
         'piezoRain.0x13.val': 'Piezo Yearly Rain',
@@ -2228,7 +2238,6 @@ class EcowittCommon:
         self.last_lightning = None
         self.lightning_mapping_confirmed = False
         self.last_lightningcount = None
-        #self.last_lightningtime = None
 
         self.last_rain = None
         self.rain_mapping_confirmed = False
@@ -2243,7 +2252,6 @@ class EcowittCommon:
         self.last_lightning_a = None
         self.lightning_mapping_confirmed_a = False
         self.last_lightningcount_a = None
-        #self.last_lightningtime_a = None
 
         self.last_rain_a = None
         self.rain_mapping_confirmed_a = False
@@ -2254,6 +2262,9 @@ class EcowittCommon:
         self.piezo_rain_mapping_confirmed_a = False
         self.piezo_rain_total_field_a = None
         self.piezo_last_rainnew_a = None
+        
+        self.ws85 = None
+        self.ws90 = None    
 
     def log_rain_data(self, data, preamble=None):
         """Log rain related data from the collector.
@@ -3996,7 +4007,8 @@ class EcowittNetCatchup(Catchup):
         'wind': {
             'wind_speed': 'common_list.0x0B.val',
             'wind_gust': 'common_list.0x0C.val',
-            'wind_direction': 'common_list.0x0A.val'
+            'wind_direction': 'common_list.0x0A.val',
+            '10_minute_average_wind_direction': 'common_list.0x6D.val',
         },
         'pressure': {
             'absolute': 'wh25.abs',
@@ -4206,7 +4218,7 @@ class EcowittNetCatchup(Catchup):
             'console': 'wh25.console_batt',
             'wind_sensor': 'ws80.voltage',
             'haptic_array_battery': 'piezoRain.0x13.voltage',
-            'haptic_array_capacitor': 'ws90cap_volt',
+            'haptic_array_capacitor': 'piezocap_volt',
             'sonic_array': 'ws80.battery',
             'rainfall_sensor': 'wh40.voltage',
             #'rainfall_sensor': 'wn20.voltage',
@@ -5536,6 +5548,17 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                     packet['rain'] = self.last_rainnew
                     packet['hail'] = self.piezo_last_rainnew
                     packet['p_rain'] = self.piezo_last_rainnew
+                    if 'ws85.version' in queue_data:
+                        packet['ws85_ver'] = queue_data['ws85.version'] 
+
+                    if 'ws90.version' in queue_data:
+                        packet['ws90_ver'] = queue_data['ws90.version'] 
+
+                    if 'piezoRain.0x13.voltage' in queue_data:
+                       if ('piezoRain.0x13.ws85_ver' in queue_data) or (self.ws85 == 1) or ('ws85.version' in queue_data):
+                          packet['ws85_batt'] = queue_data['piezoRain.0x13.voltage']
+                       elif ('piezoRain.0x13.ws90_ver' in queue_data)  or (self.ws90 == 1) or ('ws90.version' in queue_data): 
+                          packet['ws90_batt'] = queue_data['piezoRain.0x13.voltage']
 
                     ## map the raw data to WeeWX loop packet fields
                     mapped_data = self.mapper.map_data(queue_data)
@@ -5839,6 +5862,14 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                 rec['rain'] = self.last_rainnew_a
                 rec['hail'] = self.piezo_last_rainnew_a
                 rec['p_rain'] = self.piezo_last_rainnew_a
+                if 'piezoRain.0x13.voltage' in rec:
+                       #log.info("WS85 %s - WS90 %s", (self.ws85, self.ws90))
+                       if 'ws85.version' in rec or self.ws85 == 1:
+                          rec['ws85_batt'] = rec['piezoRain.0x13.voltage']
+                          rec['ws85cap_volt'] = rec['piezocap_volt']
+                       elif ('ws90.version' in rec) or (self.ws90 == 1) or ('ws90.version' not in rec) and ('ws85.version' not in rec): 
+                          rec['ws90_batt'] = rec['piezoRain.0x13.voltage']
+                          rec['ws90cap_volt'] = rec['piezocap_volt']
 
                 if self.driver_debug.archive: 
                    log.info('Archive rec data %s' , rec)
@@ -10400,10 +10431,17 @@ class EcowittHttpParser:
             # Obtain the sensor firmware version, not all sensors have
             # firmware/make firmware version data available. For those sensors
             # the 'version' key/value pair is omitted.
+            vers = 0
             if 'version' in sensor.keys():
                 data['version'] = sensor.get('version')
+                vers = 1
             # obtain the sensor model
             model = sensor.get('img')
+            if vers == 1:
+               if model == 'wh85':
+                  self.ws85 = 1
+               elif model == 'wh90':
+                  self.ws90 = 1 
             # Obtain the channel number if the sensor is part of a channelised
             # sensor group, if the sensor is not part of a channelised group
             # the channel will be set to None.
@@ -11044,6 +11082,7 @@ class EcowittHttpParser:
         exists. Also check for the 'voltage' key/value, if it exists convert
         the value to a float and return the key/value in the response. If the
         'voltage' key does not exist it is ignored.
+        The ws85_ver and ws90_ver key is are now new (from GW3000 V1.0.9.6)
 
         The original observation dict is always unchanged.
 
@@ -11052,6 +11091,12 @@ class EcowittHttpParser:
         id:      common_list observation ID number. String.
         val:     rain value in driver rainfall unit. float.
         voltage: sensor battery voltage if provided. Float.
+        new:
+        ws85cap_volt: sensor cap voltage if provided. Float.
+        ws85_ver
+        ws90cap_volt: sensor cap voltage if provided. Float.
+        ws90_ver
+   
 
         If the 'id' or 'val' keys do not exist or if the 'val' key value cannot
         be converted to an integer a ProcessorError exception is raised.
@@ -11099,6 +11144,55 @@ class EcowittHttpParser:
             # the 'voltage' key exists but there was a problem processing the
             # data, set the 'voltage' key/value to None
             _item['voltage'] = None
+
+        try:
+            # first obtain the voltage as a ValueTuple
+            voltage_vt = self.parse_obs_value('ws85cap_volt', item, 'group_volt')
+            # we have a numeric value, save it against the 'ws85cap_volt' key
+            _item['ws85cap_volt'] = voltage_vt.value
+        except KeyError:
+            # no 'ws85cap_volt' key exists, ignore and continue
+            pass
+        except ParseError as e:
+            # the 'ws85cap_volt' key exists but there was a problem processing the
+            # data, set the 'ws85cap_volt' key/value to None
+            _item['ws85cap_volt'] = None
+
+        try:
+            # first obtain the voltage as a ValueTuple
+            voltage_vt = self.parse_obs_value('ws90cap_volt', item, 'group_volt')
+            # we have a numeric value, save it against the 'ws90cap_volt' key
+            _item['ws90cap_volt'] = voltage_vt.value
+        except KeyError:
+            # no 'ws90cap_volt' key exists, ignore and continue
+            pass
+        except ParseError as e:
+            # the 'ws90cap_volt' key exists but there was a problem processing the
+            # data, set the 'ws90cap_volt' key/value to None
+            _item['ws90cap_volt'] = None
+
+        try:
+            _item['ws85_ver'] = int(item['ws85_ver'])
+            self.ws85 = 1
+        except KeyError:
+            # the item has no 'ws85_ver' key, so continue
+            pass
+        except (TypeError, ValueError):
+            # the 'usr_interval' value could not be converted to an integer,
+            # so save None to the 'ws85_ver' field
+            _item['ws85_ver'] = None
+
+        try:
+            _item['ws90_ver'] = int(item['ws90_ver'])
+            self.ws90 = 1
+        except KeyError:
+            # the item has no 'ws90_ver' key, so continue
+            pass
+        except (TypeError, ValueError):
+            # the 'usr_interval' value could not be converted to an integer,
+            # so save None to the 'ws90_ver' field
+            _item['ws90_ver'] = None
+
         # return our result dict
         return _item
 
@@ -11378,7 +11472,7 @@ class EcowittSensors:
     # map of 'dotted' get_livedata_info sensor voltage fields to sensor address
     sensor_with_voltage = {
         'rain.0x13.voltage': 3,		#wh40 
-        'rain.0x13.voltage': 70,		#wn20 
+        #'rain.0x13.voltage': 70,		#wn20 
         'piezoRain.0x13.voltage': 48,     #WH90
         'piezoRain.0x13.voltage': 49,	#WH85
         'ch_soil.1.voltage': 14,
@@ -12862,6 +12956,8 @@ class DirectEcowittDevice:
                     'piezoRain.0x12.val', 'piezoRain.0x12.voltage',
                     'piezoRain.0x13.val', 'piezoRain.0x13.voltage',
                     'piezoRain.0x7C.val',
+                    'piezoRain.0x13.ws85_ver', 'piezoRain.0x13.ws85cap_volt',
+                    'piezoRain.0x13.ws90_ver', 'piezoRain.0x13.ws90cap_volt',
                     'wh25.intemp', 'wh25.inhumi', 'wh25.abs', 'wh25.rel',
                     'wh25.CO2', 'wh25.CO2_24H',
                     'common_list.0x02.val', 'common_list.0x02.voltage',
