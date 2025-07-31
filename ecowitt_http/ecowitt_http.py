@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.1.6                                  Date: 25 July 2025
+Version: 0.2.0                                  Date: 31 July 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -77,7 +77,12 @@ Revision History
         - new rssi, rain voltage, winddir_avg10m, last24hrainin, last24hrain_piezo, LDS total_heat, wn20 (Mini rain)      
           ws85cap_volt, ws90cap_volt 
 
-    Driver not working as service!
+    31 July 2025            v0.2.0
+        - Compatibility with WeeWx 4.x established!
+        - test_service: 
+          Distinguishes between WeeWx V4.x and V5.x
+        - correction for rain, hail (p_rain). This data was missed, wenn data from SDcard 
+        - new debug Option: raindelta
 
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
@@ -189,13 +194,17 @@ import weewx.drivers
 import weewx.engine
 import weewx.units
 import weewx.wxformulas
-from weeutil.weeutil import bcolors, timestamp_to_string
+#from weeutil.weeutil import bcolors, timestamp_to_string
+from weeutil.weeutil import timestamp_to_string
 
 log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.1.0'
+DRIVER_VERSION = '0.2.0'
+
+if weewx.__version__ < "4":
+    raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
 
 # device models that are supported by the driver
 SUPPORTED_DEVICES = ('GW1100', 'GW1200', 'GW2000',
@@ -837,6 +846,24 @@ DEFAULT_GROUPS = {
     'ws90.rssi': 'group_db',
 }
 
+## for WeeWx 4.x user
+class bcolors:
+    """Colors used for terminals"""
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+class WxVersion4:
+    if weewx.__version__ < "5":
+      erg = True
+    else:
+      erg = False      
 
 # ============================================================================
 #                            InvertibleMap classes
@@ -964,7 +991,7 @@ class ApiResponseError(Exception):
 class DebugOptions:
     """Class to simplify use and handling of device debug options."""
 
-    debug_groups = ('rain', 'wind', 'lightning', 'loop', 'sensors', 'parser',
+    debug_groups = ('rain', 'raindelta', 'wind', 'lightning', 'loop', 'sensors', 'parser',
                     'catchup', 'collector', 'archive')
 
     def __init__(self, **config):
@@ -978,6 +1005,7 @@ class DebugOptions:
             lower_debug_list = list()
         # rain
         self._debug_rain = 'rain' in lower_debug_list
+        self._debug_raindelta = 'raindelta' in lower_debug_list
         # wind
         self._debug_wind = 'wind' in lower_debug_list
         # lightning
@@ -1000,6 +1028,12 @@ class DebugOptions:
         """Are we debugging rain data processing."""
 
         return self._debug_rain
+
+    @property
+    def raindelta(self):
+        """Are we debugging raindelta data processing."""
+
+        return self._debug_raindelta
 
     @property
     def wind(self):
@@ -1487,6 +1521,7 @@ class HttpMapper(FieldMapper):
         't_rainRate': 'rain.0x0E.val',
         't_rainyear': 'rain.0x13.val',
         'eventRain': 'rain.0x0D.val',
+        'rain': 'rain',
         'rainRate': 'rain.0x0E.val',
         'hourRain': 'rain.0x0F.val',
         'dayRain': 'rain.0x10.val',
@@ -1505,7 +1540,9 @@ class HttpMapper(FieldMapper):
         #'p_rain': 'piezoRain.0x0D.val',
         'p_rainrate': 'piezoRain.0x0E.val',
         'p_rainyear': 'piezoRain.0x13.val',
+        'p_rain': 'p_rain',
         'erain_piezo': 'piezoRain.0x0D.val',
+        'hail': 'hail',
         'rrain_piezo': 'piezoRain.0x0E.val',
         'hailRate': 'piezoRain.0x0E.val',
         'hrain_piezo': 'piezoRain.0x1F.val',
@@ -1620,7 +1657,7 @@ class HttpMapper(FieldMapper):
         'ws85cap_volt': 'piezoRain.0x13.ws85cap_volt',
         'ws90cap_volt': 'piezoRain.0x13.ws90cap_volt',
 
-        'ws80_batt': 'ws80.voltage',
+        'ws80_batt': 'common_list.0x0A.voltage',
         'ws85_batt': 'ws85.voltage',
         'ws90_batt': 'ws90.voltage',
         'rainBatteryStatus': 'rain.0x13.voltage',
@@ -2164,6 +2201,11 @@ class EcowittCommon:
         else:
             log.info('     rain debug is not set')
 
+        if self.driver_debug.raindelta:
+            log.info('raindelta debug is set')
+        else:
+            log.info('raindelta debug is not set')
+
         if self.driver_debug.wind:
             #debug_list.append(f"wind debug is {self.driver_debug.wind}")
             log.info('     wind debug is set')
@@ -2265,6 +2307,8 @@ class EcowittCommon:
         
         self.ws85 = None
         self.ws90 = None    
+
+        #self.version4 = True
 
     def log_rain_data(self, data, preamble=None):
         """Log rain related data from the collector.
@@ -2417,12 +2461,17 @@ class EcowittCommon:
             new_total = data[self.rain_total_field]
             # now calculate field rain as the difference between the new and
             # old totals
-            self.last_rainnew = self.delta_rain(new_total, self.last_rain)
             # if debug_rain is set log some pertinent values
-            if self.driver_debug.rain:
-                log.info("calculate_rain: last_rain=%s new_total=%s calculated rain=%s" % (self.last_rain,
-                                                                                         new_total,
-                                                                                         self.last_rainnew))
+            self.last_rainnew = self.delta_rain(new_total, self.last_rain)
+ 
+            if self.driver_debug.raindelta:
+               if self.last_rain != None: 
+                 #log.info("Rain: rain=%s new=%s " % (self.last_rain, self.last_rainnew))
+                 if (self.last_rainnew !=0):
+                    log.info("Rain: last_rain=%s new_total=%s "
+                       "calculated rain=%s" % (self.last_rain,
+                                               new_total,
+                                               self.last_rainnew))
             # save the new total as the old total for next time
             self.last_rain = new_total
 
@@ -2439,8 +2488,11 @@ class EcowittCommon:
                                              self.piezo_last_rain,
                                              descriptor='piezo rain')
             # if debug_rain is set log some pertinent values
-            if self.driver_debug.rain:
-                log.info("calculate_rain: piezo_last_rain=%s piezo_new_total=%s "
+            if self.driver_debug.raindelta:
+               if self.piezo_last_rain != None:
+                 #log.info("PiezoRain: rain=%s new=%s " % (self.piezo_last_rain, self.piezo_last_rainnew ))
+                 if (self.piezo_last_rainnew !=0):
+                    log.info("PiezoRain: piezo_last_rain=%s piezo_new_total=%s "
                        "calculated p_rain=%s" % (self.piezo_last_rain,
                                                  piezo_new_total,
                                                  self.piezo_last_rainnew))
@@ -2684,6 +2736,38 @@ class EcowittHttpService(weewx.engine.StdService, EcowittCommon):
                     # debug settings that may require this, start from the
                     # highest (most encompassing) and work to the lowest (least
                     # encompassing)
+
+                    # Krenn Werner - hier korrigieren Regen und Blitz für NewLoop
+
+                    if not self.rain_mapping_confirmed or not self.piezo_rain_mapping_confirmed:
+                        self.get_cumulative_rain_field(queue_data)
+
+                    self.calculate_rain(queue_data)
+
+                    #log.info('queue_data %s' , queue_data)
+                    if not self.lightning_mapping_confirmed:
+                       if 'lightning.count' in queue_data:
+                          self.lightning_mapping_confirmed = True
+
+                    if 'lightning.count' in queue_data: 
+                       event.packet['lightning_num'] = queue_data['lightning.count']
+                    self.calculate_lightning_count(queue_data)
+
+                    event.packet['rain'] = self.last_rainnew
+                    event.packet['hail'] = self.piezo_last_rainnew
+                    event.packet['p_rain'] = self.piezo_last_rainnew
+                    if 'ws85.version' in queue_data:
+                        event.packet['ws85_ver'] = queue_data['ws85.version'] 
+
+                    if 'ws90.version' in queue_data:
+                        event.packet['ws90_ver'] = queue_data['ws90.version'] 
+
+                    if 'piezoRain.0x13.voltage' in queue_data:
+                       if ('piezoRain.0x13.ws85_ver' in queue_data) or (self.ws85 == 1) or ('ws85.version' in queue_data):
+                          event.packet['ws85_batt'] = queue_data['piezoRain.0x13.voltage']
+                       elif ('piezoRain.0x13.ws90_ver' in queue_data)  or (self.ws90 == 1) or ('ws90.version' in queue_data): 
+                          event.packet['ws90_batt'] = queue_data['piezoRain.0x13.voltage']
+
                     if self.driver_debug.loop:
                         if 'datetime' in queue_data:
                             # if we have a 'datetime' field it is almost
@@ -2707,6 +2791,7 @@ class EcowittHttpService(weewx.engine.StdService, EcowittCommon):
                             # received data, if they do not exist say so
                             self.log_wind_data(queue_data,
                                                f'EcowittHttpService: newLoop Received {self.collector.device.model} data')
+
                     # now process the just received sensor data packet
                     self.process_queued_sensor_data(queue_data, event.packet['dateTime'])
 
@@ -2747,11 +2832,12 @@ class EcowittHttpService(weewx.engine.StdService, EcowittCommon):
         # packet to add to the loop packet
         if self.latest_sensor_data is not None:
             # we have a sensor data packet
-
+ 
             # map the raw data to WeeWX loop packet fields
             mapped_data = self.mapper.map_data(self.latest_sensor_data)
             # add 'usUnits' to the packet
             mapped_data['usUnits'] = self.unit_system
+
             # log the mapped data if necessary
             if self.driver_debug.loop:
                 log.info('EcowittHttpService: newLoop Mapped %s data: %s' % (self.collector.device.model,
@@ -3178,6 +3264,14 @@ class EcowittHttpDriverConfEditor(weewx.drivers.AbstractConfEditor):
     [[ws1900batt]]
         extractor = last
     [[console_batt]]
+        extractor = last
+    [[ldsbatt1]]
+        extractor = last
+    [[ldsbatt2]]
+        extractor = last
+    [[ldsbatt3]]
+        extractor = last
+    [[ldsbatt4]]
         extractor = last
 
         # End Ecowitt local HTTP API driver extractors
@@ -4216,7 +4310,7 @@ class EcowittNetCatchup(Catchup):
             'ws1800_console': 'wh25.ws1800_batt',
             'ws6006_console': 'wh25.ws6006_batt',
             'console': 'wh25.console_batt',
-            'wind_sensor': 'ws80.voltage',
+            'wind_sensor': 'common_list.0x0A.voltage',
             'haptic_array_battery': 'piezoRain.0x13.voltage',
             'haptic_array_capacitor': 'piezocap_volt',
             'sonic_array': 'ws80.battery',
@@ -5760,35 +5854,40 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
 
                 if not self.rain_mapping_confirmed_a:
                    if 'rain.0x13.val' in rec:
-                       self.rain_total_field = 'rain.0x13.val'
+                       self.rain_total_field_a = 'rain.0x13.val'
                        self.rain_mapping_confirmed_a = True
                    elif 'rain.0x12.val' in rec:
-                       self.rain_total_field = 'rain.0x12.val'
+                       self.rain_total_field_a = 'rain.0x12.val'
                        self.rain_mapping_confirmed_a = True
                    else:
-                       self.rain_total_field = None
+                       self.rain_total_field_a = None
                    if self.rain_mapping_confirmed_a:
-                       log.info("Archive: using '%s' for rain total" % self.rain_total_field)
+                       log.info("Archive: using '%s' for rain total" % self.rain_total_field_a)
                    elif self.driver_debug.rain:
                        log.info("Archive: no suitable field found for rain")
 
                 if not self.piezo_rain_mapping_confirmed_a:
                    if 'piezoRain.0x13.val' in rec:
-                       self.piezo_rain_total_field = 'piezoRain.0x13.val'
+                       self.piezo_rain_total_field_a = 'piezoRain.0x13.val'
                        self.piezo_rain_mapping_confirmed_a = True
                    elif 'piezoRain.0x12.val' in rec:
-                       self.piezo_rain_total_field = 'piezoRain.0x12.val'
+                       self.piezo_rain_total_field_a = 'piezoRain.0x12.val'
                        self.piezo_rain_mapping_confirmed_a = True
                    else:
-                       self.piezo_rain_total_field = None
+                       self.piezo_rain_total_field_a = None
                    if self.piezo_rain_mapping_confirmed_a:
-                       log.info("Archive: using '%s' for piezo rain total" % self.piezo_rain_total_field)
+                       log.info("Archive: using '%s' for piezo rain total" % self.piezo_rain_total_field_a)
                    elif self.driver_debug.rain:
                        log.info("Archive: no suitable field found for piezo rain")
 
                 if self.rain_mapping_confirmed_a and self.rain_total_field_a in rec:
-                    new_total = rec[self.rain_total_field]
+                    new_total = rec[self.rain_total_field_a]
+                    #if self.last_rain_a == None:
+                    #   self.last_rain_a = new_total
                     self.last_rainnew_a = self.delta_rain(new_total, self.last_rain_a)
+                    if self.driver_debug.raindelta and (self.last_rainnew_a != 0):
+                       log.info("Archive Rain: total=%s Rain=%s" % (new_total, self.last_rainnew_a))
+
                     # if debug_rain is set log some pertinent values
                     if self.driver_debug.rain:
                         log.info("Archive: calculate_rain: last_rain=%s new_total=%s calculated rain=%s" % (self.last_rain_a,
@@ -5797,10 +5896,15 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                     self.last_rain_a = new_total
 
                 if self.piezo_rain_mapping_confirmed_a and self.piezo_rain_total_field_a in rec:
-                    piezo_new_total = rec[self.piezo_rain_total_field]
+                    piezo_new_total = rec[self.piezo_rain_total_field_a]
+                    #if self.last_rain_a == None:
+                    #   self.last_rain_a = new_total
                     self.piezo_last_rainnew_a = self.delta_rain(piezo_new_total,
                                              self.piezo_last_rain_a,
                                              descriptor='piezo rain')
+                    if self.driver_debug.raindelta and (self.piezo_last_rainnew_a != 0):
+                       log.info("Archive PiezoRain: total=%s Rain=%s" % (piezo_new_total, self.piezo_last_rainnew_a))
+
                     if self.driver_debug.rain:
                         log.info("Archive: calculate_rain: piezo_last_rain=%s piezo_new_total=%s "
                                "calculated p_rain=%s" % (self.piezo_last_rain_a,
@@ -5808,21 +5912,6 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                                                  self.piezo_last_rainnew_a))
                     self.piezo_last_rain_a = piezo_new_total
 
-                # self.last_lightning = None
-                # self.lightning_mapping_confirmed = False
-                # self.last_lightningcount = None
-                # self.last_lightningtime = None
-
-                #if 'lightning.count' and 'lightning.timestamp'in rec:
-                #    if not self.lightning_mapping_confirmed:                        
-                #       self.last_lightningcount = rec['lightning.count']
-                #       self.last_lightningtime = rec['lightning.timestamp']
-                #       self.lightning_mapping_confirmed = True
-                #    newtot = rec['lightning.count']
-                #    newtime = rec['lightning.timestamp']
-                #    rec['lightning_strike_count'] = self._delta_lightning_num(newtot, self.last_lightningcount, newtime, self.last_lightningtime)
-                #    self.last_lightningcount = newtot
-                #    self.last_lightningtime = newtime
 
                 if not self.lightning_mapping_confirmed_a:
                    if 'lightning.count' in rec:
@@ -14406,15 +14495,14 @@ class DirectEcowittDevice:
                 # create the signal strength text
                 signal_str = f"signal: {sensor_data.get('signal', '--')}"
                 # create rssi  strength text
-                rssi_str = f"rssi: {sensor_data.get('rssi', '--')}"
+                if sensor_data.get('rssi', '--') is None:
+                  rssi_str = ''
+                else:  
+                  rssi_str = f"rssi: {sensor_data.get('rssi', '--')}"
 
                 # create suitable descriptive battery state text
                 desc_str = device.sensors.batt_state_desc(model=model,
                                                           sensor_data=sensor_data)
-
-                # create rssi  strength text
-                rssi_str = f"rssi: {sensor_data.get('rssi', '--')}"
-
                 # create a suitable voltage string
                 volt_str = f" ({sensor_data['voltage']}V)" if 'voltage' in sensor_data else ""
                 if sensor_data.get('battery', '--') is None:
@@ -14960,6 +15048,11 @@ class DirectEcowittDevice:
         # simulator emitting arbitrary loop packets. Include the driver
         # service and StdPrint. StdPrint will take care of printing our loop
         # packets (no StdArchive so loop packets only, no archive records)
+        if WxVersion4.erg == True:
+          use_service = 'user.ecowitt_http.EcowittHttpService'
+        else:
+          use_service = 'ecowitt_http.EcowittHttpService'
+
         config = {
             'Station': {
                 'station_type': 'Simulator',
@@ -14972,7 +15065,7 @@ class DirectEcowittDevice:
             'EcowittHttp': {},
             'Engine': {
                 'Services': {
-                    'archive_services': 'user.ecowitt_http.EcowittHttpService',
+                    'archive_services': use_service,
                     'report_services': 'weewx.engine.StdPrint'}}}
         # set the IP address and port in the dummy config
         config['EcowittHttp']['ip_address'] = self.ip_address
@@ -15081,6 +15174,12 @@ class DirectEcowittDevice:
         # simulator emitting arbitrary loop packets. Include the Ecowitt HTTP
         # service and StdPrint. StdPrint will take care of printing our loop
         # packets (no StdArchive so loop packets only, no archive records)
+        
+
+        if WxVersion4.erg == True:
+          use_service = 'user.ecowitt_http.EcowittHttpService'
+        else:
+          use_service = 'ecowitt_http.EcowittHttpService'
         config = {
             'Station': {
                 'station_type': 'Simulator',
@@ -15093,8 +15192,9 @@ class DirectEcowittDevice:
             'EcowittHttp': {},
             'Engine': {
                 'Services': {
-                    'archive_services': 'user.ecowitt_http.EcowittHttpService',
+                    'archive_services': use_service,
                     'report_services': 'weewx.engine.StdPrint'}}}
+
         # set the IP address and port in the dummy config
         config['EcowittHttp']['ip_address'] = self.ip_address
         # these command line options should only be added if they exist
@@ -15113,6 +15213,7 @@ class DirectEcowittDevice:
         try:
             # create a dummy engine
             engine = weewx.engine.StdEngine(config)
+             
             # Our Ecowitt HTTP service will have been instantiated by the
             # engine during its startup. Whilst access to the service is not
             # normally required we require access here, so we can obtain some
