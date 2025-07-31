@@ -65,7 +65,13 @@ Modified by me!
         - new rssi, rain voltage, winddir_avg10m, last24hrainin, last24hrain_piezo, LDS total_heat, wn20 (Mini rain)      
           ws85cap_volt, ws90cap_volt 
         
-    Service not working !!
+    31 July 2025            v0.2.0
+        - Compatibility with WeeWx 4.x established!
+        - test_service: 
+          Distinguishes between WeeWx V4.x and V5.x
+        - correction for rain, hail (p_rain). This data was missed, wenn data from SDcard 
+        - new debug Option: raindelta
+
 
     
 Tested and completed:
@@ -84,16 +90,6 @@ PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-add
 PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW3000% --get-services
 
 PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW3000% --test-driver 
-```
-Not working:
-```
-PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW3000% --test-service
-```
-and
-```
-[Engine]
-    [[Services]]
-        data_services = user.ecowitt_http.EcowittHttpService
 ```
 
 ### To get api_key, app_key for Ecowitt.net:
@@ -288,7 +284,7 @@ loop_on_init = 1
             algorithm = rs
             atc = 0.9
 
-   # These settings are not necessary because rain and hail (piezo_rain) are assigned in the driver!
+   # These settings are not necessary because rain and hail (p_rain) are assigned in the driver!
    # [[Delta]]
    #     [[[rain]]]
    #         input = t_rainyear
@@ -312,7 +308,8 @@ loop_on_init = 1
         manager = weewx.manager.DaySummaryManager
         # The schema defines the structure of the database.
         # It is *only* used when the database is created.
-        schema = schemas.wview_ecowitt.schema
+        #schema = schemas.wview_ecowitt.schema
+        schema = schemas.wview_ecowittrssi.schema
 ##############################################################################
 # Options for extension Ecowittcustom, GW1000, Interceptor or EcowittHttp
 [Accumulator]
