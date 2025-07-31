@@ -95,7 +95,7 @@ PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-add
 PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW% --test-driver
 PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW% --test-service
 
-WeeWx 4.x.x:
+WeeWx 4.x.x example (and all the same as WeeWx5):
 PYTHONPATH=/usr/share/weewx python3 -m user.ecowitt_http --ip-address=%IP-GW% --test-service
 PYTHONPATH=/usr/share/weewx python3 -m user.ecowitt_http --ip-address=%IP-GW% --sensors
 ```
