@@ -182,6 +182,12 @@ loop_on_init = 1
 [StdArchive]
     record_generation = software
 
+##########################################################################
+# If the driver is to be used as a service 
+[Engine]
+    [[Services]]
+        data_services = user.ecowitt_http.EcowittHttpService
+
 ###########################################################################
 [StdCalibrate]
     
