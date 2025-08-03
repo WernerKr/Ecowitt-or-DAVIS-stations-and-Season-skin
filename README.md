@@ -50,6 +50,8 @@ Ecowitt protocol:
 ``` 
 ** FOSHKplugin ADD_More 
 = radcompensation,newVersion,upgrade,rainFallPriority,rainGain,piezo,rstRainDay,rstRainWeek,rstRainYear,rain1_gain,rain2_gain,rain3_gain,rain4_gain,rain5_gain
+
+** FOSHKplugin ADD_RSSI
 ``` 
 ```
 [Export]
@@ -64,6 +66,7 @@ ADD_SPREAD = False
 ADD_SIGNAL = True		all Gateways support this (*sig)
 ADD_DEWPT = False
 ADD_MORE = True		not all Gateways support this (see **)
+ADD_RSSI = True      you get also the rssi value from the supported Gateways (at the moment GW3000, GW1100)
 ADD_VPD = False
 
 [Forward-1]
@@ -793,3 +796,4 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
