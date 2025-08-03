@@ -66,7 +66,7 @@ ADD_SPREAD = False
 ADD_SIGNAL = True		all Gateways support this (*sig)
 ADD_DEWPT = False
 ADD_MORE = True		not all Gateways support this (see **)
-ADD_RSSI = True      you get also the rssi value from the supported Gateways (at the moment GW3000, GW1100)
+ADD_RSSI = True      you get also the rssi value from the supported Gateways (at the moment GW3000, GW2000, GW1100)
 ADD_VPD = False
 
 [Forward-1]
@@ -796,4 +796,5 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
