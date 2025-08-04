@@ -6,15 +6,6 @@
 #encoding UTF-8
 ##
 
-#set $allways_lang = False
-#set $use_lang = False
-#try
- #if $SKIN_VERSION != '' or $allways_lang == True
-  #set $use_lang = True
- #end if
-#except
- #pass
-#end try
 
 <!DOCTYPE html>
 <html lang="en">
@@ -71,13 +62,15 @@
         #include "current.inc"
         #include "sunmoon.inc"
         #include "hilo.inc"
-        #include "belchertown.inc"
+        ##include "belchertown.inc"
         #include "neowx.inc"
-        #include "amphibian.inc"
+        ##include "amphibian.inc"
         ##include "sofaskin.inc"
+        #include "bootstrap.inc"
         ##include "standard.inc"
-        #include "smartphone.inc"
-        #include "mobile.inc"
+        ##include "smartphone.inc"
+        ##include "mobile.inc"
+        #include "cmon.inc"
         #include "sensors.inc"
         #include "about.inc"
         #include "radar.inc"
@@ -86,8 +79,6 @@
       </div>
 
       <div id="plot_group">
-        <div id="history_widget" class="widget">
-         #if $use_lang 
            <div id="plot_title" class="widget_title">$gettext("History"):&nbsp;&nbsp; 
             <a class="button_selected" id="button_history_day"
                onclick="choose_history('day')">$gettext("Day")</a>
@@ -99,19 +90,6 @@
                onclick="choose_history('year')">$gettext("Year")</a>
             <a class="button" id="button_history_chronicle"
                onclick="choose_history('chronicle')">$gettext("Chronicle")</a>
-          #else
-           <div id="plot_title" class="widget_title">History:&nbsp;&nbsp;
-            <a class="button_selected" id="button_history_day"
-               onclick="choose_history('day')">Day</a>
-            <a class="button" id="button_history_week"
-               onclick="choose_history('week')">Week</a>
-            <a class="button" id="button_history_month"
-               onclick="choose_history('month')">Month</a>
-            <a class="button" id="button_history_year"
-               onclick="choose_history('year')">Year</a>
-            <a class="button" id="button_history_chronicle"
-               onclick="choose_history('chronicle')">Chronicle</a>
-          #end if
            </div>
           <div id="history_day" class="plot_container">
             <img src="daybarometer.png" alt="$obs.label.barometer"/>
@@ -127,14 +105,16 @@
             #end if
             <img src="dayrainbar.png"      alt="$obs.label.rain" />
             <img src="dayrain2.png"      alt="$obs.label.rainRate" />
+            <img src="dayrain3.png"      alt="$obs.label.rainRate" />
+            <img src="dayrain4.png"      alt="$obs.label.rainRate" />
             #if $day.UV.has_data
             <img src="dayuv.png"        alt="$obs.label.UV" />
             #end if
             #if $day.radiation.has_data
             <img src="dayradiation.png" alt="$obs.label.radiation" />
             #end if
-            #if $day.sunshine_hours.has_data
-            <img src="daysunshine.png"        alt="$obs.label.sunshine_hours"/>
+            #if $day.sunshineDur.has_data
+            <img src="daysunshine.png"        alt="$obs.label.sunshineDur"/>
             #end if
 
             #if $day.inTemp.has_data
@@ -206,9 +186,12 @@
 
             #if $day.lightning_strike_count.has_data
             <img src="daylightningcount.png"        alt="$obs.label.lightning_strike_count"/>
+            <img src="daylightningcount1.png"        alt="$obs.label.lightning_strike_count"/>
             #end if
             ##if $day.lightning_distance.has_data
+            <img src="daylightning_noise_count.png"        alt="$obs.label.lightning_strike_count"/>
             <img src="daylightningdistance.png"        alt="$obs.label.lightning_distance"/>
+            <img src="daylightningdistance1.png"        alt="$obs.label.lightning_distance"/>
             ##end if
 
             #if $day.rxCheckPercent.has_data
@@ -244,6 +227,36 @@
             #end if
             #if $current.depth_ch1.has_data
             <img src="daydepth.png"        alt="$obs.label.depth_ch1"/>
+            #end if
+            #if $current.wh31_ch1_rssi.has_data or $current.wh31_ch2_rssi.has_data or $current.wh31_ch3_rssi.has_data
+            <img src="dayrssi_wh31.png"        alt="$obs.label.wh31_ch1_sig"/>
+            #end if
+
+            #if $current.wh32_rssi.has_data or $current.wh45_rssi.has_data
+            <img src="dayrssi_wh32.png"        alt="$obs.label.wh45_sig"/>
+            #end if
+
+            #if $current.wn34_ch1_rssi.has_data or $current.wn34_ch2_rssi.has_data or $current.wn34_ch3_rssi.has_data
+            <img src="dayrssi_wn341.png"        alt="$obs.label.wn34_ch1_sig"/>
+            #end if
+
+            #if $current.wn35_ch1_rssi.has_data or $current.wn35_ch2_rssi.has_data or $current.wn35_ch3_rssi.has_data
+            <img src="dayrssi_wn35.png"        alt="$obs.label.wn35_ch1_sig"/>
+            #end if
+
+            #if $current.wh51_ch1_rssi.has_data or $current.wh51_ch2_rssi.has_data or $current.wh51_ch3_rssi.has_data
+            <img src="dayrssi_wh511.png"        alt="$obs.label.wh51_ch1_sig"/>
+            #end if
+            #if $current.wh51_ch9_rssi.has_data or $current.wh51_ch10_rssi.has_data or $current.wh51_ch11_rssi.has_data
+            <img src="dayrssi_wh512.png"        alt="$obs.label.wh51_ch9_sig"/>
+            #end if
+
+            #if $current.wh55_ch1_rssi.has_data or $current.wh55_ch2_rssi.has_data or $current.wh54_ch1_rssi.has_data
+            <img src="dayrssi_wh55.png"        alt="$obs.label.wh55_ch1_sig"/>
+            #end if
+
+            #if $current.ws80_rssi.has_data or $current.ws85_rssi.has_data or $current.ws90_rssi.has_data
+            <img src="dayrssi_ws80.png"        alt="$obs.label.ws80_sig"/>
             #end if
 
 
@@ -631,40 +644,75 @@
 
           <div id="history_chronicle" class="history" style="display:none">
            <div class="col-md-8">
-            <h3>$BootstrapLabels.history_tables.min_temp</h3>
+            <h4>$BootstrapLabels.history_tables.min_temp</h4>
 $min_temp_table
 
-            <h3>$BootstrapLabels.history_tables.avg_temp</h3>
+            <h4>$BootstrapLabels.history_tables.avg_temp</h4>
 $avg_temp_table
 
-            <h3>$BootstrapLabels.history_tables.max_temp</h3>
+            <h4>$BootstrapLabels.history_tables.max_temp</h4>
 $max_temp_table
 
-            <h3>$BootstrapLabels.history_tables.rain</h3>
+            <h4>$BootstrapLabels.history_tables.rain</h4>
 $rain_table
 
-            <h3>$BootstrapLabels.history_tables.rain_days</h3>
+            <h4>$BootstrapLabels.history_tables.rain_days</h4>
 $rain_days_table
 
-            <h3>$BootstrapLabels.history_tables.windGust</h3>
+            <h4>$BootstrapLabels.history_tables.windGust</h4>
 $max_windGust_table
 
-            <h3>$BootstrapLabels.history_tables.max_UV</h3>
+            <h4>$BootstrapLabels.history_tables.max_UV</h4>
 $max_UV_table
 
-            <h3>$BootstrapLabels.history_tables.max_radiation</h3>
+            <h4>$BootstrapLabels.history_tables.max_radiation</h4>
 $max_radiation_table
 
-            <h3>$BootstrapLabels.history_tables.min_barometer</h3>
+            <h4>$BootstrapLabels.history_tables.min_barometer</h4>
 $min_barometer_table
 
-            <h3>$BootstrapLabels.history_tables.avg_barometer</h3>
+            <h4>$BootstrapLabels.history_tables.avg_barometer</h4>
 $avg_barometer_table
 
-            <h3>$BootstrapLabels.history_tables.max_barometer</h3>
+            <h4>$BootstrapLabels.history_tables.max_barometer</h4>
 $max_barometer_table
 
-##          <h3>$BootstrapLabels.history_tables.NOAA</h3>
+            <h4>$BootstrapLabels.history_tables.outTemp_days</h4>
+$outTemp_days_table
+
+            <h4>$BootstrapLabels.history_tables.outTemp20_days</h4>
+$outTemp20_days_table
+
+            <h4>$BootstrapLabels.history_tables.outTemp20x_days</h4>
+$outTemp20x_days_table
+
+            <h4>$BootstrapLabels.history_tables.vegetations_days</h4>
+$vegetations_days_table
+
+ <h4>$BootstrapLabels.history_tables.heatdays</h4>
+$heatdays_table
+
+            <h4>$BootstrapLabels.history_tables.outTemp0_days</h4>
+$outTemp0_days_table
+
+            <h4>$BootstrapLabels.history_tables.outTemp00_days</h4>
+$outTemp00_days_table
+
+
+
+ <h4>$BootstrapLabels.history_tables.sunshineDur</h4>
+$sunshineDur_table
+
+ <h4>$BootstrapLabels.history_tables.rainDur</h4>
+$rainDur_table
+
+ <h4>$BootstrapLabels.history_tables.heatdeg</h4>
+$heatdeg_table
+
+ <h4>$BootstrapLabels.history_tables.cooldeg</h4>
+$cooldeg_table
+
+##          <h4>$BootstrapLabels.history_tables.NOAA</h4>
 ##$NOAA_table
 
            </div>

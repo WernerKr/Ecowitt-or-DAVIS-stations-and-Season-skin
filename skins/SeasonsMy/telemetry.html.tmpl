@@ -7,8 +7,8 @@
 <div id="history_${label}" class="plot_containter" style="display:none">
 #for $x in [
 {'data': $period.rxCheckPercent, 'img': 'rx', 'alt': 'signal'},
-{'data': $period.signal2, 'img': 'rx1', 'alt': 'signal2'},
-{'data': $period.signal5, 'img': 'rx2', 'alt': 'signal5'},
+{'data': $period.signal2x, 'img': 'rx1', 'alt': 'signal2'},
+{'data': $period.signal5x, 'img': 'rx2', 'alt': 'signal5'},
 {'data': $period.signal3x, 'img': 'rx3', 'alt': 'signal'},
 {'data': $period.signal4x, 'img': 'rx4', 'alt': 'signal'},
 {'data': $period.signal5x, 'img': 'rx5', 'alt': 'signal'},
@@ -24,8 +24,17 @@
 {'data': $period.soilMoistBatt2x, 'img': 'voltage1x', 'alt': 'soilMoistBatt2'},
 {'data': $period.soilMoistBatt3, 'img': 'voltage2', 'alt': 'soilMoistBatt3'},
 {'data': $period.rainBatteryStatus, 'img': 'voltage3', 'alt': 'rainBatteryStatus'},
-{'data': $period.ws90cap_volt, 'img': 'voltcap', 'alt': 'ws90cap_volt'},
+{'data': $period.ws85cap_volt, 'img': 'voltcap', 'alt': 'ws85cap_volt'},
 {'data': $period.pb, 'img': 'heap0', 'alt': 'Heap'},
+{'data': $period.ldsheat_ch1, 'img': 'lds_heat', 'alt': 'ldsheat_ch1'},
+{'data': $period.wh31_ch3_rssi, 'img': 'rssi_wh31', 'alt': 'wh31_ch3_rssi'},
+{'data': $period.wh32_ch1_rssi, 'img': 'rssi_wh32', 'alt': 'wh32_ch1_rssi'},
+{'data': $period.wn34_ch1_rssi, 'img': 'rssi_wn341', 'alt': 'wn34_ch1_rssi'},
+{'data': $period.wn35_ch1_rssi, 'img': 'rssi_wn35', 'alt': 'wn35_ch1_rssi'},
+{'data': $period.wh51_ch1_rssi, 'img': 'rssi_wh511', 'alt': 'wh51_ch1_rssi'},
+{'data': $period.wh51_ch9_rssi, 'img': 'rssi_wh512', 'alt': 'wh51_ch9_rssi'},
+{'data': $period.wh55_ch1_rssi, 'img': 'rssi_wh55', 'alt': 'wh55_ch1_rssi'},
+{'data': $period.ws85_rssi, 'img': 'rssi_ws80', 'alt': 'ws85_rssi'},
 ]
 #if $x['data'].has_data
 #set $img = "%s%s.png" % ($label, $x['img'])
