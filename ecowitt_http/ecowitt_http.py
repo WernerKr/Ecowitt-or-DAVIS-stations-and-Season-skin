@@ -83,7 +83,8 @@ Revision History
           Distinguishes between WeeWx V4.x and V5.x
         - correction for rain, hail (p_rain). This data was missed, wenn data from SDcard 
         - new debug Option: raindelta
-
+    07 Aug 2025            v0.2.1
+        - wn31_sig and wn31_rssi renamed to wh31_sig and wh31_rssi
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -1675,14 +1676,14 @@ class HttpMapper(FieldMapper):
         'wn20_sig': 'wn20.signal',
         'wh25_sig': 'wh25.signal',
         'wh26_sig': 'wh26.signal',
-        'wn31_ch1_sig': 'wn31.ch1.signal',
-        'wn31_ch2_sig': 'wn31.ch2.signal',
-        'wn31_ch3_sig': 'wn31.ch3.signal',
-        'wn31_ch4_sig': 'wn31.ch4.signal',
-        'wn31_ch5_sig': 'wn31.ch5.signal',
-        'wn31_ch6_sig': 'wn31.ch6.signal',
-        'wn31_ch7_sig': 'wn31.ch7.signal',
-        'wn31_ch8_sig': 'wn31.ch8.signal',
+        'wh31_ch1_sig': 'wn31.ch1.signal',
+        'wh31_ch2_sig': 'wn31.ch2.signal',
+        'wh31_ch3_sig': 'wn31.ch3.signal',
+        'wh31_ch4_sig': 'wn31.ch4.signal',
+        'wh31_ch5_sig': 'wn31.ch5.signal',
+        'wh31_ch6_sig': 'wn31.ch6.signal',
+        'wh31_ch7_sig': 'wn31.ch7.signal',
+        'wh31_ch8_sig': 'wn31.ch8.signal',
         'wn34_ch1_sig': 'wn34.ch1.signal',
         'wn34_ch2_sig': 'wn34.ch2.signal',
         'wn34_ch3_sig': 'wn34.ch3.signal',
@@ -1740,14 +1741,14 @@ class HttpMapper(FieldMapper):
         'wn20_rssi': 'wn20.rssi',
         'wh25_rssi': 'wh25.rssi',
         'wh26_rssi': 'wh26.rssi',
-        'wn31_ch1_rssi': 'wn31.ch1.rssi',
-        'wn31_ch2_rssi': 'wn31.ch2.rssi',
-        'wn31_ch3_rssi': 'wn31.ch3.rssi',
-        'wn31_ch4_rssi': 'wn31.ch4.rssi',
-        'wn31_ch5_rssi': 'wn31.ch5.rssi',
-        'wn31_ch6_rssi': 'wn31.ch6.rssi',
-        'wn31_ch7_rssi': 'wn31.ch7.rssi',
-        'wn31_ch8_rssi': 'wn31.ch8.rssi',
+        'wh31_ch1_rssi': 'wn31.ch1.rssi',
+        'wh31_ch2_rssi': 'wn31.ch2.rssi',
+        'wh31_ch3_rssi': 'wn31.ch3.rssi',
+        'wh31_ch4_rssi': 'wn31.ch4.rssi',
+        'wh31_ch5_rssi': 'wn31.ch5.rssi',
+        'wh31_ch6_rssi': 'wn31.ch6.rssi',
+        'wh31_ch7_rssi': 'wn31.ch7.rssi',
+        'wh31_ch8_rssi': 'wn31.ch8.rssi',
         'wn34_ch1_rssi': 'wn34.ch1.rssi',
         'wn34_ch2_rssi': 'wn34.ch2.rssi',
         'wn34_ch3_rssi': 'wn34.ch3.rssi',
