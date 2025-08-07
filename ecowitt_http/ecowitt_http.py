@@ -85,6 +85,7 @@ Revision History
         - new debug Option: raindelta
     07 Aug 2025            v0.2.1
         - wn31_sig and wn31_rssi renamed to wh31_sig and wh31_rssi
+        - wh45/46: co2_batt, wh45_sig, wh45_rssi added
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -202,7 +203,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.0'
+DRIVER_VERSION = '0.2.1'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
@@ -1603,7 +1604,7 @@ class HttpMapper(FieldMapper):
         'soilMoistBatt14s': 'wh51.ch14.battery',
         'soilMoistBatt15s': 'wh51.ch15.battery',
         'soilMoistBatt16s': 'wh51.ch16.battery',
-        'co2_Batt': 'co2.battery',
+        'co2_Batt': 'wh45.battery',
         'wh40_batt': 'wh40.battery',
         'wn20_batt': 'wn20.battery',
 
@@ -1705,7 +1706,7 @@ class HttpMapper(FieldMapper):
         'wh41_ch2_sig': 'wh41.ch2.signal',
         'wh41_ch3_sig': 'wh41.ch3.signal',
         'wh41_ch4_sig': 'wh41.ch4.signal',
-        'wh45_sig': 'co2.signal',
+        'wh45_sig': 'wh45.signal',
         'wh51_ch1_sig': 'wh51.ch1.signal',
         'wh51_ch2_sig': 'wh51.ch2.signal',
         'wh51_ch3_sig': 'wh51.ch3.signal',
@@ -1770,7 +1771,7 @@ class HttpMapper(FieldMapper):
         'wh41_ch2_rssi': 'wh41.ch2.rssi',
         'wh41_ch3_rssi': 'wh41.ch3.rssi',
         'wh41_ch4_rssi': 'wh41.ch4.rssi',
-        'wh45_rssi': 'co2.rssi',
+        'wh45_rssi': 'wh45.rssi',
         'wh51_ch1_rssi': 'wh51.ch1.rssi',
         'wh51_ch2_rssi': 'wh51.ch2.rssi',
         'wh51_ch3_rssi': 'wh51.ch3.rssi',
@@ -13109,7 +13110,7 @@ class DirectEcowittDevice:
                     'wh40.battery', 'wh40.signal', 'wh40.rssi',
                     'wh41.ch1.battery', 'wh41.ch1.signal', 'wh41.ch2.battery', 'wh41.ch2.signal', 'wh41.ch1.rssi', 'wh41.ch2.rssi',
                     'wh41.ch3.battery', 'wh41.ch3.signal', 'wh41.ch4.battery', 'wh41.ch4.signal', 'wh41.ch3.rssi', 'wh41.ch4.rssi',
-                    'wh45.battery', 'wh45.signal', 'wh46.battery', 'wh46.signal', 'wh45.rssi', 'wh46.rssi',
+                    'co2.battery', 'co2.signal', 'wh46.battery', 'wh46.signal', 'co2.rssi', 'wh46.rssi',
                     'wh51.ch1.battery', 'wh51.ch1.signal', 'wh51.ch2.battery', 'wh51.ch2.signal', 'wh51.ch1.rssi', 'wh51.ch2.rssi',
                     'wh51.ch3.battery', 'wh51.ch3.signal', 'wh51.ch4.battery', 'wh51.ch4.signal', 'wh51.ch3.rssi', 'wh51.ch4.rssi',
                     'wh51.ch5.battery', 'wh51.ch5.signal', 'wh51.ch6.battery', 'wh51.ch6.signal', 'wh51.ch5.rssi', 'wh51.ch6.rssi',
