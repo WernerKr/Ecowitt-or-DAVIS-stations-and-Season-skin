@@ -72,6 +72,8 @@ Modified by me!
         - correction for rain, hail (p_rain). This data was missed, wenn data from SDcard 
         - new debug Option: raindelta
 
+    07 Aug 2025            v0.2.1
+        - wn31_sig and wn31_rssi renamed to wh31_sig and wh31_rssi
 
     
 Tested and completed:
