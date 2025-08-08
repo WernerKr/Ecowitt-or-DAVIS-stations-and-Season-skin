@@ -74,6 +74,7 @@ Modified by me!
 
     07 Aug 2025            v0.2.1
         - wn31_sig and wn31_rssi renamed to wh31_sig and wh31_rssi
+        - missed co2_Batt, wh45_sig, wh45_rssi added
 
     08 Aug 2025            v0.2.2
         - dB -> dBm
