@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.2.0                                  Date: 31 July 2025
+Version: 0.2.2                                  Date: 08 Aug 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -86,6 +86,9 @@ Revision History
     07 Aug 2025            v0.2.1
         - wn31_sig and wn31_rssi renamed to wh31_sig and wh31_rssi
         - wh45/46: co2_batt, wh45_sig, wh45_rssi added
+
+    08 Aug 2025            v0.2.2
+        - dB -> dBm
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -203,7 +206,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.1'
+DRIVER_VERSION = '0.2.2'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
@@ -261,6 +264,12 @@ DEFAULT_FW_CHECK_INTERVAL = 86400
 # default is to only accept data from registered sensors (True).
 #  DEFAULT_ONLY_REGISTERED_SENSORS = True
 DEFAULT_ONLY_REGISTERED_SENSORS = False
+
+weewx.units.USUnits["group_dbm"] = "dBm"
+weewx.units.MetricUnits["group_dbm"] = "dBm"
+weewx.units.MetricWXUnits["group_dbm"] = "dBm"
+weewx.units.default_unit_format_dict["dBm"] = "%.0f"
+weewx.units.default_unit_label_dict["dBm"] = " dBm"
 
 weewx.units.obs_group_dict['leafWet1'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet2'] = 'group_percent'
@@ -368,7 +377,7 @@ weewx.units.obs_group_dict['ldsheat_ch4'] = 'group_count'
 
 weewx.units.obs_group_dict['windDir10'] = 'group_direction'
 
-#weewx.units.obs_group_dict['wh25_rssi'] = "group_db" 
+#weewx.units.obs_group_dict['wh25_rssi'] = "group_dbm" 
 
 # define the WeeWX unit group used by each device field
 DEFAULT_GROUPS = {
@@ -779,73 +788,73 @@ DEFAULT_GROUPS = {
     'radcompensation': 'group_count',
     'upgrade': 'group_count',
     'newVersion': 'group_count',
-    'wn20.rssi': 'group_db',
-    'wh24.rssi': 'group_db',
-    'wh25.rssi': 'group_db',
-    'wh26.rssi': 'group_db',
-    'wn32.rssi': 'group_db',
-    'wn32p.rssi': 'group_db',
-    'wn31.ch1.rssi': 'group_db',
-    'wn31.ch2.rssi': 'group_db',
-    'wn31.ch3.rssi': 'group_db',
-    'wn31.ch4.rssi': 'group_db',
-    'wn31.ch5.rssi': 'group_db',
-    'wn31.ch6.rssi': 'group_db',
-    'wn31.ch7.rssi': 'group_db',
-    'wn31.ch8.rssi': 'group_db',
-    'wn34.ch1.rssi': 'group_db',
-    'wn34.ch2.rssi': 'group_db',
-    'wn34.ch3.rssi': 'group_db',
-    'wn34.ch4.rssi': 'group_db',
-    'wn34.ch5.rssi': 'group_db',
-    'wn34.ch6.rssi': 'group_db',
-    'wn34.ch7.rssi': 'group_db',
-    'wn34.ch8.rssi': 'group_db',
-    'wn35.ch1.rssi': 'group_db',
-    'wn35.ch2.rssi': 'group_db',
-    'wn35.ch3.rssi': 'group_db',
-    'wn35.ch4.rssi': 'group_db',
-    'wn35.ch5.rssi': 'group_db',
-    'wn35.ch6.rssi': 'group_db',
-    'wn35.ch7.rssi': 'group_db',
-    'wn35.ch8.rssi': 'group_db',
-    'wh40.rssi': 'group_db',
-    'wh41.ch1.rssi': 'group_db',
-    'wh41.ch2.rssi': 'group_db',
-    'wh41.ch3.rssi': 'group_db',
-    'wh41.ch4.rssi': 'group_db',
-    'wh45.rssi': 'group_db',
-    'wh51.ch1.rssi': 'group_db',
-    'wh51.ch2.rssi': 'group_db',
-    'wh51.ch3.rssi': 'group_db',
-    'wh51.ch4.rssi': 'group_db',
-    'wh51.ch5.rssi': 'group_db',
-    'wh51.ch6.rssi': 'group_db',
-    'wh51.ch7.rssi': 'group_db',
-    'wh51.ch8.rssi': 'group_db',
-    'wh51.ch9.rssi': 'group_db',
-    'wh51.ch10.rssi': 'group_db',
-    'wh51.ch11.rssi': 'group_db',
-    'wh51.ch12.rssi': 'group_db',
-    'wh51.ch13.rssi': 'group_db',
-    'wh51.ch14.rssi': 'group_db',
-    'wh51.ch15.rssi': 'group_db',
-    'wh51.ch16.rssi': 'group_db',
-    'wh54.ch1.rssi': 'group_db',
-    'wh54.ch2.rssi': 'group_db',
-    'wh54.ch3.rssi': 'group_db',
-    'wh54.ch4.rssi': 'group_db',
-    'wh55.ch1.rssi': 'group_db',
-    'wh55.ch2.rssi': 'group_db',
-    'wh55.ch3.rssi': 'group_db',
-    'wh55.ch4.rssi': 'group_db',
-    'wh57.rssi': 'group_db',
-    'wh65.rssi': 'group_db',
-    'wh68.rssi': 'group_db',
-    'wh69.rssi': 'group_db',
-    'ws80.rssi': 'group_db',
-    'ws85.rssi': 'group_db',
-    'ws90.rssi': 'group_db',
+    'wn20.rssi': 'group_dbm',
+    'wh24.rssi': 'group_dbm',
+    'wh25.rssi': 'group_dbm',
+    'wh26.rssi': 'group_dbm',
+    'wn32.rssi': 'group_dbm',
+    'wn32p.rssi': 'group_dbm',
+    'wn31.ch1.rssi': 'group_dbm',
+    'wn31.ch2.rssi': 'group_dbm',
+    'wn31.ch3.rssi': 'group_dbm',
+    'wn31.ch4.rssi': 'group_dbm',
+    'wn31.ch5.rssi': 'group_dbm',
+    'wn31.ch6.rssi': 'group_dbm',
+    'wn31.ch7.rssi': 'group_dbm',
+    'wn31.ch8.rssi': 'group_dbm',
+    'wn34.ch1.rssi': 'group_dbm',
+    'wn34.ch2.rssi': 'group_dbm',
+    'wn34.ch3.rssi': 'group_dbm',
+    'wn34.ch4.rssi': 'group_dbm',
+    'wn34.ch5.rssi': 'group_dbm',
+    'wn34.ch6.rssi': 'group_dbm',
+    'wn34.ch7.rssi': 'group_dbm',
+    'wn34.ch8.rssi': 'group_dbm',
+    'wn35.ch1.rssi': 'group_dbm',
+    'wn35.ch2.rssi': 'group_dbm',
+    'wn35.ch3.rssi': 'group_dbm',
+    'wn35.ch4.rssi': 'group_dbm',
+    'wn35.ch5.rssi': 'group_dbm',
+    'wn35.ch6.rssi': 'group_dbm',
+    'wn35.ch7.rssi': 'group_dbm',
+    'wn35.ch8.rssi': 'group_dbm',
+    'wh40.rssi': 'group_dbm',
+    'wh41.ch1.rssi': 'group_dbm',
+    'wh41.ch2.rssi': 'group_dbm',
+    'wh41.ch3.rssi': 'group_dbm',
+    'wh41.ch4.rssi': 'group_dbm',
+    'wh45.rssi': 'group_dbm',
+    'wh51.ch1.rssi': 'group_dbm',
+    'wh51.ch2.rssi': 'group_dbm',
+    'wh51.ch3.rssi': 'group_dbm',
+    'wh51.ch4.rssi': 'group_dbm',
+    'wh51.ch5.rssi': 'group_dbm',
+    'wh51.ch6.rssi': 'group_dbm',
+    'wh51.ch7.rssi': 'group_dbm',
+    'wh51.ch8.rssi': 'group_dbm',
+    'wh51.ch9.rssi': 'group_dbm',
+    'wh51.ch10.rssi': 'group_dbm',
+    'wh51.ch11.rssi': 'group_dbm',
+    'wh51.ch12.rssi': 'group_dbm',
+    'wh51.ch13.rssi': 'group_dbm',
+    'wh51.ch14.rssi': 'group_dbm',
+    'wh51.ch15.rssi': 'group_dbm',
+    'wh51.ch16.rssi': 'group_dbm',
+    'wh54.ch1.rssi': 'group_dbm',
+    'wh54.ch2.rssi': 'group_dbm',
+    'wh54.ch3.rssi': 'group_dbm',
+    'wh54.ch4.rssi': 'group_dbm',
+    'wh55.ch1.rssi': 'group_dbm',
+    'wh55.ch2.rssi': 'group_dbm',
+    'wh55.ch3.rssi': 'group_dbm',
+    'wh55.ch4.rssi': 'group_dbm',
+    'wh57.rssi': 'group_dbm',
+    'wh65.rssi': 'group_dbm',
+    'wh68.rssi': 'group_dbm',
+    'wh69.rssi': 'group_dbm',
+    'ws80.rssi': 'group_dbm',
+    'ws85.rssi': 'group_dbm',
+    'ws90.rssi': 'group_dbm',
 }
 
 ## for WeeWx 4.x user
