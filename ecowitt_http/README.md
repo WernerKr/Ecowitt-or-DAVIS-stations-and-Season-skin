@@ -78,6 +78,11 @@ Modified by me!
 
     08 Aug 2025            v0.2.2
         - dB -> dBm
+
+    21 Aug 2025            v0.2.3
+        - correction if lightning timestamp = "--/--/---- --:--:--"
+        - Error message hidden: process_lightning_array: Error processing distance: Could not convert '--.-' to a float
+        - added console_batt, consoleext_batt, charge_stat (WS6210)
     
 Tested and completed:
 ```
