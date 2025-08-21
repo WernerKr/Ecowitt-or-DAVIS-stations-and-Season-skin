@@ -6,7 +6,7 @@ A WeeWX driver for devices using Ecowitt local HTTP API.
 
 Copyright (C) 2024-25 Gary Roderick                     gjroderick<at>gmail.com
 
-Modified Werner Krenn July 2025
+Modified Werner Krenn started July 2025
 
 
 This program is free software: you can redistribute it and/or modify it under
@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.2.2                                  Date: 08 Aug 2025
+Version: 0.2.3                                  Date: 21 Aug 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -89,6 +89,11 @@ Revision History
 
     08 Aug 2025            v0.2.2
         - dB -> dBm
+
+    21 Aug 2025            v0.2.3
+        - correction if lightning timestamp = "--/--/---- --:--:--"
+        - Error message hidden: process_lightning_array: Error processing distance: Could not convert '--.-' to a float
+        - added console_batt, consoleext_batt, charge_stat (WS6210)
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -206,16 +211,15 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.2'
+DRIVER_VERSION = '0.2.3'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
 
 # device models that are supported by the driver
-SUPPORTED_DEVICES = ('GW1100', 'GW1200', 'GW2000',
-                     'GW3000', 'WH2650', 'WH2680',
-                     'WN1900', 'WN1980',
-                     'WS3800', 'WS3810', 'WS3900', 'WS3910')
+SUPPORTED_DEVICES = ('GW1100', 'GW1200', 'GW2000', 'GW3000',
+                     'WN1700', 'WN1820', 'WN1821', 'WN1920', 'WN1980',
+                     'WS6210', 'WS3800', 'WS3820', 'WS3900', 'WS3910')
 # device models that are not supported by the driver
 UNSUPPORTED_DEVICES = ('GW1000',)
 # device models that we know about
@@ -336,6 +340,8 @@ weewx.units.obs_group_dict['ws90_batt'] = 'group_volt'
 
 weewx.units.obs_group_dict['ws1900batt'] = 'group_volt'
 weewx.units.obs_group_dict['console_batt'] = 'group_volt'
+weewx.units.obs_group_dict['consoleext_batt'] = 'group_volt'
+weewx.units.obs_group_dict['charge_stat'] = 'group_count'
 weewx.units.obs_group_dict['wh68_batt'] = 'group_count'
 weewx.units.obs_group_dict['wh69_batt'] = 'group_count'
 #weewx.units.obs_group_dict['wh80_batt'] = 'group_count'
@@ -433,6 +439,9 @@ DEFAULT_GROUPS = {
     'common_list.0x19.val': 'group_speed',
     'common_list.0x19.battery': 'group_count',
     'common_list.0x19.voltage': 'group_volt',
+    'console.battery': 'group_count',
+    'console.console_batt_volt': 'group_volt',
+    'console.console_ext_volt': 'group_volt',
     'rain.0x0D.val': 'group_rain',
     'rain.0x0D.battery': 'group_count',
     'rain.0x0D.voltage': 'group_volt',
@@ -487,6 +496,10 @@ DEFAULT_GROUPS = {
     'wh25.rel': 'group_pressure',
     'wh25.CO2': 'group_fraction',
     'wh25.CO2_24H': 'group_fraction',
+    'console.console_batt_volt': 'group_volt',
+    'console.console_ext_volt': 'group_volt',
+    'console.battery': 'group_count',
+    'console.charge_stat': 'group_count',
     'lightning.distance': 'group_distance',
     'lightning.timestamp': 'group_time',
     'lightning.count': 'group_count',
@@ -1675,7 +1688,10 @@ class HttpMapper(FieldMapper):
         'hailBatteryStatus': 'piezoRain.0x13.voltage',
         'windBatteryStatus': 'ws80.voltage',
 
-        'consBatteryVoltage': 'wh25.console_batt',
+        'consBatteryVoltage': 'console.console_batt_volt',
+        'console_batt': 'console.console_batt_volt',
+        'consoleext_batt': 'console.console_ext_volt',
+        'charge_stat': 'console.charge_stat',
         'ws1900batt': 'wh25.ws1900_batt',
         'ws1800batt': 'wh25.ws1800_batt',
         'ws6006batt': 'wh25.ws6006_batt',
@@ -3276,6 +3292,8 @@ class EcowittHttpDriverConfEditor(weewx.drivers.AbstractConfEditor):
         extractor = last
     [[console_batt]]
         extractor = last
+    [[consoleext_batt]]
+        extractor = last
     [[ldsbatt1]]
         extractor = last
     [[ldsbatt2]]
@@ -4320,7 +4338,7 @@ class EcowittNetCatchup(Catchup):
             'ws1900_console': 'wh25.ws1900_batt',
             'ws1800_console': 'wh25.ws1800_batt',
             'ws6006_console': 'wh25.ws6006_batt',
-            'console': 'wh25.console_batt',
+            'console': 'console.console_batt_volt',
             'wind_sensor': 'common_list.0x0A.voltage',
             'haptic_array_battery': 'piezoRain.0x13.voltage',
             'haptic_array_capacitor': 'piezocap_volt',
@@ -6816,12 +6834,12 @@ class EcowittHttpParser:
         # as '3' that contains temperature data that is at times different to
         # any other temperature field. Use of WS View+ app suggests field '3'
         # is 'feels like'.
-        '3': 'process_temperature_object', # feels like (suspected)
+        '3': 'process_temperature_object', # feels like field
         '0x04': 'process_temperature_object', # wind chill
         # Is field '0x04' the same as field '4'. The local HTTP API
         # get_livedata_info command does not return a field identified as
         # '0x04' or as '4'.
-        '4': 'process_temperature_object', # unknown field
+        '4': 'process_temperature_object', # apparent temp field
         '0x05': 'process_temperature_object', # heat index
         # Is field '0x05' the same as field '5'. The local HTTP API
         # get_livedata_info command returns a common_list field identified
@@ -6997,6 +7015,7 @@ class EcowittHttpParser:
             process_co2_array         - process co2 array (CO2 sensor)
             process_rain_array        - process rain array (rain sensor)
             process_debug_array       - process debug array (device info)
+            process_console_array     - process console array (WS6210 info)
 
         Parameters
             response:     The API JSON response to be parsed. List representing
@@ -7025,7 +7044,7 @@ class EcowittHttpParser:
                     # group that has changed structure. In either case we do
                     # not know how to process the group so log it if necessary
                     # and continue.
-                    if weewx.debug or self.debug.parser or self.log_unknown_fields:
+                    if weewx.debug or self.log_unknown_fields:
                         log.info("Skipped unknown livedata group '%s'",
                                  group)
                     continue
@@ -9790,7 +9809,7 @@ class EcowittHttpParser:
         except  ParseError as e:
             # The 'distance' key exists but there was a problem processing the
             # data. Log it and set the 'distance' key/value to None
-            log.error("process_lightning_array: Error processing distance: %s", e)
+            # log.error("process_lightning_array: Error processing distance: %s", e)
             _item['distance'] = None
         else:
             # we have a numeric value, convert it to the unit system used by
@@ -9803,6 +9822,7 @@ class EcowittHttpParser:
         except KeyError:
             # we have no 'date' key, do nothing and continue processing
             pass
+
         # obtain and parse the 'timestamp' key/value
         try:
             _timestamp_dt = datetime.datetime.strptime(item['timestamp'],
@@ -9816,8 +9836,12 @@ class EcowittHttpParser:
             _item['timestamp'] = None
         else:
             # we have a datetime object, convert to and save as an epoch timestamp
-            timestamp_ts = int(time.mktime(_timestamp_dt.timetuple()))
-            _item['timestamp'] = timestamp_ts
+            try:
+              timestamp_ts = int(time.mktime(_timestamp_dt.timetuple()))
+              _item['timestamp'] = timestamp_ts
+            except:
+              _item['timestamp'] = None
+ 
         # return the parsed data
         return _item
 
@@ -10449,6 +10473,70 @@ class EcowittHttpParser:
             _item['is_cnip'] = None
         # return the parsed data
         return _item
+
+
+    #@staticmethod
+    def process_console_array(self, response):
+
+        try:
+            item = response[0]
+        except (KeyError, TypeError) as e:
+            # we have something other than a JSON array, raise a ParseError
+            # with an appropriate error message
+            raise ParseError("Cannot parse 'console' array: %s" % e)
+        # we have the raw response, create a dict to hold the parsed data for
+        # this item
+        _item = dict()
+        # We have a 'battery' field, now convert to an integer. Wrap in a
+        # try..except in case there is a problem.
+        try:
+            _item['battery'] = int(item['battery'])
+        except KeyError:
+            # the item has no 'battery' key, so continue
+            pass
+        except (TypeError, ValueError):
+            # the 'battery' value could not be converted to an integer,
+            # so save None to the 'battery' field
+            _item['battery'] = None
+
+        try:
+            _item['charge_stat'] = int(item['charge_stat'])
+        except KeyError:
+            # the item has no 'charge_stat' key, so continue
+            pass
+        except (TypeError, ValueError):
+            # the 'charge_stat' value could not be converted to an integer,
+            # so save None to the 'charge_stat' field
+            _item['charge_stat'] = None
+
+        try:
+            # first obtain the console_batt_volt as a ValueTuple
+            voltage_vt = self.parse_obs_value('console_batt_volt', item, 'group_volt')
+            # we have a numeric value, save it against the 'console_batt_volt' key
+            _item['console_batt_volt'] = voltage_vt.value
+        except KeyError:
+            # no 'console_batt_volt' key exists, ignore and continue
+            pass
+        except UnitError as e:
+            # the key 'console_batt_volt' exists, but the value could not be converted to
+            # a float, so save None to the 'console_batt_volt' key/value
+           _item['console_batt_volt'] = None
+
+        try:
+            # first obtain the console_ext_volt as a ValueTuple
+            voltage_vt = self.parse_obs_value('console_ext_volt', item, 'group_volt')
+            # we have a numeric value, save it against the 'console_ext_voltt' key
+            _item['console_ext_volt'] = voltage_vt.value
+        except KeyError:
+            # no 'console_ext_volt' key exists, ignore and continue
+            pass
+        except UnitError as e:
+            # the key 'console_ext_volt' exists, but the value could not be converted to
+            # a float, so save None to the 'console_ext_volt' key/value
+           _item['console_ext_volt'] = None
+        # return the parsed data
+        return _item
+ 
 
     def process_sensor_array(self, sensor, connected_only):
         """Process sensor data obtained via the 'get_sensors_info' API command.
