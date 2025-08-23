@@ -168,7 +168,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Ecowittcustom'
-DRIVER_VERSION = '0.1.5'
+DRIVER_VERSION = '0.1.6'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -268,8 +268,12 @@ weewx.units.obs_group_dict['ws80_batt'] = 'group_volt'
 weewx.units.obs_group_dict['ws90_batt'] = 'group_volt'
 weewx.units.obs_group_dict['ws1900batt'] = 'group_volt'
 weewx.units.obs_group_dict['console_batt'] = 'group_volt'
+weewx.units.obs_group_dict['consoleext_batt'] = 'group_volt'
+weewx.units.obs_group_dict['charge_stat'] = 'group_count'
+weewx.units.obs_group_dict['consolebattp'] = 'group_percent'
+
 weewx.units.obs_group_dict['ws85_batt'] = 'group_volt'
-weewx.units.obs_group_dict['wh85_batt'] = 'group_volt'
+#weewx.units.obs_group_dict['wh85_batt'] = 'group_volt'
 
 weewx.units.obs_group_dict['rrain_piezo'] = 'group_rainrate'
 weewx.units.obs_group_dict['erain_piezo'] = 'group_rain'
@@ -448,8 +452,8 @@ weewx.units.obs_group_dict['wh68_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh69_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws80_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws90_sig'] = 'group_count'
-weewx.units.obs_group_dict['ws85_sig'] = 'group_percent'
-weewx.units.obs_group_dict['wh85_sig'] = 'group_count'
+weewx.units.obs_group_dict['ws85_sig'] = 'group_count'
+weewx.units.obs_group_dict['wh85_sig'] = 'group_percent'
 """
 
 weewx.units.obs_group_dict['wn20_rssi'] = 'group_dbm'
@@ -545,7 +549,7 @@ weewx.units.obs_group_dict['co2_batt6'] = 'group_count'
 weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['heap'] = 'group_data'
-
+weewx.units.obs_group_dict['pb'] = 'group_data'
 
 weewx.units.obs_group_dict['fdewptf'] = 'group_temperature'
 weewx.units.obs_group_dict['fwindchillf'] = 'group_temperature'
@@ -633,6 +637,9 @@ weewx.units.obs_group_dict['vpd'] = 'group_pressurevpd'
 weewx.units.USUnits["group_pressurevpd"] = "inHg"
 weewx.units.MetricUnits["group_pressurevpd"] = "kPa"
 weewx.units.MetricWXUnits["group_pressurevpd"] = "kPa"
+
+weewx.units.obs_group_dict['bgt'] = 'group_temperature'
+weewx.units.obs_group_dict['wbgt'] = 'group_temperature'
 
 
 def loader(config_dict, _):
@@ -1147,6 +1154,11 @@ class Consumer(object):
         'gain2': 'rain3_gain',
         'gain3': 'rain4_gain',
         'gain4': 'rain5_gain',
+        'charge_stat': 'charge',
+        'consoleext_batt': 'ext_volt',
+        'consolebattp': 'consolebattp',
+        'bgt': 'bgt',
+        'wbgt': 'wbgt',
     }
 
     def default_sensor_map(self):
@@ -1587,6 +1599,7 @@ class WUClient(Consumer):
             'weather', 'clouds', 'osunhours', 'nsunhours',
             'windspdmph_avg2m', 'winddir_avg2m',
             'windgustmph_10m', 'windgustdir_10m',
+            'imei', 'iccid', 'imsi', 'msisdn', 'wifimode', 'up_mtd',
         ]
 
         def __init__(self):
@@ -1873,6 +1886,9 @@ class EcowittClient(Consumer):
             'ws85_ver' : 'ws85_ver',
             'ws1900batt' : 'console_batt',
             'console_batt' : 'console_batt',
+            'consolebattp' : 'consolebattp',
+            'ext_volt' : 'ext_volt',
+            'charge' : 'charge',
             'ws90cap_volt' : 'ws90cap_volt',
             'ws85cap_volt' : 'ws85cap_volt',
             'gain10_piezo' : 'gain0',
@@ -2118,6 +2134,8 @@ class EcowittClient(Consumer):
             'ldspw_ch3': 'ldspw_ch3',
             'ldspw_ch4': 'ldspw_ch4',
             'vpd': 'vpd',
+            'bgt': 'bgt',
+            'wbgt': 'wbgt',
        }
 
         IGNORED_LABELS = [
@@ -2132,6 +2150,7 @@ class EcowittClient(Consumer):
             'pm10_AQIlvl_co2','pm10_AQIlvl_24h_co2',
             #'windspdmph_avg10m','winddir_avg10m','windgustmph_max10m','windrun',
             'brightness','cloudf','srsum', 'osunhours', 'nsunhours',
+            'imei', 'iccid', 'imsi', 'msisdn', 'wifimode', 'up_mtd',
             #'sunhours','sunshine',
             'ptrend1','pchange1','ptrend3','pchange3',
             'running','wswarning','sensorwarning','batterywarning','stormwarning','tswarning','updatewarning','leakwarning','co2warning','intvlwarning','time',
