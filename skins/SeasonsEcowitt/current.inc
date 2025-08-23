@@ -319,6 +319,8 @@
  ('yearRain_2','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ($gettext('Data FOSHKplugin'),'','','3'),
+('bgt','','current','1'),
+('wbgt','','current','1'),
 ('fdewptf','','current','1'),
 ('fwindchillf','','current','1'),
 ('ffeelslikef','','current','1'),

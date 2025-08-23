@@ -1,6 +1,9 @@
 ## about module for weewx skins
 ## Copyright Tom Keffer, Matthew Wall
 ## See LICENSE.txt for your rights
+## Werner Krenn 2025/06/14
+## 2025-08-21 add data from WS6210
+
 #errorCatcher Echo
 #encoding UTF-8
 
@@ -30,14 +33,22 @@
   <table>
     <tr>
       <td class="label">$gettext("Hardware")</td>
-       <td class="data">$station.hardware $xt</td>
+       <td class="data">$station.hardware</td>
     </tr>
+    #if $xt !=''
+    <tr>
+      <td class="label">      </td>
+       <td class="data">$xt</td>
+    </tr>
+    #end if
+
     #if $xt1 !=''
     <tr> 
       <td class="label">$gettext("StationType")</td>
       <td class="data">$xt1</td>
     </tr>
     #end if
+
    #try
     #if $current.upgrade.has_data
     <tr> 
@@ -51,6 +62,20 @@
       <td class="data">$current.newVersion</td>
     </tr>
     #end if
+    #if $current.charge_stat.has_data
+    <tr> 
+      <td class="label">$gettext("Charge")</td>
+      <td class="data">$current.charge_stat</td>
+    </tr>
+    #end if
+    #if $current.consolebattp.has_data
+    <tr> 
+      <td class="label">$gettext("ChargeProz")</td>
+      <td class="data">$current.consolebattp</td>
+    </tr>
+    #end if
+
+
     #if $current.runtime.has_data
     <tr> 
       <td class="label">$gettext("Station uptime")</td>
