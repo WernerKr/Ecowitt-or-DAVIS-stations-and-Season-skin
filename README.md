@@ -191,6 +191,10 @@ Jan-Mar 2025:
 - vpd
 - LDS01 - LDS04
 
+Aug 2025:
+- Support for WS6210
+- Support for WN38 (bgt, wbgt)
+  
 weewx-ecowittcustom.zip 
  - V4: sudo wee_extension --install=weewx-ecowittcustom.zip
  - V5: sudo weectl extension install weewx-ecowittcustom.zip
@@ -241,10 +245,12 @@ Code:
          database_name = weewx.sdb
          database_type = SQLite
          database_name_new = weewx_ecowitt.sdb
+         database_name_new = weewx_ecowittrssi.sdb
      change to
          # database_name = weewx.sdb
          database_type = SQLite
-         database_name = weewx_ecowitt.sdb
+         database_name = weewx_ecowitt.sdb       # or database_name = weewx_ecowittrssi.sdb
+
 Since the installation routine does not change any existing entries, one must in weewx.conf
 adapt a few entries
 
@@ -796,5 +802,6 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
