@@ -63,14 +63,14 @@
         #include "sunmoon.inc"
         #include "hilo.inc"
         ##include "belchertown.inc"
-        #include "neowx.inc"
+        ##include "neowx.inc"
         ##include "amphibian.inc"
         ##include "sofaskin.inc"
-        #include "bootstrap.inc"
+        ##include "bootstrap.inc"
         ##include "standard.inc"
         ##include "smartphone.inc"
         ##include "mobile.inc"
-        #include "cmon.inc"
+        ##include "cmon.inc"
         #include "sensors.inc"
         #include "about.inc"
         #include "radar.inc"
@@ -188,11 +188,11 @@
             <img src="daylightningcount.png"        alt="$obs.label.lightning_strike_count"/>
             <img src="daylightningcount1.png"        alt="$obs.label.lightning_strike_count"/>
             #end if
-            ##if $day.lightning_distance.has_data
+            #if $year.lightning_distance.has_data
             <img src="daylightning_noise_count.png"        alt="$obs.label.lightning_strike_count"/>
             <img src="daylightningdistance.png"        alt="$obs.label.lightning_distance"/>
             <img src="daylightningdistance1.png"        alt="$obs.label.lightning_distance"/>
-            ##end if
+            #end if
 
             #if $day.rxCheckPercent.has_data
             <img src="dayrx.png"        alt="$obs.label.rxCheckPercent"/>
@@ -232,8 +232,8 @@
             <img src="dayrssi_wh31.png"        alt="$obs.label.wh31_ch1_sig"/>
             #end if
 
-            #if $current.wh32_rssi.has_data or $current.wh45_rssi.has_data
-            <img src="dayrssi_wh32.png"        alt="$obs.label.wh45_sig"/>
+            #if $current.wh40_rssi.has_data or $current.wh45_rssi.has_data or $current.wh41_ch1_rssi.has_data
+            <img src="dayrssi_wh40.png"        alt="$obs.label.wh40_sig"/>
             #end if
 
             #if $current.wn34_ch1_rssi.has_data or $current.wn34_ch2_rssi.has_data or $current.wn34_ch3_rssi.has_data

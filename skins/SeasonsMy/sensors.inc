@@ -12,6 +12,7 @@
 ## 2025-07-14 wh69_batt
 ## 2025-07-19 add rssi for Ecowitt stations
 ## 2025-07-22 removed wh80_sig, wh85_sig, wh90_sig as they come as ws?0_sig
+## 2035-08-21 add WS6210
 
 ## remember the current time - we will use it more than once.
 #import time
@@ -31,8 +32,8 @@
 
 ## skin.conf:
 ## [DisplayOptions]
-##   sensors_not = 'rxCheckPercent = ws90_sig','signal1 = ws80_sig','signal2 = wh31_ch1_sig','signal3 = wn34_ch1_sig','signal4 = wh40_sig','signal5 = wh45_sig','signal6 = wh57_sig','signal7 = wh51_ch1_sig','signal8 = wn35_ch1_sig'
-##   or sensors_not = ws90_sig, ws80_sig, wh31_ch1_sig, wn34_ch1_sig, wh40_sig, wh45_sig, wh57_sig, wh51_ch1_sig, wn35_ch1_sig
+##   sensors_not = 'rxCheckPercent = ws90_sig','signal1 = ws80_sig','signal2 = wn31_ch1_sig','signal3 = wn34_ch1_sig','signal4 = wh40_sig','signal5 = wh45_sig','signal6 = wh57_sig','signal7 = wh51_ch1_sig','signal8 = wn35_ch1_sig'
+##   or sensors_not = ws90_sig, ws80_sig, wn31_ch1_sig, wn34_ch1_sig, wh40_sig, wh45_sig, wh57_sig, wh51_ch1_sig, wn35_ch1_sig
 ## = list which sensors only shown at signalQuality
 
 #set $signal_data_not = $to_list($DisplayOptions.get('sensors_not', ['rxCheckPercent']))
@@ -83,6 +84,7 @@ $gettext('never')
                     ('WN1980'),
                     ('WS38'),
                     ('WS39'),
+                    ('WS62'),
                     ('HP2550'),
                     ('ecowitt-client'),
                     ]
@@ -109,20 +111,21 @@ $gettext('never')
                           ('wh80_batt', 'get_multi_battery_status'),
                           ('wh85_batt', 'get_multi_battery_status'),
                           ('wh90_batt', 'get_multi_battery_status'),
+                          ('ws6210_batt', 'get_multi_battery_status'),
                          ]
 ##
 #set $signal_data = [('wn20_sig'),
                      ('wh24_sig'),
                      ('wh25_sig'),
                      ('wh26_sig'),
-                     ('wh31_ch1_sig'),
-                     ('wh31_ch2_sig'),
-                     ('wh31_ch3_sig'),
-                     ('wh31_ch4_sig'),
-                     ('wh31_ch5_sig'),
-                     ('wh31_ch6_sig'),
-                     ('wh31_ch7_sig'),
-                     ('wh31_ch8_sig'),
+                     ('wn31_ch1_sig'),
+                     ('wn31_ch2_sig'),
+                     ('wn31_ch3_sig'),
+                     ('wn31_ch4_sig'),
+                     ('wn31_ch5_sig'),
+                     ('wn31_ch6_sig'),
+                     ('wn31_ch7_sig'),
+                     ('wn31_ch8_sig'),
                      ('wh32_sig'),                     
                      ('wn34_ch1_sig'),
                      ('wn34_ch2_sig'),
@@ -191,14 +194,14 @@ $gettext('never')
                      ('wh24_'),
                      ('wh25_'),
                      ('wh26_'),
-                     ('wh31_ch1_'),
-                     ('wh31_ch2_'),
-                     ('wh31_ch3_'),
-                     ('wh31_ch4_'),
-                     ('wh31_ch5_'),
-                     ('wh31_ch6_'),
-                     ('wh31_ch7_'),
-                     ('wh31_ch8_'),
+                     ('wn31_ch1_'),
+                     ('wn31_ch2_'),
+                     ('wn31_ch3_'),
+                     ('wn31_ch4_'),
+                     ('wn31_ch5_'),
+                     ('wn31_ch6_'),
+                     ('wn31_ch7_'),
+                     ('wn31_ch8_'),
                      ('wh32_'),                     
                      ('wn34_ch1_'),
                      ('wn34_ch2_'),
@@ -269,14 +272,14 @@ $gettext('never')
 ('wh24_sig'),
 ('wh25_sig'),
 ('wh26_sig'),
-('wh31_ch1_sig'),
-('wh31_ch2_sig'),
-('wh31_ch3_sig'),
-('wh31_ch4_sig'),
-('wh31_ch5_sig'),
-('wh31_ch6_sig'),
-('wh31_ch7_sig'),
-('wh31_ch8_sig'),
+('wn31_ch1_sig'),
+('wn31_ch2_sig'),
+('wn31_ch3_sig'),
+('wn31_ch4_sig'),
+('wn31_ch5_sig'),
+('wn31_ch6_sig'),
+('wn31_ch7_sig'),
+('wn31_ch8_sig'),
 ('wh32_sig'),                     
 ('wn34_ch1_sig'),
 ('wn34_ch2_sig'),
@@ -343,7 +346,7 @@ $gettext('never')
 
 ##
 #set $battery_statuses = [ "outTempBatteryStatus", "inTempBatteryStatus", "windBatteryStatus", "rainBatteryStatus", "hailBatteryStatus", "snowBatteryStatus", "uvBatteryStatus", "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
-#set $battery_statuses_ecowitt = [ "wh24_batt", "wh25_batt", "wh26_batt", "wh65_batt", "wh68_batt", "wh69_batt" ]
+#set $battery_statuses_ecowitt = [ "wh24_batt", "wh25_batt", "wh26_batt", "wh65_batt", "wh68_batt", "wh69_batt", "consolebattp" ]
 
 ##set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
 #set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus2", "batteryStatus7", "batteryStatus8" ]
@@ -412,6 +415,8 @@ $gettext('never')
 ("ldsbatt2",2.4),
 ("ldsbatt3",2.4),
 ("ldsbatt4",2.4),
+("console_batt",2.4),
+("consoleext_batt",2.4),
 ]
 
 #set $testvoltage = True
@@ -798,33 +803,30 @@ $gettext('never')
           #set $sstatetxt = $getattr($latest, $rssi)
         #end if
 
-        ##if ($sstate <= 4) 
-        <tr>
-         #if ($sstate <= 1) or ($sstatevar <= -83)
+        #if ($sstate <= 1) or ($sstatevar <= -83)
+          <tr>
           <td class="label"><font color='red'>$obs.label[$signal]</font></td>
           ##<td class="data"><font color='red'>N/A</font></td>
-         #else
+        #else
+          <tr>
           <td class="label">$obs.label[$signal]</td>
-         #end if
-         #set $x = ''
-         #set $ux = $getVar('unit.label.' + $signal)
-         #if $sstate != None 
-           #set $x = $sstate
-           #if $sstate <= 4
+        #end if
+        #set $x = ''
+        #set $ux = $getVar('unit.label.' + $signal)
+        #if $sstate != None 
+          #set $x = $sstate
+          #if $sstate <= 4
             #set $sh_1 = float($sstate)
             #set $x = int($sh_1 * 100) / 100
-           #end if
-           #if ($sstate > 4) or ($ux == '%')
+          #end if
+          #if ($sstate > 4) or ($ux == '%')
             #set $x = $getattr($latest, $signal).format("%.0f", add_label=False)
             #set $ux = '%'
-           #end if
-           <td class="data">$sstatetxt  $x$ux</td>
-         #end if
-         ##$sig_out($sstate)
-         ##<td class="data">$sstate</td>
-        </tr>
-        ##end if
-
+          #end if
+          <td class="data">$sstatetxt  $x$ux</td>
+          </tr>
+        #end if
+ 
       #end if
     #except (AttributeError, TypeError)
       ## there is no signal state data for that sensor
