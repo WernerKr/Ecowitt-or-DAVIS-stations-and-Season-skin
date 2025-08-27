@@ -775,14 +775,14 @@ https://www.pc-wetterstation.de/wetter/weewx8/
 
     For WeeWX package installs:
 
-        weectl extension install https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/tree/main/ecowitt_http/weewx_ecowitt_http.zip
+        weectl extension install https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/tree/main/ecowitt_http/weewx-ecowitt_http.zip
 
     For WeeWX *pip* installs the Python virtual environment must be activated before the extension is installed:
 
         source ~/weewx-venv/bin/activate
-        weectl extension install https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/tree/main/ecowitt_http/weewx_ecowitt_http.zip
+        weectl extension install https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/tree/main/ecowitt_http/weewx-ecowitt_http.zip
 
     For WeeWX installs from *git* the Python virtual environment must be activated before the extension is installed:
 
         source ~/weewx-venv/bin/activate
-        python3 ~/weewx/src/weectl.py extension install https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/tree/main/weewx_ecowitt_http/ecowitt_http.zip
+        python3 ~/weewx/src/weectl.py extension install https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/tree/main/ecowitt_http/weewx-ecowitt_http.zip
