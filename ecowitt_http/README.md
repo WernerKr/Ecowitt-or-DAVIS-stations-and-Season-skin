@@ -748,7 +748,7 @@ skin.conf
              label =ws90 
 
 ```
-<img width="500" height="180" alt="dayrssi_ws80" src="https://github.com/user-attachments/assets/cf01ad01-4e29-4cbf-a636-0d1122b2f7a6" />
+<img width="500" height="180" alt="dayrssi_ws80" src="https://github.com/user-attachments/assets/65e83076-b6f7-4eaa-8270-95e7c57213ce" />
 
 
 ## Live data comparison GW3000 original driver V0.1.0a28 with my driver V0.1.1
