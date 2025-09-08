@@ -5,6 +5,7 @@
 #encoding UTF-8
 
 ## 2025-07-11 settings for lightning changed (lightning_num = new)
+## 2025-09-02 new AQI values from EcowittHttp
 
 #set $ecowitt_hw = [('GW1000'),
                     ('GW1100'),
@@ -17,6 +18,7 @@
                     ('WN1980'),
                     ('WS39'),
                     ('WS38'),
+                    ('WS62'),
                     ('HP2550'),
                     ('ecowitt-client'),
                     ]
@@ -121,22 +123,30 @@
  ('dayET','#42B4B4','current','1'),
  ('monthET','','current','1'),
  ('yearET','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','0'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('pm25_1','#0e25f2','current','1'),
  ('pm25_avg_24h_ch1','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','0'),
+ ('pm25_RealAQI_ch1','','current','1'),
+ ('pm25_AQI_24h_ch1','','current','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('pm25_2','#0e25f2','current','1'),
  ('pm25_2','','aqiepa','1'),
  ('pm25_2','','aqieea','1'),
  ('pm25_avg_24h_ch2','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','0'),
+ ('pm25_RealAQI_ch2','','current','1'),
+ ('pm25_AQI_24h_ch2','','current','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('pm25_3','#0e25f2','current','1'),
  ('pm25_3','','aqiepa','1'),
  ('pm25_3','','aqieea','1'),
  ('pm25_avg_24h_ch3','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','0'),
+ ('pm25_RealAQI_ch3','','current','1'),
+ ('pm25_AQI_24h_ch3','','current','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('pm25_4','#0e25f2','current','1'),
  ('pm25_avg_24h_ch4','','current','1'),
+ ('pm25_RealAQI_ch4','','current','1'),
+ ('pm25_AQI_24h_ch4','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('inTemp','#c95716','current','1'),
 ('inHumidity','#17c4ef','current','1'),
@@ -174,7 +184,7 @@
 ('soilTemp14','','current','1'),
 ('soilTemp15','','current','1'),
 ('soilTemp16','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','0'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('soilMoist1','#e85d0d','current','1'),
 ('soilad1','','current','1'),
 ('soilMoist2','#1a50bc','current','1'),
@@ -194,15 +204,15 @@
 ('soilMoist14','','current','1'),
 ('soilMoist15','','current','1'),
 ('soilMoist16','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','0'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('leafTemp1','#5427db','current','1'),
 ('leafTemp2','#e85d0d','current','1'),
 ('leafTemp3','#e85d0d','current','1'),
 ('leafTemp4','#e85d0d','current','1'),
 ('leafWet1','#5127db','current','1'),
 ('leafWet2','#5127db','current','1'),
-('leafWet3','#5127db','day','1'),
-('leafWet4','#5127db','day','1'),
+('leafWet3','#5127db','current','1'),
+('leafWet4','#5127db','current','1'),
 ('leafWet5','#5127db','current','1'),
 ('leafWet6','#5127db','current','1'),
 ('leafWet7','#5127db','current','1'),
@@ -253,15 +263,23 @@
  ('co2_24h','','current','1'),
 ('pm1_0','#0e25f2','current','1'),
  ('pm1_24h_co2','','current','1'),
+ ('pm1_RealAQI_co2','','current','1'),
+ ('pm1_24hAQI_co2','','current','1'),
 ('pm2_5','#0e25f2','current','1'),
  ('pm2_5_aqi','','current','1'),
  ('pm2_5','','aqiepa','1'),
  ('pm2_5','','aqieea','1'),
  ('pm25_24h_co2','','current','1'),
+ ('pm25_RealAQI_co2','','current','1'),
+ ('pm25_24hAQI_co2','','current','1'),
 ('pm4_0','#0e25f2','current','1'),
  ('pm4_24h_co2','','current','1'),
+ ('pm4_RealAQI_co2','','current','1'),
+ ('pm4_24hAQI_co2','','current','1'),
 ('pm10_0','#0e25f2','current','1'),
  ('pm10_24h_co2','','current','1'),
+ ('pm10_RealAQI_co2','','current','1'),
+ ('pm10_24hAQI_co2','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','0'),
 ($gettext('Data Air'),'','','0'),
 ('co2_Temp','#f20e3c','current','0'),
@@ -319,8 +337,6 @@
  ('yearRain_2','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ($gettext('Data FOSHKplugin'),'','','3'),
-('bgt','','current','1'),
-('wbgt','','current','1'),
 ('fdewptf','','current','1'),
 ('fwindchillf','','current','1'),
 ('ffeelslikef','','current','1'),
@@ -345,6 +361,8 @@
 ('fpm10_AQI_24h_co2','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ($gettext('Data other'),'','','3'),
+('bgt','','current','1'),
+('wbgt','','current','1'),
 ('outVaporP','','current','1'),
 ('outSVP','','current','1'),
 ('outMixingRatio','','current','1'),
@@ -439,6 +457,28 @@
 #end def
 ##
 
+##
+#def compute_pmxx_aqiepa($xv)
+#set $xx = round($xv)
+#set $x = float($xv)
+  #if $x <= 50    ##        Good # Green
+     #set $color = '#00e400'
+  #elif $x <= 100 ##         Moderate # Yellow
+     #set $color = '#e8e81b'
+  #elif $x <= 150 ##         Unhealthy for senstive # Orange
+     #set $color = '#ff7e00'
+  #elif $x <= 200 ##        Unhealthy # Red
+     #set $color = '#ff0000'
+  #elif $x <= 300 ##        Very Unhealthy # Purple
+     #set $color = '#8f3f97' 
+  #elif $x > 30 ##        Hazardous # Maroon
+     #set $color = '#7e0023'
+  #else              ##         Hazardous # Maroon
+     #set $color = '#7e0023'
+  #end if
+<td class="data"><span><font color=$color>$xx EPA</font></span></td>
+#end def
+##
 
 <div id='current_widget' class="widget">
   <div class="widget_title">
@@ -690,6 +730,14 @@
         #set $xv = $xt.raw
         $compute_pm2_5_aqieea($xv)
       </tr>
+    #elif 'AQI' in $x[0]
+      <tr>
+        <td class="label"><span><font color=$color>$obs.label[$x[0]]</font></span></td>
+        #set $xv = $xt.raw
+        $compute_pmxx_aqiepa($xv)
+      </tr>
+
+
     #elif $x[0] == 'outHumAbs'
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]</font></span></td>

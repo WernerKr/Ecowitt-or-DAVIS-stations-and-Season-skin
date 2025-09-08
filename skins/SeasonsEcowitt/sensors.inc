@@ -13,6 +13,9 @@
 ## 2025-07-19 add rssi for Ecowitt stations
 ## 2025-07-22 removed wh80_sig, wh85_sig, wh90_sig as they come as ws?0_sig
 ## 2035-08-21 add WS6210
+## 2025-08-26 renamed wn31 to wh31
+## 2025-08-29 variable $redcolorrssi for  red colour text at rssi
+
 
 ## remember the current time - we will use it more than once.
 #import time
@@ -27,13 +30,15 @@
 #set $userecentvol = 1
 #set $userecentsig = 1
 
+#set $redcolorrssi = -83
+
 ## if sensors can be shown on signalQuality and Signal change $notuse = 1
 #set $notuse = 0
 
 ## skin.conf:
 ## [DisplayOptions]
-##   sensors_not = 'rxCheckPercent = ws90_sig','signal1 = ws80_sig','signal2 = wn31_ch1_sig','signal3 = wn34_ch1_sig','signal4 = wh40_sig','signal5 = wh45_sig','signal6 = wh57_sig','signal7 = wh51_ch1_sig','signal8 = wn35_ch1_sig'
-##   or sensors_not = ws90_sig, ws80_sig, wn31_ch1_sig, wn34_ch1_sig, wh40_sig, wh45_sig, wh57_sig, wh51_ch1_sig, wn35_ch1_sig
+##   sensors_not = 'rxCheckPercent = ws90_sig','signal1 = ws80_sig','signal2 = wh31_ch1_sig','signal3 = wn34_ch1_sig','signal4 = wh40_sig','signal5 = wh45_sig','signal6 = wh57_sig','signal7 = wh51_ch1_sig','signal8 = wn35_ch1_sig'
+##   or sensors_not = ws90_sig, ws80_sig, wh31_ch1_sig, wn34_ch1_sig, wh40_sig, wh45_sig, wh57_sig, wh51_ch1_sig, wn35_ch1_sig
 ## = list which sensors only shown at signalQuality
 
 #set $signal_data_not = $to_list($DisplayOptions.get('sensors_not', ['rxCheckPercent']))
@@ -118,14 +123,14 @@ $gettext('never')
                      ('wh24_sig'),
                      ('wh25_sig'),
                      ('wh26_sig'),
-                     ('wn31_ch1_sig'),
-                     ('wn31_ch2_sig'),
-                     ('wn31_ch3_sig'),
-                     ('wn31_ch4_sig'),
-                     ('wn31_ch5_sig'),
-                     ('wn31_ch6_sig'),
-                     ('wn31_ch7_sig'),
-                     ('wn31_ch8_sig'),
+                     ('wh31_ch1_sig'),
+                     ('wh31_ch2_sig'),
+                     ('wh31_ch3_sig'),
+                     ('wh31_ch4_sig'),
+                     ('wh31_ch5_sig'),
+                     ('wh31_ch6_sig'),
+                     ('wh31_ch7_sig'),
+                     ('wh31_ch8_sig'),
                      ('wh32_sig'),                     
                      ('wn34_ch1_sig'),
                      ('wn34_ch2_sig'),
@@ -194,14 +199,14 @@ $gettext('never')
                      ('wh24_'),
                      ('wh25_'),
                      ('wh26_'),
-                     ('wn31_ch1_'),
-                     ('wn31_ch2_'),
-                     ('wn31_ch3_'),
-                     ('wn31_ch4_'),
-                     ('wn31_ch5_'),
-                     ('wn31_ch6_'),
-                     ('wn31_ch7_'),
-                     ('wn31_ch8_'),
+                     ('wh31_ch1_'),
+                     ('wh31_ch2_'),
+                     ('wh31_ch3_'),
+                     ('wh31_ch4_'),
+                     ('wh31_ch5_'),
+                     ('wh31_ch6_'),
+                     ('wh31_ch7_'),
+                     ('wh31_ch8_'),
                      ('wh32_'),                     
                      ('wn34_ch1_'),
                      ('wn34_ch2_'),
@@ -272,14 +277,14 @@ $gettext('never')
 ('wh24_sig'),
 ('wh25_sig'),
 ('wh26_sig'),
-('wn31_ch1_sig'),
-('wn31_ch2_sig'),
-('wn31_ch3_sig'),
-('wn31_ch4_sig'),
-('wn31_ch5_sig'),
-('wn31_ch6_sig'),
-('wn31_ch7_sig'),
-('wn31_ch8_sig'),
+('wh31_ch1_sig'),
+('wh31_ch2_sig'),
+('wh31_ch3_sig'),
+('wh31_ch4_sig'),
+('wh31_ch5_sig'),
+('wh31_ch6_sig'),
+('wh31_ch7_sig'),
+('wh31_ch8_sig'),
 ('wh32_sig'),                     
 ('wn34_ch1_sig'),
 ('wn34_ch2_sig'),
@@ -803,7 +808,7 @@ $gettext('never')
           #set $sstatetxt = $getattr($latest, $rssi)
         #end if
 
-        #if ($sstate <= 1) or ($sstatevar <= -83)
+        #if ($sstate <= 1) or ($sstatevar <= int($redcolorrssi) )
           <tr>
           <td class="label"><font color='red'>$obs.label[$signal]</font></td>
           ##<td class="data"><font color='red'>N/A</font></td>
