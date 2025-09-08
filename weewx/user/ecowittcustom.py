@@ -640,6 +640,7 @@ weewx.units.MetricWXUnits["group_pressurevpd"] = "kPa"
 
 weewx.units.obs_group_dict['bgt'] = 'group_temperature'
 weewx.units.obs_group_dict['wbgt'] = 'group_temperature'
+weewx.units.obs_group_dict['wbgtcat'] = 'group_count'
 
 
 def loader(config_dict, _):
@@ -1159,6 +1160,7 @@ class Consumer(object):
         'consolebattp': 'consolebattp',
         'bgt': 'bgt',
         'wbgt': 'wbgt',
+        'wbgtcat': 'wbgtcat',
     }
 
     def default_sensor_map(self):
@@ -2136,6 +2138,7 @@ class EcowittClient(Consumer):
             'vpd': 'vpd',
             'bgt': 'bgt',
             'wbgt': 'wbgt',
+            'wbgtcat': 'wbgtcat',
        }
 
         IGNORED_LABELS = [
