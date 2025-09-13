@@ -221,11 +221,13 @@ table = [('dateTime',             'INTEGER NOT NULL UNIQUE PRIMARY KEY'),
          ('thi_ch1',              'REAL'),
          ('air_ch1',              'REAL'),
          ('wh54_ch1_sig',         'REAL'),
+         ('ldsheat_ch1',          'REAL'),
          ('ldsbatt2',             'REAL'),
          ('depth_ch2',            'REAL'),
          ('thi_ch2',              'REAL'),
          ('air_ch2',              'REAL'),
          ('wh54_ch2_sig',         'REAL'),
+         ('ldsheat_ch2',          'REAL'),
          ]
 
 day_summaries = [(e[0], 'scalar') for e in table
