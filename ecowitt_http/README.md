@@ -213,7 +213,6 @@ loop_on_init = 1
     [[Corrections]]
         foo = foo + 0.2
         luminosity = radiation * 126.7
-        # radiation = luminosity / 126.7 if luminosity is not None else None
         
         rxCheckPercent = ws80_sig * 25 if ws80_sig is not None else None
         
@@ -438,9 +437,11 @@ loop_on_init = 1
         extractor = last
     [[hail]]
         extractor = sum
-    
-    [[vpd]]
+    [[p_rain]]
+        extractor = sum    
+    [[t_rain]]
         extractor = last
+
     [[depth_ch1]]
         extractor = last
     [[depth_ch2]]
