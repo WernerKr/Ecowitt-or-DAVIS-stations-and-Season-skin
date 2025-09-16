@@ -440,7 +440,7 @@ loop_on_init = 1
     [[p_rain]]
         extractor = sum    
     [[t_rain]]
-        extractor = last
+        extractor = sum
 
     [[depth_ch1]]
         extractor = last
