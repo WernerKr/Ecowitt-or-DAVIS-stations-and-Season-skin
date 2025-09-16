@@ -35,6 +35,7 @@ weectl database add-column wn35_ch5_sig --type=REAL -y
 weectl database add-column wn35_ch6_sig --type=REAL -y
 weectl database add-column wn35_ch7_sig --type=REAL -y
 weectl database add-column wn35_ch8_sig --type=REAL -y
+weectl database add-column wn38_sig --type=REAL -y
 weectl database add-column wh40_sig --type=REAL -y
 weectl database add-column wh41_ch1_sig --type=REAL -y
 weectl database add-column wh41_ch2_sig --type=REAL -y

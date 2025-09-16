@@ -35,6 +35,7 @@ weectl database add-column wn35_ch5_rssi --type=REAL -y
 weectl database add-column wn35_ch6_rssi --type=REAL -y
 weectl database add-column wn35_ch7_rssi --type=REAL -y
 weectl database add-column wn35_ch8_rssi --type=REAL -y
+weectl database add-column wn38_rssi --type=REAL -y
 weectl database add-column wh40_rssi --type=REAL -y
 weectl database add-column wh41_ch1_rssi --type=REAL -y
 weectl database add-column wh41_ch2_rssi --type=REAL -y

@@ -90,15 +90,23 @@ weectl database add-column depth_ch1 --type=REAL -y
 weectl database add-column thi_ch1 --type=REAL -y
 weectl database add-column air_ch1 --type=REAL -y
 weectl database add-column wh54_ch1_sig --type=REAL -y
+weectl database add-column ldsheat_ch1 --type=REAL -y
 weectl database add-column ldsbatt2 --type=REAL -y
 weectl database add-column depth_ch2 --type=REAL -y
 weectl database add-column thi_ch2 --type=REAL -y
 weectl database add-column air_ch2 --type=REAL -y
 weectl database add-column wh54_ch2_sig --type=REAL -y
+weectl database add-column ldsheat_ch2 --type=REAL -y
 weectl database add-column vpd --type=REAL -y
 
 weectl database rename-column co co2in -y
 #weectl database rename-column pb heap -y
+
+weectl database add-column bgt --type=REAL -y
+weectl database add-column wbgt --type=REAL -y
+
+weectl database add-column consoleext_batt --type=REAL -y
+weectl database add-column consolebattp --type=REAL -y
 
 
 

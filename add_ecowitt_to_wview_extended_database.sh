@@ -93,13 +93,20 @@ sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=depth_c
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=thi_ch1 --type=REAL -y
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=air_ch1 --type=REAL -y
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=wh54_ch1_sig --type=REAL -y
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=ldsheat_ch1 --type=REAL -y
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=ldsbatt2 --type=REAL -y
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=depth_ch2 --type=REAL -y
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=thi_ch2 --type=REAL -y
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=air_ch2 --type=REAL -y
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=wh54_ch2_sig --type=REAL -y
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=ldsheat_ch2 --type=REAL -y
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=vpd --type=REAL -y
 
 sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --rename-column=co --to-name=co2in -y
 #sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --rename-column=pb --to-name=heap -y
 
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=bgt --type=REAL -y
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=wbgt --type=REAL -y
+
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=consoleext_batt --type=REAL -y
+sudo echo "y" | wee_database --config=/etc/weewx/weewx.conf --add-column=consolebattp --type=REAL -y
