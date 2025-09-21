@@ -776,7 +776,7 @@ https://www.pc-wetterstation.de/wetter/weewx8/
 
     For WeeWX package installs: 
        #### Install direct from Web do not work! and wget also corrupts the file!
-       #### So download it direct
+       #### So download it direct as raw file
 
        weectl extension install weewx-ecowitt_http.zip
 
