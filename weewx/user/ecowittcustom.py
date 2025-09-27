@@ -637,6 +637,7 @@ weewx.units.obs_group_dict['vpd'] = 'group_pressurevpd'
 weewx.units.USUnits["group_pressurevpd"] = "inHg"
 weewx.units.MetricUnits["group_pressurevpd"] = "kPa"
 weewx.units.MetricWXUnits["group_pressurevpd"] = "kPa"
+weewx.units.default_unit_format_dict["kPa"] = "%.3f"
 
 weewx.units.obs_group_dict['bgt'] = 'group_temperature'
 weewx.units.obs_group_dict['wbgt'] = 'group_temperature'
