@@ -14,11 +14,13 @@ you can find script files that extend an existing database schema for the values
 
 Modified by me!
 
+    July 2025
         - WH45/WH46 = co2 missed - added
         - changed some keys that are the same as my ecowittcustom driver
         - add some keys
         - completed all data from the SDcard GW3000
         - completed all data from the device 
+    
     4 July 2025           
         - corrected radiation
         - corrected co2_Temp
@@ -26,6 +28,7 @@ Modified by me!
         - corrected signal to None if signal id is "FFFFFFFE" or "FFFFFFFF"
         - add some unit-settings
         - corrected rain, piezo_rain, lightning_count for loop packets
+    
     5 July 2025
         - add missed wh40_sig
         - changed daymaxwind to maxdailygust (because customecowitt driver)
@@ -33,56 +36,74 @@ Modified by me!
         - add wh40_batt, wh80_batt, wh85_batt, wh95_bat
         - now is 'hailBatteryStatus': 'piezoRain.0x13.voltage',
         - add correction for rain, piezo_rain, lightning_count with data from sdcard
+    
     6 July 2025
         - added more values (soilmoist9..soilmoist16, ...) to history data
           added debug option "archive"
+    
     7 July 2025 
         - added voltage for/from leaf sensors
         - increased the default url_timeout to 10 - but seems do be better with 20 
         - corrected history - mapping from ecowitt.net
+    
     8 July 2025
         - added ws85_ver, ws90_ver, radiationcompensation, upgrade, newVersion,
                 rain_source, rain_priority, rain_day_reset, rain_week_reset, rain_annual_reset,
                 piezo, raingain, gain0, gain1, gain2, gain3, gain4
                 to the supported fields, because compatible with Ecowitt Custom Driver and the GW1000 Driver
        - if app_key, api_key or mac are not set, no further attempts will be made to retrieve data from Ecowitt.net
+    
     10 July 2025            v0.1.0
         - initial release
+    
     11 July 2025	    v0.1.1
         - corrected lightning 
+    
     12 July 2025		v0.1.2
         - piezo, leak_Batt3, rain, piezo rain wasn't set to new value
+    
     13 July 2025		v0.1.3
         - calc vpd if data from Ecowitt.net - because this value is not provided.
         - changed lighting_distance to lighting_dist 
+    
     14 July 2025		v0.1.4         
         - 'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4' from Ecowitt.net added
         - wh68_batt, wh69_batt
+    
     15 July 2025		v0.1.5     
         - p_rain is back  (for people who used this field )
-
+    
     25 July 2025		v0.1.6     
         - new rssi, rain voltage, winddir_avg10m, last24hrainin, last24hrain_piezo, LDS total_heat, wn20 (Mini rain)      
           ws85cap_volt, ws90cap_volt 
-        
+    
     31 July 2025            v0.2.0
         - Compatibility with WeeWx 4.x established!
         - test_service: 
           Distinguishes between WeeWx V4.x and V5.x
         - correction for rain, hail (p_rain). This data was missed, wenn data from SDcard 
         - new debug Option: raindelta
-
+    
     07 Aug 2025            v0.2.1
         - wn31_sig and wn31_rssi renamed to wh31_sig and wh31_rssi
         - missed co2_Batt, wh45_sig, wh45_rssi added
-
+    
     08 Aug 2025            v0.2.2
         - dB -> dBm
-
+    
     21 Aug 2025            v0.2.3
         - correction if lightning timestamp = "--/--/---- --:--:--"
         - Error message hidden: process_lightning_array: Error processing distance: Could not convert '--.-' to a float
         - added console_batt, consoleext_batt, charge_stat (WS6210)
+    
+    04 Oct 2025            v0.2.4
+        - if driver is used as a service, Rain and Piezo Rain are only mapped as t_rain and p_rain in loop data, 
+          in archive ( SDcard, cloud ) Rain and Hail are still mapped as rain and hail! 
+          Reason for this: if Ecowittcustom is used as a station, Rain and Piezo Rain are recorded multiple times.
+        - new Sensor wn38 (BGT)
+        - bug with 'PM2.5 ch1' .. 'ch4' and Data from SDCard solved (correct is 'PM2.5 CH1' )
+        - added soilad1..16
+
     
 Tested and completed:
 ```
@@ -222,8 +243,13 @@ loop_on_init = 1
         
         # hail = p_rain if p_rain is not None else None                  # mapped in driver
         # hailRate = p_rainrate if p_rainrate is not None else None      # mapped in driver
-        pb = heap if heap is not None else None
 
+        # from v0.2.4  is this required if the driver is used as a Data_Service
+        # data_services = user.ecowitt_http.EcowittHttpService
+        #rain = t_rain if t_rain is not None
+        #hail = p_rain if p_rain is not None #if hail is used as default piezo rain
+
+        pb = heap if heap is not None else None
         lightning_distance_save = lightning_dist if lightning_dist is not None else None
         lightning_distance = lightning_dist if lightning_strike_count > 0 else None 
         #lightning_distance_save = lightning_distance if lightning_distance is not None else None        #old setting
