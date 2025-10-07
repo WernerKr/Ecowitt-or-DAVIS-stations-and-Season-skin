@@ -1,3 +1,8 @@
+Using configuration file [1m/etc/weewx/weewx.conf[0m
+
+Ecowitt HTTP driver/service default field map:
+(format is WeeWX field name: Ecowitt HTTP driver field name)
+
                 appTemp: common_list.4.val
               barometer: wh25.rel
          batteryStatus1: wn31.ch1.battery
@@ -8,6 +13,7 @@
          batteryStatus6: wn31.ch6.battery
          batteryStatus7: wn31.ch7.battery
          batteryStatus8: wn31.ch8.battery
+                    bgt: wn38.bgt
             charge_stat: console.charge_stat
                     co2: co2.CO2
                 co2_24h: co2.CO2_24H
@@ -165,22 +171,22 @@ lightning_disturber_count: lightning.timestamp
                rainRate: rain.0x0E.val
             rrain_piezo: piezoRain.0x0E.val
                 runtime: debug.runtime
-                soilad1: ch_soil.1.ad
-                soilad2: ch_soil.2.ad
-                soilad3: ch_soil.3.ad
-                soilad4: ch_soil.4.ad
-                soilad5: ch_soil.5.ad
-                soilad6: ch_soil.6.ad
-                soilad7: ch_soil.7.ad
-                soilad8: ch_soil.8.ad
-                soilad9: ch_soil.9.ad
-               soilad10: ch_soil.10.ad
-               soilad11: ch_soil.11.ad
-               soilad12: ch_soil.12.ad
-               soilad13: ch_soil.13.ad
-               soilad14: ch_soil.14.ad
-               soilad15: ch_soil.15.ad
-               soilad16: ch_soil.16.ad
+                soilad1: ch_soil1nowAd
+                soilad2: ch_soil2nowAd
+                soilad3: ch_soil3nowAd
+                soilad4: ch_soil4nowAd
+                soilad5: ch_soil5nowAd
+                soilad6: ch_soil6nowAd
+                soilad7: ch_soil7nowAd
+                soilad8: ch_soil8nowAd
+                soilad9: ch_soil9nowAd
+               soilad10: ch_soil10nowAd
+               soilad11: ch_soil11nowAd
+               soilad12: ch_soil12nowAd
+               soilad13: ch_soil13nowAd
+               soilad14: ch_soil14nowAd
+               soilad15: ch_soil15nowAd
+               soilad16: ch_soil16nowAd
              soilMoist1: ch_soil.1.humidity
              soilMoist2: ch_soil.2.humidity
              soilMoist3: ch_soil.3.humidity
@@ -254,7 +260,7 @@ lightning_disturber_count: lightning.timestamp
           soilTempBatt8: ch_temp.8.voltage
          soilTempBatt8s: wn34.ch8.battery
             srain_piezo: piezoRain.srain_piezo.val
-                 t_rain: rain.0x0D.val
+                 t_rain: t_rain
              t_rainRate: rain.0x0E.val
              t_rainyear: rain.0x13.val
                 thi_ch1: ch_lds.1.air
@@ -265,6 +271,7 @@ lightning_disturber_count: lightning.timestamp
                      UV: common_list.0x17.val
             uvradiation: common_list.0x16.val
                     vpd: common_list.5.val
+                   wbgt: wn38.wbgt
                weekRain: rain.0x11.val
               wh25_batt: wh25.battery
               wh25_rssi: wh25.rssi
