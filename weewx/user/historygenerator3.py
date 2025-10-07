@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2013-2016  Nick Dajda <nick.dajda@gmail.com>
 # Modified 2023 Werner Krenn : barometercut, colour-> color
+# Modified 2025 Werner Krenn : obs_type not found!
 # Distributed under the terms of the GNU GENERAL PUBLIC LICENSE
 #
 """Extends the Cheetah generator search list to add html historic data tables in a nice color scheme.
@@ -242,6 +243,7 @@ class MyXSearch(SearchList):
         """
 
         aggregation = False
+        uniterror = False
 
         cellColors = self._parseTableOptions(table_options, table_name)
 
@@ -260,6 +262,7 @@ class MyXSearch(SearchList):
 
             # obs_type
             readingBinder = getattr(table_stats, obs_type)
+
 
             # Some aggregate come with an argument
             if aggregate_type in ['max_ge', 'max_le', 'min_ge', 'min_le',
@@ -293,8 +296,16 @@ class MyXSearch(SearchList):
             try:
                 unit_type = reading.converter.group_unit_dict[reading.value_t[2]]
             except KeyError:
+                uniterror = True
                 log.info("%s: obs_type %s no unit found" % (os.path.basename(__file__),
                                                             obs_type))
+
+            except:
+              if uniterror == False:
+                 log.info("%s: obs_type %s not found" % (os.path.basename(__file__),
+                                                    obs_type))
+                 return "Could not generate table %s" % table_name
+
             unit_formatted = ''
 
             # 'units' option in skin.conf?
