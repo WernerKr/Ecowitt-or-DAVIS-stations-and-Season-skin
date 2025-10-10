@@ -3,6 +3,7 @@ Using configuration file [1m/etc/weewx/weewx.conf[0m
 Ecowitt HTTP driver/service default field map:
 (format is WeeWX field name: Ecowitt HTTP driver field name)
 
+                 apName: apName
                 appTemp: common_list.4.val
               barometer: wh25.rel
          batteryStatus1: wn31.ch1.battery
@@ -260,6 +261,7 @@ lightning_disturber_count: lightning.timestamp
           soilTempBatt8: ch_temp.8.voltage
          soilTempBatt8s: wn34.ch8.battery
             srain_piezo: piezoRain.srain_piezo.val
+            stationtype: stationtype
                  t_rain: t_rain
              t_rainRate: rain.0x0E.val
              t_rainyear: rain.0x13.val
