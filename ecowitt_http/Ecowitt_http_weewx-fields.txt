@@ -1,0 +1,366 @@
+Using configuration file [1m/etc/weewx/weewx.conf[0m
+
+Interrogating [1m GW3000A_V1.1.2[0m at [1m192.168.0.146[0m
+
+                   apName: GW3000A-WIFICB5B
+                barometer: 1033.3 mbar
+           batteryStatus1: 0
+           batteryStatus2: 0
+           batteryStatus3: 0
+           batteryStatus4: 0
+           batteryStatus5: 0
+           batteryStatus6: 0
+           batteryStatus7: 0
+           batteryStatus8: 0
+                      co2: 499 ppm
+                  co2_24h: 492 ppm
+                 co2_Batt: 6
+                  co2_Hum: 89%
+                 co2_Temp: 9.2°C
+                 dateTime: 10-Oct-2025 19:51
+                  dayRain: 0.1 mm
+                depth_ch1: 0 mm
+                 dewpoint: 7.4°C
+              drain_piezo: 0.0 mm
+              erain_piezo: 0.0 mm
+                eventRain: 0.0 mm
+              extraHumid1: 96%
+              extraHumid2: 73%
+              extraHumid3: 55%
+              extraHumid4: 65%
+              extraHumid5: 52%
+              extraHumid6: 51%
+              extraHumid7: 59%
+              extraHumid8: 79%
+               extraTemp1: 8.6°C
+               extraTemp2: 10.4°C
+               extraTemp3: 19.9°C
+               extraTemp4: 14.8°C
+               extraTemp5: 20.5°C
+               extraTemp6: 18.8°C
+               extraTemp7: 15.2°C
+               extraTemp8: 11.8°C
+                feelslike: 7.8°C
+                    gain0: 0.890000
+                    gain1: 1.050000
+                    gain2: 1.060000
+                    gain3: 1.000000
+                    gain4: 1.000000
+                     hail: None
+        hailBatteryStatus: 3.22 V
+                 hailRate: 0.0 mm/h
+                     heap: 78180 B
+               height_ch1: 2050 mm
+               inHumidity: 47%
+                   inTemp: 22.8°C
+      inTempBatteryStatus: 0
+                 ldsbatt1: 2.84 V
+              ldsheat_ch1: 3118
+                 leafWet1: 99%
+             leafWetBatt1: 1.70 V
+                   leak_1: 0
+                   leak_2: 0
+                   leak_3: 0
+                   leak_4: 0
+               leak_Batt1: 4
+               leak_Batt2: 5
+               leak_Batt3: 5
+               leak_Batt4: 5
+           lightning_Batt: 4
+           lightning_dist: None
+lightning_disturber_count: None
+            lightning_num: 0
+   lightning_strike_count: None
+           lightningcount: None
+             maxdailygust: 5.9 m/s
+                monthRain: 41.3 mm
+              mrain_piezo: 36.9 mm
+               newVersion: 0
+              outHumidity: 97%
+                  outTemp: 7.8°C
+                   p_rain: None
+               p_rainrate: 0.0 mm/h
+               p_rainyear: 740.0 mm
+                    piezo: 1
+                    pm1_0: 11.2 µg/m³
+              pm1_24h_co2: 6.7 µg/m³
+           pm1_24hAQI_co2: 28
+          pm1_RealAQI_co2: 47
+                    pm2_5: 12.8 µg/m³
+                    pm4_0: 13.6 µg/m³
+              pm4_24h_co2: 7.6 µg/m³
+           pm4_24hAQI_co2: 32
+          pm4_RealAQI_co2: 54
+                   pm10_0: 14.0 µg/m³
+             pm10_24h_co2: 7.7 µg/m³
+          pm10_24hAQI_co2: 7
+         pm10_RealAQI_co2: 13
+                   pm25_1: 4.0 µg/m³
+                   pm25_2: 44.0 µg/m³
+                   pm25_3: 24.0 µg/m³
+                   pm25_4: 34.0 µg/m³
+             pm25_24h_co2: 7.4 µg/m³
+          pm25_24hAQI_co2: 31
+         pm25_AQI_24h_ch1: 21
+         pm25_AQI_24h_ch2: 54
+         pm25_AQI_24h_ch3: 43
+         pm25_AQI_24h_ch4: 55
+         pm25_avg_24h_ch1: 5.1 µg/m³
+         pm25_avg_24h_ch2: 13.4 µg/m³
+         pm25_avg_24h_ch3: 10.4 µg/m³
+         pm25_avg_24h_ch4: 14.1 µg/m³
+               pm25_Batt1: 6
+               pm25_Batt2: 5
+               pm25_Batt3: 6
+               pm25_Batt4: 5
+         pm25_RealAQI_ch1: 17
+         pm25_RealAQI_ch2: 122
+         pm25_RealAQI_ch3: 76
+         pm25_RealAQI_ch4: 97
+         pm25_RealAQI_co2: 52
+                 pressure: 935.6 mbar
+          radcompensation: 1
+                radiation: 0 W/m²
+                     rain: None
+                   rain24: 0.0 mm
+             rain24_piezo: 0.0 mm
+        rain_annual_reset: 0
+           rain_day_reset: 0
+              rain_source: 1
+          rain_week_reset: 1
+        rainBatteryStatus: 1.40 V
+                 raingain: 1.000000
+                 rainRate: 0.0 mm/h
+              rrain_piezo: 0.0 mm/h
+                  runtime: 36031 seconds
+                  soilad1: 243
+                  soilad2: 231
+                  soilad3: 260
+                  soilad4: 364
+                  soilad5: 193
+                  soilad6: 408
+                  soilad7: 219
+                  soilad8: 415
+                  soilad9: 145
+                 soilad10: 358
+               soilMoist1: 53%
+               soilMoist2: 51%
+               soilMoist3: 61%
+               soilMoist4: 85%
+               soilMoist5: 43%
+               soilMoist6: 95%
+               soilMoist7: 49%
+               soilMoist8: 98%
+               soilMoist9: 31%
+              soilMoist10: 78%
+           soilMoistBatt1: 1.70 V
+          soilMoistBatt1s: 5
+           soilMoistBatt2: 1.70 V
+          soilMoistBatt2s: 5
+           soilMoistBatt3: 1.70 V
+          soilMoistBatt3s: 5
+           soilMoistBatt4: 1.70 V
+          soilMoistBatt4s: 5
+           soilMoistBatt5: 1.70 V
+          soilMoistBatt5s: 5
+           soilMoistBatt6: 1.70 V
+          soilMoistBatt6s: 5
+           soilMoistBatt7: 1.40 V
+          soilMoistBatt7s: 4
+           soilMoistBatt8: 1.60 V
+          soilMoistBatt8s: 5
+           soilMoistBatt9: 1.40 V
+          soilMoistBatt9s: 4
+          soilMoistBatt10: 1.40 V
+         soilMoistBatt10s: 4
+         soilMoistBatt11s: 9
+         soilMoistBatt12s: 9
+         soilMoistBatt13s: 9
+         soilMoistBatt14s: 9
+         soilMoistBatt15s: 9
+         soilMoistBatt16s: 9
+                soilTemp1: 10.8°C
+                soilTemp2: 9.3°C
+                soilTemp3: 9.5°C
+                soilTemp4: -19.2°C
+                soilTemp5: 26.9°C
+                soilTemp6: 27.2°C
+                soilTemp7: 8.0°C
+                soilTemp8: 39.9°C
+            soilTempBatt1: 1.54 V
+           soilTempBatt1s: 5
+            soilTempBatt2: 1.54 V
+           soilTempBatt2s: 5
+            soilTempBatt3: 1.54 V
+           soilTempBatt3s: 5
+            soilTempBatt4: 1.40 V
+           soilTempBatt4s: 4
+            soilTempBatt5: 1.42 V
+           soilTempBatt5s: 4
+            soilTempBatt6: 1.36 V
+           soilTempBatt6s: 3
+            soilTempBatt7: 1.52 V
+           soilTempBatt7s: 5
+            soilTempBatt8: 1.76 V
+           soilTempBatt8s: 5
+              srain_piezo: 0
+              stationtype: GW3000A_V1.1.2
+                   t_rain: None
+               t_rainRate: 0.0 mm/h
+               t_rainyear: 730.0 mm
+                  thi_ch1: 2062 mm
+                  upgrade: 0
+                       UV: 0.0
+                      vpd: 0.32 hPa
+                 weekRain: 26.0 mm
+                wh25_batt: 0
+                wh25_rssi: -34 dBm
+                 wh25_sig: 4
+                wh26_batt: 0
+                wh26_rssi: -64 dBm
+                 wh26_sig: 4
+            wh31_ch1_rssi: -77 dBm
+             wh31_ch1_sig: 4
+            wh31_ch2_rssi: -84 dBm
+             wh31_ch2_sig: 4
+            wh31_ch3_rssi: -55 dBm
+             wh31_ch3_sig: 4
+            wh31_ch4_rssi: -75 dBm
+             wh31_ch4_sig: 4
+            wh31_ch5_rssi: -54 dBm
+             wh31_ch5_sig: 4
+            wh31_ch6_rssi: -74 dBm
+             wh31_ch6_sig: 4
+            wh31_ch7_rssi: -62 dBm
+             wh31_ch7_sig: 4
+            wh31_ch8_rssi: -70 dBm
+             wh31_ch8_sig: 4
+                wh40_batt: 4
+                wh40_rssi: -68 dBm
+                 wh40_sig: 4
+            wh41_ch1_rssi: -26 dBm
+             wh41_ch1_sig: 4
+            wh41_ch2_rssi: -65 dBm
+             wh41_ch2_sig: 4
+            wh41_ch3_rssi: -73 dBm
+             wh41_ch3_sig: 4
+            wh41_ch4_rssi: -64 dBm
+             wh41_ch4_sig: 4
+                wh45_rssi: -77 dBm
+                 wh45_sig: 4
+            wh51_ch1_rssi: -84 dBm
+             wh51_ch1_sig: 4
+            wh51_ch2_rssi: -60 dBm
+             wh51_ch2_sig: 4
+            wh51_ch3_rssi: -70 dBm
+             wh51_ch3_sig: 4
+            wh51_ch4_rssi: -40 dBm
+             wh51_ch4_sig: 4
+            wh51_ch5_rssi: -59 dBm
+             wh51_ch5_sig: 3
+            wh51_ch6_rssi: -56 dBm
+             wh51_ch6_sig: 4
+            wh51_ch7_rssi: -47 dBm
+             wh51_ch7_sig: 4
+            wh51_ch8_rssi: -64 dBm
+             wh51_ch8_sig: 4
+            wh51_ch9_rssi: -52 dBm
+             wh51_ch9_sig: 4
+           wh51_ch10_rssi: -40 dBm
+            wh51_ch10_sig: 4
+           wh51_ch11_rssi: None
+            wh51_ch11_sig: None
+           wh51_ch12_rssi: None
+            wh51_ch12_sig: None
+           wh51_ch13_rssi: None
+            wh51_ch13_sig: None
+           wh51_ch14_rssi: None
+            wh51_ch14_sig: None
+           wh51_ch15_rssi: None
+            wh51_ch15_sig: None
+           wh51_ch16_rssi: None
+            wh51_ch16_sig: None
+            wh54_ch1_rssi: -72 dBm
+             wh54_ch1_sig: 4
+            wh54_ch2_rssi: None
+             wh54_ch2_sig: None
+            wh54_ch3_rssi: None
+             wh54_ch3_sig: None
+            wh54_ch4_rssi: None
+             wh54_ch4_sig: None
+            wh55_ch1_rssi: -71 dBm
+             wh55_ch1_sig: 4
+            wh55_ch2_rssi: -84 dBm
+             wh55_ch2_sig: 4
+            wh55_ch3_rssi: -70 dBm
+             wh55_ch3_sig: 4
+            wh55_ch4_rssi: -69 dBm
+             wh55_ch4_sig: 4
+                wh57_rssi: -57 dBm
+                 wh57_sig: 4
+                wh68_batt: 9
+                wh68_rssi: None
+                 wh68_sig: None
+                wh69_batt: 0
+                wh69_rssi: -66 dBm
+                 wh69_sig: 4
+                wh80_batt: 5
+                wh85_batt: 5
+                wh90_batt: 5
+                  windDir: 353°
+                windDir10: 241°
+                 windGust: 0.9 m/s
+                windSpeed: 0.7 m/s
+                wn20_batt: 9
+                wn20_rssi: None
+                 wn20_sig: None
+            wn34_ch1_rssi: -64 dBm
+             wn34_ch1_sig: 4
+            wn34_ch2_rssi: -52 dBm
+             wn34_ch2_sig: 4
+            wn34_ch3_rssi: -54 dBm
+             wn34_ch3_sig: 4
+            wn34_ch4_rssi: -55 dBm
+             wn34_ch4_sig: 3
+            wn34_ch5_rssi: -60 dBm
+             wn34_ch5_sig: 4
+            wn34_ch6_rssi: -45 dBm
+             wn34_ch6_sig: 4
+            wn34_ch7_rssi: -95 dBm
+             wn34_ch7_sig: 4
+            wn34_ch8_rssi: -59 dBm
+             wn34_ch8_sig: 3
+            wn35_ch1_rssi: -54 dBm
+             wn35_ch1_sig: 4
+            wn35_ch2_rssi: None
+             wn35_ch2_sig: None
+            wn35_ch3_rssi: None
+             wn35_ch3_sig: None
+            wn35_ch4_rssi: None
+             wn35_ch4_sig: None
+            wn35_ch5_rssi: None
+             wn35_ch5_sig: None
+            wn35_ch6_rssi: None
+             wn35_ch6_sig: None
+            wn35_ch7_rssi: None
+             wn35_ch7_sig: None
+            wn35_ch8_rssi: None
+             wn35_ch8_sig: None
+                wn38_batt: 9
+                wn38_rssi: None
+                 wn38_sig: None
+              wrain_piezo: 15.9 mm
+                ws80_rssi: -79 dBm
+                 ws80_sig: 4
+                ws85_batt: 3.22 V
+                ws85_rssi: -73 dBm
+                 ws85_sig: 4
+                 ws85_ver: 114
+             ws85cap_volt: 3.50 V
+                ws90_rssi: -80 dBm
+                 ws90_sig: 4
+                 ws90_ver: 158
+             ws90cap_volt: 2.50 V
+              ws_interval: 16 seconds
+                 yearRain: 730.0 mm
+              yrain_piezo: 740.0 mm
