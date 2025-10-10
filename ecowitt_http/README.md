@@ -378,6 +378,9 @@ loop_on_init = 1
     [[stationtype]]
         accumulator = firstlast
         extractor = last
+    [[apName]]
+        accumulator = firstlast
+        extractor = last
     
     [[gain0]]
         extractor = last
@@ -770,6 +773,29 @@ skin.conf
 
 ```
 <img width="500" height="180" alt="dayrssi_ws80" src="https://github.com/user-attachments/assets/65e83076-b6f7-4eaa-8270-95e7c57213ce" />
+
+#### New soilad1..16 value:
+
+skin.conf
+```
+        [[[daysoilMoistAd]]]
+            yscale = None, None, 25
+            y_label = ""
+            [[[[soilad1]]]]
+		label = soil1
+            [[[[soilad2]]]]
+		label = soil2
+            [[[[soilad3]]]]
+		label = soil3
+            [[[[soilad5]]]]
+		label = soil5
+            [[[[soilad7]]]]
+		label = soil7
+            [[[[soilad9]]]]
+		label = soil9
+
+```
+<img width="500" height="180" alt="daysoilMoistAd" src="https://github.com/user-attachments/assets/4be58f6d-f097-42bf-b993-3ff025dc869f" />
 
 
 ## Live data comparison GW3000 original driver V0.1.0a28 with my driver V0.1.1
