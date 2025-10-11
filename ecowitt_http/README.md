@@ -816,7 +816,10 @@ https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/
 ## Skin with data from Ecowitt_http:
 https://www.pc-wetterstation.de/wetter/weewx8/
 
+# Updating the Ecowitt_http driver:
 
+Simply download and unzip the ecowitt_http.zip file, or ecowitt_http.py file and replace the existing file (/etc/weewx/bin/ecowitt_http.py) with it.
+After that restart weewx!
 
 # Installation as a WeeWX driver with Skin SeasonsEcowitt
 
