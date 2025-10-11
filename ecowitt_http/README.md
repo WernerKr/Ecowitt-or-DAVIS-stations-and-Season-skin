@@ -813,7 +813,7 @@ https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/
 https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/Ecowitt_http_default_mapping.txt
 
 ## WeeWx Fields:
-https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/weewx_fields.txt
+https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/Ecowitt_http_weewx-fields.txt
 
 ## Example Data from ecowitt.net:
 
