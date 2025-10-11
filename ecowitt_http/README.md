@@ -104,7 +104,15 @@ Modified by me!
         - bug with 'PM2.5 ch1' .. 'ch4' and Data from SDCard solved (correct is 'PM2.5 CH1' )
         - added soilad1..16
 
-    
+    xx Oct 2025            v0.2.5 	(not yet released)
+	    - added apName - need 
+          [Accumulator]
+            [[apName]]
+              accumulator = firstlast
+              extractor = last
+        - added stationtype 
+		  After firmware update (and not restart weewx) then shows the current hardware version
+		  
 Tested and completed:
 ```
 PYTHONPATH=/usr/share/weewx python3 /etc/weewx/bin/user/ecowitt_http.py --ip-address=%IP-GW% --live-data
