@@ -63,14 +63,14 @@
         #include "sunmoon.inc"
         #include "hilo.inc"
         ##include "belchertown.inc"
-        ##include "neowx.inc"
+        #include "neowx.inc"
         ##include "amphibian.inc"
         ##include "sofaskin.inc"
-        ##include "bootstrap.inc"
+        #include "bootstrap.inc"
         ##include "standard.inc"
         ##include "smartphone.inc"
         ##include "mobile.inc"
-        ##include "cmon.inc"
+        #include "cmon.inc"
         #include "sensors.inc"
         #include "about.inc"
         #include "radar.inc"
@@ -170,9 +170,16 @@
             #if $day.soilMoist1.has_data or $day.soilMoist2.has_data or $day.soilMoist3.has_data or $day.soilMoist4.has_data
             <img src="daysoilMoist.png"      alt="$obs.label.soilMoist1" />
             #end if
+            #if $day.soilad1.has_data or $day.soilad2.has_data or $day.soilad3.has_data or $day.soilad5.has_data
+            <img src="daysoilMoistAd.png"      alt="$obs.label.soilad1" />
+            #end if
+            #if $day.soilad4.has_data or $day.soilad6.has_data or $day.soilad8.has_data or $day.soilad10.has_data
+            <img src="daysoilMoistAd1.png"      alt="$obs.label.soilad4" />
+            #end if
             #if $day.soilMoist5.has_data or $day.soilMoist6.has_data or $day.soilMoist7.has_data or $day.soilMoist8.has_data
             <img src="daysoilMoist2.png"      alt="$obs.label.soilMoist5" />
             #end if
+
             #if $day.pm2_5.has_data 
             <img src="dayppm.png"      alt="$obs.label.pm2_5" />
             #end if
@@ -330,6 +337,12 @@
             #if $week.soilMoist1.has_data or $week.soilMoist2.has_data or $week.soilMoist3.has_data or $week.soilMoist4.has_data 
             <img src="weeksoilMoist.png"      alt="$obs.label.soilMoist1" />
             #end if
+            #if $week.soilad1.has_data or $week.soilad2.has_data or $week.soilad3.has_data or $week.soilad5.has_data
+            <img src="weeksoilMoistAd.png"      alt="$obs.label.soilad1" />
+            #end if
+            #if $week.soilad4.has_data or $week.soilad6.has_data or $week.soilad8.has_data or $week.soilad10.has_data
+            <img src="weeksoilMoistAd1.png"      alt="$obs.label.soilad4" />
+            #end if
             #if $week.soilMoist5.has_data or $week.soilMoist6.has_data or $week.soilMoist7.has_data or $week.soilMoist8.has_data
             <img src="weeksoilMoist2.png"      alt="$obs.label.soilMoist5" />
             #end if
@@ -455,6 +468,12 @@
 
             #if $month.soilMoist1.has_data or $month.soilMoist2.has_data or $month.soilMoist3.has_data or $month.soilMoist4.has_data 
             <img src="monthsoilMoist.png"      alt="$obs.label.soilMoist1" />
+            #end if
+            #if $month.soilad1.has_data or $month.soilad2.has_data or $month.soilad3.has_data or $month.soilad5.has_data
+            <img src="monthsoilMoistAd.png"      alt="$obs.label.soilad1" />
+            #end if
+            #if $month.soilad4.has_data or $month.soilad6.has_data or $month.soilad8.has_data or $month.soilad10.has_data
+            <img src="monthsoilMoistAd1.png"      alt="$obs.label.soilad4" />
             #end if
             #if $month.soilMoist5.has_data or $month.soilMoist6.has_data or $month.soilMoist7.has_data or $month.soilMoist8.has_data 
             <img src="monthsoilMoist2.png"      alt="$obs.label.soilMoist5" />
@@ -585,6 +604,12 @@
 
             #if $year.soilMoist1.has_data or $year.soilMoist2.has_data or $year.soilMoist3.has_data or $year.soilMoist4.has_data 
             <img src="yearsoilMoist.png"      alt="$obs.label.soilMoist1" />
+            #end if
+            #if $year.soilad1.has_data or $year.soilad2.has_data or $year.soilad3.has_data or $year.soilad5.has_data
+            <img src="yearsoilMoistAd.png"      alt="$obs.label.soilad1" />
+            #end if
+            #if $year.soilad4.has_data or $year.soilad6.has_data or $year.soilad8.has_data or $year.soilad10.has_data
+            <img src="yearsoilMoistAd1.png"      alt="$obs.label.soilad4" />
             #end if
             #if $year.soilMoist5.has_data or $year.soilMoist6.has_data or $year.soilMoist7.has_data or $year.soilMoist8.has_data 
             <img src="yearsoilMoist2.png"      alt="$obs.label.soilMoist5" />

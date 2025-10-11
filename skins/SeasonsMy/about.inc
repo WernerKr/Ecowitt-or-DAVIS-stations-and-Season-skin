@@ -2,7 +2,6 @@
 ## Copyright Tom Keffer, Matthew Wall
 ## See LICENSE.txt for your rights
 ## Werner Krenn 2025/06/14
-## 2025-08-21 add data from WS6210
 
 #errorCatcher Echo
 #encoding UTF-8
@@ -10,11 +9,14 @@
 #set $xt = ''
 #if $current.stationtype.has_data
  #if not 'EasyWeather' in $current.stationtype.raw
-  #set $xt = $current.stationtype.raw
+  #if $current.stationtype.raw not in $station.hardware  
+   #set $xt = $current.stationtype.raw
+  #end if
  #elif $current.model.has_data
   #set $xt = $current.model.raw 
  #end if
 #end if
+
 #set $xt1 = ''
 #if $current.stationtype.has_data
  #if 'EasyWeather' in $current.stationtype.raw
@@ -50,6 +52,17 @@
     #end if
 
    #try
+     #if $current.apName.has_data
+     <tr> 
+      <td class="label">$gettext("apName")</td>
+      <td class="data">$current.apName</td>
+     </tr>
+     #end if
+   #except
+     #pass
+   #end try
+
+   #try
     #if $current.upgrade.has_data
     <tr> 
       <td class="label">$gettext("Station Auto upgrade")</td>
@@ -62,20 +75,6 @@
       <td class="data">$current.newVersion</td>
     </tr>
     #end if
-    #if $current.charge_stat.has_data
-    <tr> 
-      <td class="label">$gettext("Charge")</td>
-      <td class="data">$current.charge_stat</td>
-    </tr>
-    #end if
-    #if $current.consolebattp.has_data
-    <tr> 
-      <td class="label">$gettext("ChargeProz")</td>
-      <td class="data">$current.consolebattp</td>
-    </tr>
-    #end if
-
-
     #if $current.runtime.has_data
     <tr> 
       <td class="label">$gettext("Station uptime")</td>
