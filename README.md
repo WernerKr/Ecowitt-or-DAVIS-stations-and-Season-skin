@@ -2,7 +2,25 @@
    This driver fully supports all currently available data from Ecowitt Wi-Fi consoles and/or gateways.
    
    It supports both the Ecowitt Protocol and the Wunderground Protocol
-
+```
+Revision History
+   Jan 2024:
+       - supports soilad1 - soilad16 and heap (as pb)
+   May/June 2024:
+      - Support Co2in, PM1, PM4
+      - WS85
+   Jan-Mar 2025:
+       - all data from FOSHKplugin
+       - vpd
+       - LDS01 - LDS04 (WH54)
+   Aug 2025:
+       - Support for WS6210
+       - Support for WN38 (bgt, wbgt)
+   
+   26 Sep 2025            v0.1.6
+      - "kPa" = "%.3f"
+      - wbgtcat
+```
 ![Ecowitt_ecowitt](https://github.com/user-attachments/assets/bbc8312e-f51c-4e47-aebf-d29fb8353d73)
 ![Ecowitt_wunderground](https://github.com/user-attachments/assets/333c1192-edc7-41c6-9ecf-50521fa526fb)
 
@@ -183,17 +201,7 @@ Jan 2024:
     [[Corrections]]
       pb = heap if heap is not None else None 
 ``` 
-May/June 2024:
- - Support Co2in, PM1, PM4
- - WS85
-Jan-Mar 2025:
-- all data from FOSHKplugin
-- vpd
-- LDS01 - LDS04
 
-Aug 2025:
-- Support for WS6210
-- Support for WN38 (bgt, wbgt)
   
 weewx-ecowittcustom.zip 
  - V4: sudo wee_extension --install=weewx-ecowittcustom.zip
@@ -802,6 +810,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
