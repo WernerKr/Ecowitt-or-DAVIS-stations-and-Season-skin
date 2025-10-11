@@ -18,7 +18,7 @@ Revision History
        - Support for WN38 (bgt, wbgt)
    
    26 Sep 2025            v0.1.6
-      - "kPa" = "%.3f"
+      - "kPa" = "%.3f" -> VPD
       - wbgtcat
 ```
 ![Ecowitt_ecowitt](https://github.com/user-attachments/assets/bbc8312e-f51c-4e47-aebf-d29fb8353d73)
@@ -810,6 +810,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
