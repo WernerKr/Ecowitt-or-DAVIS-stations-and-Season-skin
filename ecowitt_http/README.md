@@ -809,8 +809,8 @@ skin.conf
 <img width="500" height="180" alt="daysoilMoistAd" src="https://github.com/user-attachments/assets/4be58f6d-f097-42bf-b993-3ff025dc869f" />
 
 
-## Live data comparison GW3000 original driver V0.1.0a28 with my driver V0.1.1
-https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/compare_%20gw3000_live_data.txt
+## Live data comparison GW3000 original driver V0.1.0a28 with the driver V0.2.5
+https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/compare_gw3000_live_data.txt
 
 ## Default Mapping:
 https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/Ecowitt_http_default_mapping.txt
