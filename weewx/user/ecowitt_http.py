@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.2.4                                  Date: 04 Oct 2025
+Version: 0.2.5                                  Date: 13 Oct 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -41,7 +41,7 @@ Revision History
         - add missed wh40_sig
         - changed daymaxwind to maxdailygust (because customecowitt driver)
         - hail, hailrate is Piezo Rain too
-        - add wh40_batt, wh80_batt, wh85_batt, wh95_bat
+        - add wh40_batt, wh80_batt, wh85_batt, wh95_batt
         - now is 'hailBatteryStatus': 'piezoRain.0x13.voltage',
         - add correction for rain, piezo_rain, lightning_count with data from sdcard
     6 July 2025            v0.1.0x
@@ -103,6 +103,13 @@ Revision History
         - bug with 'PM2.5 ch1' .. 'ch4' and Data from SDCard solved (correct is 'PM2.5 CH1' )
         - added soilad1..16
 
+    13 Oct 2025            v0.2.5
+        - added apName
+        - added stationtype
+        - Calculates WBGT when not transmitted
+        - 24h rain (piezo) from Ecowitt cloud
+        - workaround if no SDCard inserted (thanks to rosensama )  
+
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
 
@@ -121,8 +128,9 @@ WH41/43:    PM2.5, 24-hour average PM2.5, signal level, battery state.
             Channels 1-4 inclusive
 WH45        CO2, PM2.5, PM10, signal level, battery state. single device only
 WH46        CO2, PM2.5, PM10, PM1, PM4, signal level, battery state. single device only	
-WH54        LDS Sensor	
-WH55        Leak Sensor	
+WH51        SoilMoisture Sensors 1..16
+WH54        LDS Sensor 1..4	
+WH55        Leak Sensor 1..4	
 WH57        Lightning, signal level, battery state. single device only
 WH68        signal level, battery state
 WH69        signal level, battery state
@@ -220,7 +228,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.4'
+DRIVER_VERSION = '0.2.5'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
@@ -340,6 +348,8 @@ weewx.units.obs_group_dict['pm25_avg_24h_ch4'] = 'group_concentration'
 
 weewx.units.obs_group_dict['rainrate'] = 'group_rainrate'
 weewx.units.obs_group_dict['eventRain'] = 'group_rain'
+weewx.units.obs_group_dict['rain60'] = 'group_rain'
+weewx.units.obs_group_dict['rain24'] = 'group_rain'
 weewx.units.obs_group_dict['weekRain'] = 'group_rain'
 weewx.units.obs_group_dict['raintotal'] = 'group_rain'
 
@@ -351,6 +361,7 @@ weewx.units.obs_group_dict['wrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['mrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['yrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['rain60_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain24_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['t_rain'] = 'group_rain'
 weewx.units.obs_group_dict['p_rain'] = 'group_rain'
@@ -359,7 +370,6 @@ weewx.units.obs_group_dict['p_rainrate'] = 'group_rainrate'
 #weewx.units.obs_group_dict['hailRate'] = 'group_rainrate'
 weewx.units.obs_group_dict['t_rainyear'] = 'group_rain'
 weewx.units.obs_group_dict['p_rainyear'] = 'group_rain'
-weewx.units.obs_group_dict['rain24_piezo'] = 'group_rain'
 
 weewx.units.obs_group_dict['rainBatteryStatus'] = 'group_volt'
 weewx.units.obs_group_dict['hailBatteryStatus'] = 'group_volt'
@@ -426,6 +436,15 @@ weewx.units.obs_group_dict['signal5'] = 'group_percent'
 weewx.units.obs_group_dict['signal6'] = 'group_percent'
 weewx.units.obs_group_dict['signal7'] = 'group_percent'
 weewx.units.obs_group_dict['signal8'] = 'group_percent'
+
+weewx.units.USUnits['group_string'] = 'string'
+weewx.units.MetricUnits['group_string'] = 'string'
+weewx.units.MetricWXUnits['group_string'] = 'string'
+weewx.units.default_unit_label_dict['string'] = ''
+weewx.units.default_unit_format_dict['string'] = '%s'
+weewx.units.obs_group_dict['apName'] = 'group_string'
+weewx.units.obs_group_dict['stationtype'] = 'group_string'
+
 
 # define the WeeWX unit group used by each device field
 DEFAULT_GROUPS = {
@@ -858,7 +877,9 @@ DEFAULT_GROUPS = {
     'ws85.signal': 'group_count',
     'ws90.signal': 'group_count',
     'ws85.version': 'group_count',
+    'ws85_vers': 'group_count',
     'ws90.version': 'group_count',
+    'ws90_vers': 'group_count',
     'radcompensation': 'group_count',
     'upgrade': 'group_count',
     'newVersion': 'group_count',
@@ -932,6 +953,8 @@ DEFAULT_GROUPS = {
     'ws90.rssi': 'group_dbm',
     'wn38.bgt': 'group_temperature',
     'wn38.wbgt': 'group_temperature',
+    'apName': 'group_string',
+    'stationtype': 'group_string',
 }
 
 ## for WeeWx 4.x user
@@ -1566,7 +1589,8 @@ class HttpMapper(FieldMapper):
         'radcompensation': 'radcompensation',
         'upgrade': 'upgrade',
         'newVersion': 'newVersion',
-
+        'apName': 'apName',
+        'stationtype': 'stationtype',
         'rain_source': 'rain_priority',
         'rain_day_reset': 'rain_reset_day',
         'rain_week_reset': 'rain_reset_week',
@@ -1595,7 +1619,8 @@ class HttpMapper(FieldMapper):
         'soilad14': 'ch_soil14nowAd',
         'soilad15': 'ch_soil15nowAd',
         'soilad16': 'ch_soil16nowAd',
-
+        'bgt': 'wn38.bgt',
+        'wbgt': 'wn38.wbgt',
     }
     # modular rain map
     default_rain_map = {
@@ -1617,6 +1642,7 @@ class HttpMapper(FieldMapper):
         'monthRain': 'rain.0x12.val',
         'yearRain': 'rain.0x13.val',
         'rain24': 'rain.0x7C.val',
+        #'rain60': 'rain60',
         #'p_rainevent': 'piezoRain.0x0D.val',
         #'p_rainrate': 'piezoRain.0x0E.val',
         #'p_rainhour': 'p_rainhour',
@@ -1637,6 +1663,7 @@ class HttpMapper(FieldMapper):
         'mrain_piezo': 'piezoRain.0x12.val',
         'yrain_piezo': 'piezoRain.0x13.val',
         'rain24_piezo': 'piezoRain.0x7C.val',
+        #'rain60_piezo': 'rain60_piezo',
     }
     # modular wind map
     default_wind_map = {
@@ -1763,7 +1790,9 @@ class HttpMapper(FieldMapper):
         'ws6006batt': 'wh25.ws6006_batt',
 
         'ws85_ver': 'piezoRain.0x13.ws85_ver',
+        #'ws85_ver': 'ws85.version',
         'ws90_ver': 'piezoRain.0x13.ws90_ver',
+        #'ws90_ver': 'ws90.version',
 
         'wn20_sig': 'wn20.signal',
         'wh25_sig': 'wh25.signal',
@@ -1896,8 +1925,6 @@ class HttpMapper(FieldMapper):
         'ws80_rssi': 'ws80.rssi',
         'ws85_rssi': 'ws85.rssi',
         'ws90_rssi': 'ws90.rssi',
-        'bgt': 'wn38.bgt',
-        'wbgt': 'wn38.wbgt',
     }
     # construct the default map based on the modular maps
     default_map = (dict(default_obs_map))
@@ -2149,8 +2176,8 @@ class SdMapper(FieldMapper):
         'console.console_ext_volt': 'External Supply',
         'console.battery_proz': 'Console Battery Percentage',
         'console.charge_stat': 'Charge',
-        #'wn38.bgt': 'BGT',
-        #'wn38.wbgt': 'WBGT',
+        'wn38.bgt': 'BGT',
+        'wn38.wbgt': 'WBGT',
     }
 
     def __init__(self, driver_debug=None, default_map=None, **mapper_config):
@@ -2892,6 +2919,17 @@ class EcowittHttpService(weewx.engine.StdService, EcowittCommon):
                        elif ('piezoRain.0x13.ws90_ver' in queue_data)  or (self.ws90 == 1) or ('ws90.version' in queue_data): 
                           event.packet['ws90_batt'] = queue_data['piezoRain.0x13.voltage']
 
+                    if 'wn38.wbgt' not in queue_data:
+                       if 'common_list.0x02.val' in queue_data  and 'common_list.0x07.val' in queue_data:
+                         if queue_data['common_list.0x02.val'] != None and queue_data['common_list.0x07.val'] != None:
+                           # tempc = (float(queue_data['common_list.0x02.val'])-32)*5/9
+                           tempc = float(queue_data['common_list.0x02.val'])
+                           humidity = float(queue_data['common_list.0x07.val'])
+                           Twb = (tempc * math.atan(0.151977 * (humidity + 8.313659)**0.5) +
+                                math.atan(tempc + humidity) - math.atan(humidity - 1.676331) +
+                                0.00391838 * humidity**1.5 * math.atan(0.023101 * humidity) - 4.686035)
+                           event.packet['wbgt'] = (Twb * 1.8) +32
+
                     if self.driver_debug.loop:
                         if 'datetime' in queue_data:
                             # if we have a 'datetime' field it is almost
@@ -3152,6 +3190,9 @@ class EcowittHttpDriverConfEditor(weewx.drivers.AbstractConfEditor):
         accumulator = firstlast
         extractor = last
     [[stationtype]]
+        accumulator = firstlast
+        extractor = last
+    [[apName]]
         accumulator = firstlast
         extractor = last
     
@@ -4218,6 +4259,7 @@ class EcowittNetCatchup(Catchup):
             'event': 'rain.0x0D.val',
             'hourly': 't_rainhour',
             'daily': 'rain.0x10.val',
+            '24_hours': 'rain.0x7C.val',
             'weekly': 'rain.0x11.val',
             'monthly': 'ain.0x12.val',
             'yearly': 'rain.0x13.val',
@@ -4227,6 +4269,7 @@ class EcowittNetCatchup(Catchup):
             'event': 'piezoRain.0x0D.val',
             'hourly': 'hrain_piezo',
             'daily': 'piezoRain.0x10.val',
+            '24_hours': 'rain.0x7C.val',
             'weekly': 'piezoRain.0x11.val',
             'monthly': 'piezoRain.0x12.val',
             'yearly': 'piezoRain.0x13.val',
@@ -4809,6 +4852,10 @@ class EcowittNetCatchup(Catchup):
 
         #        history_data = json.loads(self.d).get('data', dict())
         # initialise a dict to hold the parsed data
+        if not history_data:
+            log.info("No history data to parse")
+            return {}
+
         result = dict()
         # iterate over each set of data in history_data
         for set_name, set_data in history_data.items():
@@ -5807,6 +5854,17 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                        elif ('piezoRain.0x13.ws90_ver' in queue_data)  or (self.ws90 == 1) or ('ws90.version' in queue_data): 
                           packet['ws90_batt'] = queue_data['piezoRain.0x13.voltage']
 
+                    if 'wn38.wbgt' not in queue_data:
+                       if 'common_list.0x02.val' in queue_data  and 'common_list.0x07.val' in queue_data:
+                         if queue_data['common_list.0x02.val'] != None and queue_data['common_list.0x07.val'] != None:
+                           # tempc = (float(queue_data['common_list.0x02.val'])-32)*5/9
+                           tempc = float(queue_data['common_list.0x02.val'])
+                           humidity = float(queue_data['common_list.0x07.val'])
+                           Twb = (tempc * math.atan(0.151977 * (humidity + 8.313659)**0.5) +
+                                math.atan(tempc + humidity) - math.atan(humidity - 1.676331) +
+                                0.00391838 * humidity**1.5 * math.atan(0.023101 * humidity) - 4.686035)
+                           packet['wbgt'] = Twb
+
                     ## map the raw data to WeeWX loop packet fields
                     mapped_data = self.mapper.map_data(queue_data)
 
@@ -6473,6 +6531,7 @@ class EcowittHttpCollector(Collector):
         curr_data.update(self.device.get_rain_totalspart())
         curr_data.update(self.device.get_piezo_rain_datapart())
         curr_data.update(self.device.get_device_info_datapart())
+        curr_data.update(self.device.get_stationtype())
 
         if self.get_soilad:
          curr_data.update(self.device.get_soil_adnow_data())
@@ -7402,6 +7461,44 @@ class EcowittHttpParser:
         return _parsed
 
     @staticmethod
+    def parse_get_stationtype(response):
+        """Parse the response from a 'get_version' API command.
+
+        Parse the raw JSON response from a 'get_version' API command.
+
+        Example raw 'get_version' data:
+
+            {"version": "Version: GW2000C_V3.1.2",
+             "newVersion": "1",
+             "platform": "ecowitt"}
+
+        Returns a dict keyed as follows:
+
+        version:          Extended device firmware version string,
+                          eg "Version: GW2000C_V3.1.2". String.
+        If the device response cannot be parsed a ParseError is raised.
+        """
+
+        # Create a copy of the response, this serves as a quick check we have a
+        # dict as a response. This saves catching AttributeErrors against each
+        # field we convert to a float or int.
+        try:
+            _ = dict(response)
+        except (TypeError, ValueError) as e:
+            # we have a malformed or otherwise invalid response, raise a ParseError:
+            raise ParseError(f"Error parsing 'parse_get_version' data: {e}")
+        # initialise a dict to hold our parsed response
+        _parsed_data = dict()
+        # first parse the 'version' key/value and extract the short form
+        # firmware version from the 'version' key/value
+        try:
+            _parsed_data['stationtype'] = str(response['version'])[9:]
+        except KeyError as e:
+            # we have no 'version' key, do nothing and continue
+            pass
+        return _parsed_data
+
+    @staticmethod
     def parse_get_calibration_data(response, device_units):
         """Parse the response from a 'get_calibration_data' API command.
 
@@ -7966,6 +8063,16 @@ class EcowittHttpParser:
             # we have an 'newVersion' key but encountered an error processing
             # the 'newVersion' value, set 'newVersion' to None
             _parsed_data['newVersion'] = None
+        try:
+            _parsed_data['apName'] = response['apName']
+        except KeyError as e:
+            # the 'apName' key does not exist, do nothing and continue
+            pass
+        except ValueError as e:
+            # we have an 'apName' key but encountered an error processing the
+            # 'apName' value, set 'apName' to None
+            _parsed_data['apName'] = None
+
         # return the parsed data
         return _parsed_data
 
@@ -12657,6 +12764,12 @@ class EcowittDevice:
         device_info_data = self.api.get_device_info()
         return self.parser.parse_get_device_infopart(device_info_data)
 
+    def get_stationtype(self):
+        """Get stationtype info."""
+
+        stationtype_data = self.api.get_version()
+        return self.parser.parse_get_stationtype(stationtype_data)
+
     def get_ws_settings(self):
         """Get weather services settings."""
 
@@ -13423,7 +13536,7 @@ class DirectEcowittDevice:
                     'wn35.ch3.battery', 'wn35.ch3.signal', 'wn35.ch4.battery', 'wn35.ch4.signal', 'wn34.ch11.rssi', 'wn34.ch12.rssi',
                     'wn35.ch5.battery', 'wn35.ch5.signal', 'wn35.ch6.battery', 'wn35.ch6.signal', 'wn34.ch13.rssi', 'wn34.ch14.rssi',
                     'wn35.ch7.battery', 'wn35.ch7.signal', 'wn35.ch8.battery', 'wn35.ch8.signal', 'wn34.ch15.rssi', 'wn34.ch16.rssi',
-                    'wn38.battery', 'wn38.signal', 'wn38.rssi',
+                    'wn38.battery', 'wn38.signal', 'wn38.rssi', 'wn38.bgt', 'wn38.wbgt',
                     'wh40.battery', 'wh40.signal', 'wh40.rssi',
                     'wh41.ch1.battery', 'wh41.ch1.signal', 'wh41.ch2.battery', 'wh41.ch2.signal', 'wh41.ch1.rssi', 'wh41.ch2.rssi',
                     'wh41.ch3.battery', 'wh41.ch3.signal', 'wh41.ch4.battery', 'wh41.ch4.signal', 'wh41.ch3.rssi', 'wh41.ch4.rssi',
@@ -14983,7 +15096,7 @@ class DirectEcowittDevice:
             # iterate over the fields in our original data dict
             for key in mapped_data:
                 # we don't need usUnits in the result so skip it
-                if key == 'usUnits' or key == 'ws90_ver' or key == 'ws85_ver':
+                if key == 'usUnits':
                     continue
                 # get our key as a ValueTuple
                 try:
@@ -15639,7 +15752,12 @@ class DirectEcowittDevice:
                         continue
                     # get our key as a ValueTuple
                     key_vt = weewx.units.as_value_tuple(pkt, key)
-                    # get a ValueHelper which will do the conversion and formatting
+                    if key == 'apName' or key == 'stationtype':
+                       key_vh = weewx.units.ValueHelper(key_vt, formatter=f, converter=None)
+                       result[key] = key_vh.toString(None_string='None')
+                       continue
+
+                   # get a ValueHelper which will do the conversion and formatting
                     key_vh = weewx.units.ValueHelper(key_vt, formatter=f, converter=c)
                     # and add the converted and formatted value to our dict
                     try:
