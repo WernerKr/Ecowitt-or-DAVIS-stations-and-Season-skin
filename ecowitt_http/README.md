@@ -104,7 +104,7 @@ Modified by me!
         - bug with 'PM2.5 ch1' .. 'ch4' and Data from SDCard solved (correct is 'PM2.5 CH1' )
         - added soilad1..16
 
-    xx Oct 2025            v0.2.5 	(not yet released)
+    13 Oct 2025            v0.2.5
 	    - added apName - need 
           [Accumulator]
             [[apName]]
@@ -112,6 +112,9 @@ Modified by me!
               extractor = last
         - added stationtype 
 		  After firmware update (and not restart weewx) then shows the current hardware version
+        - Calculates WBGT when not transmitted
+        - 24h rain (piezo) from Ecowitt cloud
+        - workaround if no SDCard inserted (thanks to rosensama )  
 		  
 Tested and completed:
 ```
