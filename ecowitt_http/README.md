@@ -11,9 +11,6 @@ under https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin
 
 you can find script files that extend an existing database schema for the values of Ecowitt stations 
 
-
-Modified by me!
-
     July 2025
         - WH45/WH46 = co2 missed - added
         - changed some keys that are the same as my ecowittcustom driver
