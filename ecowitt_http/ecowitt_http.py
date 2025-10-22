@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.2.5                                  Date: 13 Oct 2025
+Version: 0.2.6                                  Date: 22 Oct 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -109,6 +109,10 @@ Revision History
         - Calculates WBGT when not transmitted
         - 24h rain (piezo) from Ecowitt cloud
         - workaround if no SDCard inserted (thanks to rosensama )  
+
+    22 Oct 2025            v0.2.6
+        - Checks if a soil moisture sensor is present and if not, no further attempts are made 
+          to query the soilad values
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -228,7 +232,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.5'
+DRIVER_VERSION = '0.2.6'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
@@ -348,10 +352,10 @@ weewx.units.obs_group_dict['pm25_avg_24h_ch4'] = 'group_concentration'
 
 weewx.units.obs_group_dict['rainrate'] = 'group_rainrate'
 weewx.units.obs_group_dict['eventRain'] = 'group_rain'
-weewx.units.obs_group_dict['rain60'] = 'group_rain'
+weewx.units.obs_group_dict['hourRain'] = 'group_rain'
 weewx.units.obs_group_dict['rain24'] = 'group_rain'
 weewx.units.obs_group_dict['weekRain'] = 'group_rain'
-weewx.units.obs_group_dict['raintotal'] = 'group_rain'
+weewx.units.obs_group_dict['totalRain'] = 'group_rain'
 
 weewx.units.obs_group_dict['rrain_piezo'] = 'group_rainrate'
 weewx.units.obs_group_dict['erain_piezo'] = 'group_rain'
@@ -361,8 +365,8 @@ weewx.units.obs_group_dict['wrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['mrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['yrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain_piezo'] = 'group_rain'
-weewx.units.obs_group_dict['rain60_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain24_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['train_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['t_rain'] = 'group_rain'
 weewx.units.obs_group_dict['p_rain'] = 'group_rain'
 weewx.units.obs_group_dict['p_rainrate'] = 'group_rainrate'
@@ -1626,7 +1630,7 @@ class HttpMapper(FieldMapper):
     default_rain_map = {
         #'t_rainevent': 'rain.0x0D.val',
         #'t_rainRate': 'rain.0x0E.val',
-        #'t_rainhour': 't_rainhour',
+        #'t_rainhour': 'rain.0x0F.val',
         #'t_rainday': 'rain.0x10.val',
         #'t_rainweek': 'rain.0x11.val',
         #'t_rainmonth': 'rain.0x12.val',
@@ -1642,10 +1646,10 @@ class HttpMapper(FieldMapper):
         'monthRain': 'rain.0x12.val',
         'yearRain': 'rain.0x13.val',
         'rain24': 'rain.0x7C.val',
-        #'rain60': 'rain60',
+        'totalRain': 'rain.0x14.val',
         #'p_rainevent': 'piezoRain.0x0D.val',
         #'p_rainrate': 'piezoRain.0x0E.val',
-        #'p_rainhour': 'p_rainhour',
+        #'p_rainhour': 'piezoRain.0x0F.val',
         #'p_rainday': 'piezoRain.0x10.val',
         #'p_rainweek': 'piezoRain.0x11.val',
         #'p_rainmonth': 'piezoRain.0x12.val',
@@ -1663,7 +1667,7 @@ class HttpMapper(FieldMapper):
         'mrain_piezo': 'piezoRain.0x12.val',
         'yrain_piezo': 'piezoRain.0x13.val',
         'rain24_piezo': 'piezoRain.0x7C.val',
-        #'rain60_piezo': 'rain60_piezo',
+        'train_piezo': 'rain.0x14.val',
     }
     # modular wind map
     default_wind_map = {
@@ -2456,7 +2460,8 @@ class EcowittCommon:
         self.piezo_last_rainnew_a = None
         
         self.ws85 = None
-        self.ws90 = None    
+        self.ws90 = None
+        self.soilmoisture = False    
 
         #self.version4 = True
 
@@ -3259,6 +3264,8 @@ class EcowittHttpDriverConfEditor(weewx.drivers.AbstractConfEditor):
     [[mrain_piezo]]
         extractor = last
     [[yrain_piezo]]
+        extractor = last
+    [[totalRain_piezo]]
         extractor = last
     
     [[p_rainrate]]
@@ -4257,7 +4264,7 @@ class EcowittNetCatchup(Catchup):
         'rainfall': {
             'rain_rate': 'rain.0x0E.val',
             'event': 'rain.0x0D.val',
-            'hourly': 't_rainhour',
+            'hourly': 'rain.0x0F.val',
             'daily': 'rain.0x10.val',
             '24_hours': 'rain.0x7C.val',
             'weekly': 'rain.0x11.val',
@@ -4267,7 +4274,7 @@ class EcowittNetCatchup(Catchup):
         'rainfall_piezo': {
             'rain_rate': 'piezoRain.0x0E.val',
             'event': 'piezoRain.0x0D.val',
-            'hourly': 'hrain_piezo',
+            'hourly': 'piezoRain.0x0F.val',
             'daily': 'piezoRain.0x10.val',
             '24_hours': 'rain.0x7C.val',
             'weekly': 'piezoRain.0x11.val',
@@ -4821,6 +4828,7 @@ class EcowittNetCatchup(Catchup):
 
         # do we have a response
         if response is not None and len(response) > 0:
+            # log.info("JSON response: %s",response )
             # we have some sort of response, but is it JSON and is the response
             # code 0
             try:
@@ -6527,14 +6535,20 @@ class EcowittHttpCollector(Collector):
         # Now obtain the current data via the API. If the data cannot be
         # obtained we will see a DeviceIOError exception which we just let
         # bubble up. Otherwise, we are returned the parsed current live data.
+        self.soilmoisture = False
         curr_data = self.device.get_live_data()
         curr_data.update(self.device.get_rain_totalspart())
         curr_data.update(self.device.get_piezo_rain_datapart())
         curr_data.update(self.device.get_device_info_datapart())
         curr_data.update(self.device.get_stationtype())
 
-        if self.get_soilad:
-         curr_data.update(self.device.get_soil_adnow_data())
+        #if 'ch_soil.1.humidity' in curr_data:
+        for test in range(1,16):
+          t = f"ch_soil.{test}.humidity"
+          if t in curr_data:
+            self.soilmoisture = True
+        if self.get_soilad and self.soilmoisture:
+          curr_data.update(self.device.get_soil_adnow_data())
        
         # add the timestamp to the data dict
         curr_data['datetime'] = _timestamp
