@@ -744,6 +744,21 @@ new ApexCharts(document.querySelector('#$id'), {
   $getChartJsCode("ws90cap_volt", "ws90cap_voltchart", "area", "ws90cap_volt")
   #end if
 
+  #if $month.wh26_rssi.has_data
+  $getChartJsCode("wh26_rssi", "wh26_rssichart", "area", "wh26_rssi", "wh69_rssi")
+  #end if
+
+  #if $month.ws80_rssi.has_data
+  $getChartJsCode("ws80_rssi", "ws80_rssichart", "area", "ws80_rssi", "ws85_rssi", "avg", "ws90_rssi")
+  #end if
+
+  #if $month.wh31_ch1_rssi.has_data
+  $getChartJsCode("wh31_ch1_rssi", "wh31_ch1_rssichart", "area", "wh31_ch1_rssi", "wh31_ch2_rssi", "avg", "wh31_ch3_rssi", "wh31_ch4_rssi")
+  #end if
+
+  #if $month.wh31_ch5_rssi.has_data
+  $getChartJsCode("wh31_ch5_rssi", "wh31_ch5_rssichart", "area", "wh31_ch5_rssi", "wh31_ch6_rssi", "avg", "wh31_ch7_rssi", "wh31_ch8_rssi")
+  #end if
 
 </script>
 

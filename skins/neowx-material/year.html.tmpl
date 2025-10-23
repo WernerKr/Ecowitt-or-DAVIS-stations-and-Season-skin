@@ -702,7 +702,7 @@ new ApexCharts(document.querySelector('#$id'), {
 
   #if $year.lightning_strike_count.has_data
   $getChartJsCode("lightning_strike_count", "lightning_strike_countchart", "bar", "lightning_strike_count", "", "sum")
-  #$getChartJsCode("lightning_strike_count", "lightning_strike_countchart", "bar", "lightning_strike_count")
+  ##$getChartJsCode("lightning_strike_count", "lightning_strike_countchart", "area", "lightning_strike_count")
   #end if
 
   #if $year.lightning_distance.has_data
@@ -750,6 +750,7 @@ new ApexCharts(document.querySelector('#$id'), {
   #if $year.wh31_ch1_rssi.has_data
   $getChartJsCode("wh31_ch1_rssi", "wh31_ch1_rssichart", "area", "wh31_ch1_rssi", "wh31_ch2_rssi", "avg", "wh31_ch3_rssi", "wh31_ch4_rssi")
   #end if
+
   #if $year.wh31_ch5_rssi.has_data
   $getChartJsCode("wh31_ch5_rssi", "wh31_ch5_rssichart", "area", "wh31_ch5_rssi", "wh31_ch6_rssi", "avg", "wh31_ch7_rssi", "wh31_ch8_rssi")
   #end if
