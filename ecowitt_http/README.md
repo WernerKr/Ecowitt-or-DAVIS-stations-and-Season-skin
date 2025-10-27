@@ -112,10 +112,11 @@ you can find script files that extend an existing database schema for the values
         - Calculates WBGT when not transmitted
         - 24h rain (piezo) from Ecowitt cloud
         - workaround if no SDCard inserted (thanks to rosensama )  
-
 	22 Oct 2025            v0.2.6
         - Checks if a soil moisture sensor is present and if not, no further attempts are made 
           to query the soilad values
+    27 Oct 2025            v0.2.7
+        - Stored Lightning time (lightning_disturber_count) didn't use local time
 		  
 Tested and completed:
 ```
