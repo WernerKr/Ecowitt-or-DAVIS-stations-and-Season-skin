@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.2.6                                  Date: 22 Oct 2025
+Version: 0.2.7                                  Date: 27 Oct 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -114,6 +114,9 @@ Revision History
         - Checks if a soil moisture sensor is present and if not, no further attempts are made 
           to query the soilad values
 
+    27 Oct 2025            v0.2.7
+        - Stored Lightning time (lightning_disturber_count) didn't use local time
+
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
 
@@ -193,6 +196,7 @@ import calendar
 import collections
 import csv
 import datetime
+import time
 import io
 import json
 import logging
@@ -204,8 +208,6 @@ import struct
 import sys
 import textwrap
 import threading
-import datetime
-import time
 import math
 import urllib.error
 import urllib.parse
@@ -232,7 +234,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.6'
+DRIVER_VERSION = '0.2.7'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
@@ -2239,8 +2241,9 @@ class SdMapper(FieldMapper):
                     dest_field = self.field_map.inverse[clean_key]
 
                     if clean_key == 'Thunder time':
-                       datetime_obj = datetime.datetime.strptime(rec[field], "%Y-%m-%d %H:%M") 
-                       mapped_rec[dest_field] = datetime_obj.timestamp()
+                       datetime_obj = datetime.datetime.strptime(rec[field], "%Y-%m-%d %H:%M")
+                       #mapped_rec[dest_field] = datetime_obj.timestamp()
+                       mapped_rec[dest_field] = int(time.mktime(datetime_obj.utctimetuple()))
                        continue 
                     elif rec[field] == '--' or rec[field] == '':
                        if self.driver_debug.catchup:
@@ -2256,10 +2259,12 @@ class SdMapper(FieldMapper):
                        continue
                     else:  
                       mapped_rec[dest_field] = float(rec[field])
-                except (KeyError, TypeError, ValueError) as e:
+                except (KeyError, TypeError, ValueError, OverflowError) as e:
                     # KeyError indicates no mapping exists for this source
                     # field, TypeError and ValueError indicate the source data
-                    # could not be converted to a float. In either case log it,
+                    # could not be converted to a float. OverflowError is when 
+                    # the result of an arithmetic operation is too large to be represented
+                    # In either case log it,
                     # ignore this field and continue.
                     if self.driver_debug.catchup:
                         log.info("Error mapping field '%s': %s", field, e)
@@ -10160,7 +10165,8 @@ class EcowittHttpParser:
         else:
             # we have a datetime object, convert to and save as an epoch timestamp
             try:
-              timestamp_ts = int(time.mktime(_timestamp_dt.timetuple()))
+              #timestamp_ts = int(time.mktime(_timestamp_dt.timetuple()))
+              timestamp_ts = int(time.mktime(_timestamp_dt.utctimetuple()))
               _item['timestamp'] = timestamp_ts
             except:
               _item['timestamp'] = None
