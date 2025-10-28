@@ -1,0 +1,206 @@
+## Copyright 2009-2018 Tom Keffer, Matthew Wall
+## Distributed under terms of GPLv3.  See LICENSE.txt for your rights.
+#errorCatcher Echo
+
+#set $periods = $to_list($DisplayOptions.get('periods', ['day', 'week', 'month', 'year']))
+#set $plot_groups = $to_list($DisplayOptions.get('plot_groups', ['tempdew', 'wind', 'rain']))
+
+## use this span to determine whether there are any data to consider.
+#set $recent=$span($day_delta=30, boundary='midnight')
+
+<!DOCTYPE html>
+<html lang="$lang">
+  <head>
+    <meta charset="UTF-8">
+<META HTTP-EQUIV="Refresh" CONTENT="300">
+    <title>$station.location</title>
+    <link rel="icon" type="image/png" href="favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="seasons.css"/>
+
+    <style type="text/css">
+
+.col-md-8 {
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.col-md-8 table th {
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    border-bottom: 1px solid;
+}
+
+.col-md-8 table td {
+    font-weight: normal;
+    text-align: right;
+    font-size: 12px;
+    padding-right: 5px;
+    padding-left: 5px;
+    border-bottom: 1px solid;
+}
+
+.col-md-8 historyHeader {
+  font-weight: bold;
+  font-size: calc(14px + 0.3vw);
+  white-space: nowrap; 
+}
+
+.history {
+  #font-size: calc(5px + 0.5vw);
+  font-size: 1.1vw;
+  margin-bottom: 30px;
+  overflow: auto;
+  float: left;
+}
+
+    </style>
+
+    #if $station.station_url
+    <link rel="canonical" href="$station.station_url/$filename" />
+    #end if
+
+    <script src="seasons.js"></script>
+    #include "analytics.inc"
+  </head>
+
+  <body onload="setup();">
+    #include "titlebar.inc"
+    
+    <div id="contents">
+      <div id="widget_group">
+        #include "current.inc"
+        #include "sunmoon.inc"
+        #include "hilo.inc"
+        #include "sensors.inc"
+        #include "about.inc"
+        #include "radar.inc"
+        #include "satellite.inc"
+        #include "map.inc"
+      </div>
+
+      <div id="plot_group">
+        <div id="history_widget" class="widget">
+          <div id="plot_title" class="widget_title">$gettext("History"):&nbsp;&nbsp;
+            <a class="button_selected" id="button_history_day"
+               onclick="choose_history('day')">$gettext("Day")</a>
+            <a class="button" id="button_history_week"
+               onclick="choose_history('week')">$gettext("Week")</a>
+            <a class="button" id="button_history_month"
+               onclick="choose_history('month')">$gettext("Month")</a>
+            <a class="button" id="button_history_year"
+               onclick="choose_history('year')">$gettext("Year")</a>
+            <a class="button" id="button_history_chronicle"
+               onclick="choose_history('chronicle')">$gettext("Chronicle")</a>
+          </div>
+
+#for period in $periods
+          <div id="history_${period}" class="plot_container" style="display:none">
+  #for plot_group in $plot_groups
+    #set $show_plot = 0
+    #*
+      The plot name is just the concatenation of the period and the plot group.
+      For example, 'year' + 'tempdew' yields 'yeartempdew'.
+    *#
+    #set $plot_name = $period + $plot_group
+    #for obs in $getobs($plot_name)
+      #if $recent.check_for_data($obs)
+        #set $show_plot = 1
+      #end if
+    #end for
+    #if $show_plot
+            <img src="${plot_name}.png" alt="${plot_name}"/>
+    #end if
+  #end for
+          </div>
+#end for
+
+          <div id="history_chronicle" class="history" style="display:none">
+           <div class="col-md-8">
+            <h4>$BootstrapLabels.history_tables.min_temp</h4>
+$min_temp_table
+
+            <h4>$BootstrapLabels.history_tables.avg_temp</h4>
+$avg_temp_table
+
+            <h4>$BootstrapLabels.history_tables.max_temp</h4>
+$max_temp_table
+
+            <h4>$BootstrapLabels.history_tables.rain</h4>
+$rain_table
+
+            <h4>$BootstrapLabels.history_tables.rain_days</h4>
+$rain_days_table
+
+            <h4>$BootstrapLabels.history_tables.windGust</h4>
+$max_windGust_table
+
+            <h4>$BootstrapLabels.history_tables.max_UV</h4>
+$max_UV_table
+
+            <h4>$BootstrapLabels.history_tables.max_radiation</h4>
+$max_radiation_table
+
+            <h4>$BootstrapLabels.history_tables.min_barometer</h4>
+$min_barometer_table
+
+            <h4>$BootstrapLabels.history_tables.avg_barometer</h4>
+$avg_barometer_table
+
+            <h4>$BootstrapLabels.history_tables.max_barometer</h4>
+$max_barometer_table
+
+            <h4>$BootstrapLabels.history_tables.outTemp_days</h4>
+$outTemp_days_table
+
+            <h4>$BootstrapLabels.history_tables.outTemp20_days</h4>
+$outTemp20_days_table
+
+            <h4>$BootstrapLabels.history_tables.outTemp20x_days</h4>
+$outTemp20x_days_table
+
+<h4 class="historyHeader">$BootstrapLabels.history_tables.vegetations_days</h4>
+$vegetations_days_table
+
+ <h4>$BootstrapLabels.history_tables.heatdays</h4>
+$heatdays_table
+
+            <h4>$BootstrapLabels.history_tables.outTemp0_days</h4>
+$outTemp0_days_table
+
+            <h4>$BootstrapLabels.history_tables.outTemp00_days</h4>
+$outTemp00_days_table
+
+ <h4>$BootstrapLabels.history_tables.sunshineDur</h4>
+$sunshineDur_table
+
+ <h4>$BootstrapLabels.history_tables.rainDur</h4>
+$rainDur_table
+
+ <h4>$BootstrapLabels.history_tables.heatdeg</h4>
+$heatdeg_table
+
+ <h4>$BootstrapLabels.history_tables.cooldeg</h4>
+$cooldeg_table
+
+##          <h4>$BootstrapLabels.history_tables.NOAA</h4>
+##$NOAA_table
+
+
+           </div>
+          </div>
+
+
+        </div>
+      </div>
+    </div>
+
+    <p class="footnote">
+      $gettext("This station is controlled by <a href='https://weewx.com'>WeeWX</a>, an experimental weather software system written in Python.")
+    </p>
+
+  </body>
+
+</html>
