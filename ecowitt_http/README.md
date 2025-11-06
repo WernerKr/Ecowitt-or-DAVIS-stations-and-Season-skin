@@ -117,6 +117,7 @@ you can find script files that extend an existing database schema for the values
           to query the soilad values
     27 Oct 2025            v0.2.7
         - Stored Lightning time (lightning_disturber_count) didn't use local time
+		  workaround for firmware bug: This affects all current firmware versions of the gateways
 		  
 Tested and completed:
 ```
@@ -380,7 +381,8 @@ loop_on_init = 1
         # The schema defines the structure of the database.
         # It is *only* used when the database is created.
         #schema = schemas.wview_ecowitt.schema
-        schema = schemas.wview_ecowittrssi.schema
+        #schema = schemas.wview_ecowittrssi.schema
+        schema = schemas.wview_ecowittrssisoilad.schema
 ##############################################################################
 # Options for extension Ecowittcustom, GW1000, Interceptor or EcowittHttp
 [Accumulator]
