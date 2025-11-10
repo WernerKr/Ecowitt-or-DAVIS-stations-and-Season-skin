@@ -4,7 +4,7 @@ https://github.com/gjr80/weewx-ecowitt_local_http/blob/master
 
 (C) 2024-25 Gary Roderick                     gjroderick<at>gmail.com
 
-### For this driver there is also a database schema "weewx_ecowitt.py" or "weewx_ecowittrssi.py"
+### For this driver there is also a database schema "weewx_ecowitt.py" or "weewx_ecowittrssi.py" or "weewx_ecowittrssisoilad.py"
 https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/wview_ecowitt.py
 
 under https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin
