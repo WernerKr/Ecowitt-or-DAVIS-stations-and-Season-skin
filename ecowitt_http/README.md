@@ -118,6 +118,11 @@ you can find script files that extend an existing database schema for the values
     27 Oct 2025            v0.2.7
         - Stored Lightning time (lightning_disturber_count) didn't use local time
 		  workaround for firmware bug: This affects all current firmware versions of the gateways
+    10 Nov 2025            v0.2.8
+        - Correction for WS6210 and SDCard data (now supports downloads from SDCard - but PM2.5 1..4 here are missing!)
+        - for WS6210 use ecowittws6210_http driver -> With Firmware V1.1.1.2: 
+		  here uses original Thunder time and too PM2.5 1..4 
+		  because this data differs from the other Ecowitt supported gateways/stations 
 		  
 Tested and completed:
 ```
