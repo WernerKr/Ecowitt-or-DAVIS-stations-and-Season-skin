@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.2.7                                  Date: 27 Oct 2025
+Version: 0.2.8                                  Date: 10 Nov 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -116,6 +116,10 @@ Revision History
 
     27 Oct 2025            v0.2.7
         - Stored Lightning time (lightning_disturber_count) didn't use local time
+
+    10 Nov 2025            v0.2.8
+        - Correction for WS6210 and SDCard data (but from SDCard PM2.5 1..4 are missing!
+        - for WS6210 use ecowittws6210_http driver -> use other Thunder time and correct PM2.5 1..4
 
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -234,7 +238,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.7'
+DRIVER_VERSION = '0.2.8'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
@@ -2153,6 +2157,10 @@ class SdMapper(FieldMapper):
         'ch_leak.2.status': 'Water CH2',
         'ch_leak.3.status': 'Water CH3',
         'ch_leak.4.status': 'Water CH4',
+        #'ch_pm25.1.PM25': 'Pm2.5 CH1',		# only WS6210!
+        #'ch_pm25.2.PM25': 'Pm2.5 CH2',		# only WS6210!
+        #'ch_pm25.3.PM25': 'Pm2.5 CH3',		# only WS6210!
+        #'ch_pm25.4.PM25': 'Pm2.5 CH4',		# only WS6210!
         'ch_pm25.1.PM25': 'PM2.5 CH1',
         'ch_pm25.2.PM25': 'PM2.5 CH2',
         'ch_pm25.3.PM25': 'PM2.5 CH3',
@@ -2178,8 +2186,8 @@ class SdMapper(FieldMapper):
         'ch_lds.4.depth': 'LDS_Depth CH4',
         'ch_lds.4.total_heat': 'LDS_Heat CH4',
         #'console.battery': 'Console Battery', 
-        'console.console_batt_volt': 'Console Battery',
-        'console.console_ext_volt': 'External Supply',
+        'console.console_batt_volt': 'Console Battery ',
+        'console.console_ext_volt': 'External Supply ',
         'console.battery_proz': 'Console Battery Percentage',
         'console.charge_stat': 'Charge',
         'wn38.bgt': 'BGT',
@@ -2225,6 +2233,7 @@ class SdMapper(FieldMapper):
         if self.field_map is not None and len(self.field_map) > 0:
             # we have a field map
             # initialise an empty dict to hold the mapped data
+
             mapped_rec = {}
             # iterate over the source data keys
             for field in rec.keys():
@@ -2242,7 +2251,9 @@ class SdMapper(FieldMapper):
 
                     if clean_key == 'Thunder time':
                        datetime_obj = datetime.datetime.strptime(rec[field], "%Y-%m-%d %H:%M")
-                       #mapped_rec[dest_field] = datetime_obj.timestamp()
+                       #if self.timecorr == False: 
+                       #  mapped_rec[dest_field] = datetime_obj.timestamp()
+                       #else:
                        mapped_rec[dest_field] = int(time.mktime(datetime_obj.utctimetuple()))
                        continue 
                     elif rec[field] == '--' or rec[field] == '':
@@ -2466,7 +2477,9 @@ class EcowittCommon:
         
         self.ws85 = None
         self.ws90 = None
-        self.soilmoisture = False    
+        self.soilmoisture = False 
+        
+        self.timecorr = True     
 
         #self.version4 = True
 
@@ -5668,7 +5681,7 @@ class EcowittDeviceCatchup:
         file_list = sd_info['file_list']
         # now extract a list of file names but only include those whose type
         # is 'file'
-        files = [f['name'] for f in file_list if f['type'] == 'file']
+        files = [f['name'] for f in file_list if (f['type'] == 'file' or f['type'] == '1') ]  
         # Calculate an 'index' for start_ts based on the start_ts year and
         # month. The earlier the month and year the lower the index. This makes
         # it easier to sort files by date and exclude files that are too old.
@@ -10165,7 +10178,9 @@ class EcowittHttpParser:
         else:
             # we have a datetime object, convert to and save as an epoch timestamp
             try:
-              #timestamp_ts = int(time.mktime(_timestamp_dt.timetuple()))
+              #if self.timecorr == False:
+              #  timestamp_ts = int(time.mktime(_timestamp_dt.timetuple()))
+              #else: 
               timestamp_ts = int(time.mktime(_timestamp_dt.utctimetuple()))
               _item['timestamp'] = timestamp_ts
             except:
@@ -13503,6 +13518,8 @@ class DirectEcowittDevice:
                     'common_list.0x16.val', 'common_list.0x16.voltage',
                     'common_list.0x17.val', 'common_list.0x17.voltage',
                     'common_list.0x6D.val',
+                    'console.console_batt_volt', 'console.battery', 'console.console_ext_volt',
+                    'console.charge_stat', 'console.battery_proz',
                     'co2.temperature', 'co2.temp', 'co2.humidity', 'co2.CO2', 'co2.CO2_24H', 'co2.battery',
                     'co2.PM25', 'co2.PM25_RealAQI', 'co2.PM25_24HAQI', 'co2.PM25_24H',
                     'co2.PM10', 'co2.PM10_RealAQI', 'co2.PM10_24HAQI', 'co2.PM10_24H',
