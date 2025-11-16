@@ -72,6 +72,11 @@ Ecowitt protocol:
 ** FOSHKplugin ADD_RSSI
 ``` 
 ```
+[Weatherstation]
+WS_IP = 192.168.0.86      # IP Ecowitt Gateway/Station
+WS_PORT = 45000
+WS_INTERVAL = 16
+
 [Export]
 EVAL_VALUES = True
 ADD_ITEMS = 
@@ -182,7 +187,7 @@ Code:
     hailDur_log = 0        # no logging for piezo-rain duration
 ``` 
 
-################################################# ###############################################
+#################################################
 
 May 2025: 
 Under [Accumulator] all "*.sig" removed, as not necessary
@@ -244,6 +249,10 @@ Code:
         #schema = schemas.wview.schema
         schema = schemas.wview_ecowitt.schema
 
+# Now there are more database schemas are available:
+ - wview_ecowittrssi.py            # with the rssi fields
+ - wview_ecowittrssisoilad.py      # with the rssi and soilad fields
+
 Possibly also the database name from weewx.sdb to weewx_ecowitt.sdb
 to change.
 Code:
@@ -262,11 +271,12 @@ Code:
 Since the installation routine does not change any existing entries, one must in weewx.conf
 adapt a few entries
 
-Signal assignment with GW1000 driver (the Ecowittcustom driver can evaluate the signals with the foshkplugin )
+Signal assignment with GW1000 driver (the Ecowittcustom driver can evaluate the signals with the FOSHKplugin )
 
-But if you use FOSHKplugin, the interceptor can also evalute the signals and all
-this other data (and more), which are only available via gw1000
-The weewx-gw1000.zip installation routine adds these entries to weewx.conf:
+But if you use FOSHKplugin, the ecowittcustorm driver can also evalute the signals and all
+this other data (and more), which are only available from the ecowitt_http driver
+or from the old gateway GW1000  with the gw1000 driver
+The weewx-ecowittcustom.zip installation routine adds these entries to weewx.conf:
 [StdCalibrate]
     [[Corrections]]
         #rxCheckPercent = ws80_sig * 25 if ws80_sig is not None else None
@@ -811,6 +821,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
