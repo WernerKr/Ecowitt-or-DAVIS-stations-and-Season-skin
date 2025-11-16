@@ -84,7 +84,7 @@ ADD_SPREAD = False
 ADD_SIGNAL = True		all Gateways support this (*sig)
 ADD_DEWPT = False
 ADD_MORE = True		not all Gateways support this (see **)
-ADD_RSSI = True      you get also the rssi value from the supported Gateways (at the moment GW3000, GW2000, GW1100)
+ADD_RSSI = True      you get also the rssi value from the supported Gateways and Stations (like WS3910, WS6210)
 ADD_VPD = False
 
 [Forward-1]
@@ -400,6 +400,22 @@ Code:
         process_services = weewx.engine.StdConvert, weewx.engine.StdCalibrate, weewx.engine.StdQC, weewx.wxservices.StdWXCalculate, user.sunrainduration.SunshineDuration
         xtype_services = weewx.wxxtypes.StdWXXTypes, weewx.wxxtypes.StdPressureCooker, weewx.wxxtypes.StdRainRater, weewx.wxxtypes.StdDelta, user.GTS.GTSService
 
+##############################################################################
+[Ecowittcustom]
+    # This section is for the network traffic ecowittcustom driver.
+    # The driver to use:
+    driver = user.ecowittcustom
+    device_type = ecowitt-client
+    port = 8083         # example direct from Custom function station/gateway
+    #port = 8572        # example if you use FOSHKplugin (FWD_URL = http://192.168.0.93:8572/data/report/)
+    iface = eth0
+    #iface = wlan0 
+
+  [[sensor_map_extensions]]
+   # mappings now in the ecowittcustom.py driver
+   #  outTempBatteryStatus = wh26batt
+
+##############################################################################
 [GW1000]
   driver = user.gw1000
   # This section is for the GW1000 API driver.
@@ -568,21 +584,6 @@ Code:
    gain7 = gain7
    gain8 = gain8
    gain9 = gain9
-
-##############################################################################
-
-[Ecowittcustom]
-    # This section is for the network traffic ecowittcustom driver.
-    # The driver to use:
-    driver = user.ecowittcustom
-    device_type = ecowitt-client
-    port = 8080
-    iface = eth0
-    #iface = wlan0 
-
-  [[sensor_map_extensions]]
-   # mappings now in the ecowittcustom.py driver
-   #  outTempBatteryStatus = wh26batt
 
 ##############################################################################
 
@@ -810,6 +811,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
