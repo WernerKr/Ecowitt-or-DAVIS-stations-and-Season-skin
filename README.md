@@ -72,6 +72,10 @@ Ecowitt protocol:
 ** FOSHKplugin ADD_RSSI
 ``` 
 ```
+[Config]
+LB_IP = 192.168.0.93
+LBH_PORT = 8083            # this port is set at customized server (gateway/station)
+
 [Weatherstation]
 WS_IP = 192.168.0.86      # IP Ecowitt Gateway/Station
 WS_PORT = 45000
@@ -821,6 +825,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
