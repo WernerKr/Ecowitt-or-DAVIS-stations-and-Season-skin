@@ -30,7 +30,7 @@ or the gateways always provide the signals, the Ecowitt Custom function in the E
 the data to the FOSHKplugin, and FOSHKplugin forwards the data to the Ecowittcustom driver for WeeWx.
 
 This provides the functionality of the GW1000 driver with all newer data (e.g. inbuilt WS3910 CO2 sensor, LDS sensor WH54, VPD) 
-that is no longer provided by the Ecowitt API (last Telnet v1.7.0).
+that is no longer provided by the Ecowitt API (last Telnet v1.7.0 - 2024.05.27 [WH46]).
 ```
 Ecowitt protocol:
   - Ecowitt Gateways GW1000, GW1100, GW1200, GW2000, GW3000, WS38xx, WS39xx, WS6210, WS1900, WN1980, WN1900, WH2650 
@@ -825,6 +825,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
