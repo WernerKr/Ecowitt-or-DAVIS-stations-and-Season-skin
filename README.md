@@ -66,10 +66,10 @@ Ecowitt protocol:
   - Ecowitt Gateways GW1000, GW1100, GW1200, GW2000, GW3000, WS38xx, WS39xx, WS6210, WS1900, WN1980, WN1900, WH2650 
   - Ecowitt wifi consoles HP2560, HP2550, HP3500, WS39xx, WS38xx, WN1980, WN1900, WS1900 
 ``` 
-** FOSHKplugin ADD_More 
+** FOSHKplugin ADD_More - not GW1000!
 = radcompensation,newVersion,upgrade,rainFallPriority,rainGain,piezo,rstRainDay,rstRainWeek,rstRainYear,rain1_gain,rain2_gain,rain3_gain,rain4_gain,rain5_gain
 
-** FOSHKplugin ADD_RSSI
+** FOSHKplugin ADD_RSSI - not GW1000!
 ``` 
 ```
 [Config]
@@ -825,6 +825,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
