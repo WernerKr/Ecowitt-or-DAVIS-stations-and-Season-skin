@@ -7,6 +7,9 @@
   #set $xt = $current.model.raw 
  #end if
 #end if
+#if $xt == ''
+  #set $xt = $station.hardware 
+#end if
 
     <hr>
     <footer>

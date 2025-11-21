@@ -28,6 +28,37 @@
     </div>
 </div>
 
+<div class="row $global_station_info_classes">
+    <div class="col-2">
+        <i class="bi-cloud-rain fs-4" title="$Labels.Generic['hail']"></i>
+    </div>
+    <div class="col-2">
+        <div class="text-nowrap fw-bold stationInfoRainHeader">$gettext('Today')</div>
+        <div class="text-nowrap"><span id="stationInfoDayRainPiezo">$day.hail.sum</span></div>
+        <div class="text-nowrap fw-bold stationInfoRainHeader mt-2">$gettext('24h')</div>
+        <div class="text-nowrap"><span id="stationInfo24hrainPiezo">$span(hour_delta=24).hail.sum</span></div>
+    </div>
+    <div class="col-2">
+        <div class="text-nowrap fw-bold stationInfoRainHeader">$gettext('This week')</div>
+        <div class="text-nowrap"><span id="stationInfoWeekRainPiezo">$week.hail.sum</span></div>
+        <div class="text-nowrap fw-bold stationInfoRainHeader mt-2">$gettext('72h')</div>
+        <div class="text-nowrap"><span id="stationInfo72hrainPiezo">$span(hour_delta=72).hail.sum</span></div>
+    </div>
+    <div class="col-3">
+        <div class="text-nowrap fw-bold stationInfoRainHeader">$gettext('This month')</div>
+        <div class="text-nowrap"><span id="stationInfoMonthRainPiezo">$month.hail.sum</span></div>
+        <div class="text-nowrap fw-bold stationInfoRainHeader mt-2">$span(day_delta=30).length.day.format("%d")</div>
+        <div class="text-nowrap"><span id="stationInfo30dayRainPiezo">$span(day_delta=30).hail.sum</span></div>
+    </div>
+    <div class="col-3">
+        <div class="text-nowrap fw-bold stationInfoRainHeader">$gettext('This year')</div>
+        <div class="text-nowrap"><span id="stationInfoYearRainPiezo">$year.hail.sum</span></div>
+        <div class="text-nowrap fw-bold stationInfoRainHeader mt-2">$span(day_delta=365).length.day.format("%d")</div>
+        <div class="text-nowrap"><span id="stationInfo365DayRainPiezo">$span(day_delta=365).hail.sum</span></div>
+    </div>
+
+</div>
+
 <script type="text/javascript">
 #raw
 updateFunctions.push(
@@ -40,6 +71,14 @@ updateFunctions.push(
         setInnerHTML(document.getElementById("stationInfo72hrain"), reportData.stationInfo["72hRain"]);
         setInnerHTML(document.getElementById("stationInfo30dayRain"), reportData.stationInfo["30dRain"]);
         setInnerHTML(document.getElementById("stationInfo365DayRain"), reportData.stationInfo["365dRain"]);
+        setInnerHTML(document.getElementById("stationInfoDayRainPiezo"), reportData.stationInfo.dayRainPiezo);
+        setInnerHTML(document.getElementById("stationInfoWeekRainPiezo"), reportData.stationInfo.weekRainPiezo);
+        setInnerHTML(document.getElementById("stationInfoMonthRainPiezo"), reportData.stationInfo.monthRainPiezo);
+        setInnerHTML(document.getElementById("stationInfoYearRainPiezo"), reportData.stationInfo.yearRainPiezo);
+        setInnerHTML(document.getElementById("stationInfo24hrainPiezo"), reportData.stationInfo["24hRainPiezo"]);
+        setInnerHTML(document.getElementById("stationInfo72hrainPiezo"), reportData.stationInfo["72hRainPiezo"]);
+        setInnerHTML(document.getElementById("stationInfo30dayRainPiezo"), reportData.stationInfo["30dRainPiezo"]);
+        setInnerHTML(document.getElementById("stationInfo365DayRainPiezo"), reportData.stationInfo["365dRainPiezo"]);
     }
 );
 #end raw

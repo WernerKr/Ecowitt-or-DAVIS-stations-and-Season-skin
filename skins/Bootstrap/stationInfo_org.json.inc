@@ -14,13 +14,5 @@
     "24hRain": "$span(hour_delta=24).rain.sum",
     "72hRain": "$span(hour_delta=72).rain.sum",
     "30dRain": "$span(day_delta=30).rain.sum",
-    "365dRain": "$span(day_delta=365).rain.sum",
-    "dayRainPiezo": "$day.hail.sum",
-    "weekRainPiezo": "$week.hail.sum",
-    "monthRainPiezo": "$month.hail.sum",
-    "yearRainPiezo": "$rainyear.hail.sum",
-    "24hRainPiezo": "$span(hour_delta=24).hail.sum",
-    "72hRainPiezo": "$span(hour_delta=72).hail.sum",
-    "30dRainPiezo": "$span(day_delta=30).hail.sum",
-    "365dRainPiezo": "$span(day_delta=365).hail.sum"
+    "365dRain": "$span(day_delta=365).rain.sum"
 }
