@@ -65,23 +65,12 @@ class JSONGenerator(weewx.reportengine.ReportGenerator):
                 log.info("JSONGenerator is not enabled")
     def setup(self):
         self.json_dict = self.skin_dict['JSONGenerator']
-        self.log = int(self.json_dict.get('log', 0))
-
         self.gauge_dict = self.skin_dict['LiveGauges']
         self.chart_dict = self.skin_dict['LiveCharts']
-
         self.units_dict = self.skin_dict['Units']
-        try:
-          merge_config(self.units_dict, self.config_dict['StdReport']['Defaults']['Units'])
-        except KeyError:
-            log.debug('No config dict [StdReport][[Defaults]][[[Units]]]')
-
+        merge_config(self.units_dict, self.config_dict['StdReport']['Defaults']['Units'])
         self.labels_dict = self.skin_dict['Labels']
-        try:
-          merge_config(self.labels_dict, self.config_dict['StdReport']['Defaults']['Labels'])
-        except KeyError:
-            log.debug('No config dict [StdReport][[Defaults]][[[Labels]]]')
-
+        merge_config(self.labels_dict, self.config_dict['StdReport']['Defaults']['Labels'])
         self.frontend_data = {}
 
         # Create a converter to get this into the desired units
@@ -187,10 +176,9 @@ class JSONGenerator(weewx.reportengine.ReportGenerator):
         self.write_ts_file(os.path.join(html_root, timestamp_filename))
 
         finish_time = datetime.now().timestamp()
-        if self.log == 1:
-           log.info("JSONGenerator: Generated %d data items for %s in %.2f seconds" %
-                 (ngen, self.skin_dict['REPORT_NAME'], finish_time - start_time))
 
+        log.info("JSONGenerator: Generated %d data items for %s in %.2f seconds" %
+                 (ngen, self.skin_dict['REPORT_NAME'], finish_time - start_time))
 
     def get_target_unit(self, column_name):
         try:
@@ -340,8 +328,7 @@ class JSONGenerator(weewx.reportengine.ReportGenerator):
             except zoneinfo.ZoneInfoNotFoundError as err:
                 log.debug("tzlocal get_localzone_name execption. Will fallback to UTC offset: %s", err)
         else:
-            if self.log == 1:
-               log.warning("tzlocal not installed. Will fallback to UTC offset for station timezone")
+            log.warning("tzlocal not installed. Will fallback to UTC offset for station timezone")
         
         if station_timezone is None:
             # fallback to UTC offset
