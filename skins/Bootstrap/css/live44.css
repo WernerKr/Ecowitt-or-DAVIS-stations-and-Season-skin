@@ -20,7 +20,7 @@ body {
 }
 
 .chart {
-  width: 410px;
+  width: 475px;
   height:275px;
   margin-top: 3px;
   margin-bottom: 3px;
@@ -80,7 +80,6 @@ caption {
 }
 
 thead.table-light th {
-  color: #333;
   background-color: #f6f6f6;
 }
 

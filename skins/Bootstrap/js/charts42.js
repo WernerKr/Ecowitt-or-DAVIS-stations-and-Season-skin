@@ -1,6 +1,5 @@
 const BG_REGEX = /background-color:.*;/;
-const DAY_NIGHT = "dayNight";
-const DAY_NIGHT_KEY = DAY_NIGHT + "_";
+const DAY_NIGHT_KEY = "dayNight_";
 const BAR = "bar";
 const LINE = "line";
 const SCATTER = "scatter";
@@ -59,10 +58,8 @@ function loadCharts() {
                 obs_group: category.obs_group,
                 weewxColumn: categoryId,
                 decimals: Number(category.decimals),
-                interval: category.interval,
                 minInterval: category.minInterval,
                 maxInterval: category.maxInterval,
-                splitNumber: category.splitNumber,
                 showMaxMarkPoint: getBooleanOrDefault(category.showMaxMarkPoint, false),
                 showMinMarkPoint: getBooleanOrDefault(category.showMinMarkPoint, false),
                 showAvgMarkLine: getBooleanOrDefault(category.showAvgMarkLine, false),
@@ -94,11 +91,11 @@ function loadCharts() {
         chartOption = getChartOption(chartSeriesConfigs);
 
         for (let serie of chartOption.series) {
-            if (serie.data === undefined || serie.data === null) {
+            if (serie.dataOption === undefined || serie.data === null) {
                 continue;
             }
-            let currenStart = serie.data[0][0] - archiveIntervalSeconds * 1000;
-            let currentEnd = serie.data[serie.data.length - 1][0] + archiveIntervalSeconds * 1000;
+            let currenStart = serie.data[0][0] - chart.weewxData.aggregateInterval;
+            let currentEnd = serie.data[serie.data.length - 1][0] + chart.weewxData.aggregateInterval;
             start = start === undefined || start >= currenStart ? currenStart : start;
             end = end === undefined || end <= currentEnd ? currentEnd : end;
         }
@@ -137,14 +134,7 @@ function getDayNightSeries(chartOption, chartId, start, end) {
         data[data.length - 1][0] = end;
     }
 
-    let dayNightSerie = {
-        "name": DAY_NIGHT,
-        "type": "line",
-        "data": [[start, undefined], [end, undefined]],
-        "markArea": getDayNightMarkArea(),
-    }
-
-    chartOption.series.push(dayNightSerie);
+    chartOption.series[0].markArea = getDayNightMarkArea();
 
     return {
         name: DAY_NIGHT_KEY + chartId,
@@ -157,35 +147,18 @@ function getChartOption(seriesConfigs) {
     let series = [];
     let colors = [];
     let yAxisIndices = [];
-    let legendData = [];
-    let z = seriesConfigs.length;
     for (let seriesConfig of seriesConfigs) {
         if (seriesConfig.plotType === SCATTER && seriesConfig.dataReferences.length < 1) {
             continue;
         }
-        getSeriesConfig(seriesConfig, series, colors, z--);
+        getSeriesConfig(seriesConfig, series, colors);
         yAxisIndices[seriesConfig.yAxisIndex] = Array();
         yAxisIndices[seriesConfig.yAxisIndex]["unit"] = seriesConfig.unit;
         yAxisIndices[seriesConfig.yAxisIndex]["obs_group"] = seriesConfig.obs_group;
         yAxisIndices[seriesConfig.yAxisIndex]["decimals"] = seriesConfig.decimals;
-        yAxisIndices[seriesConfig.yAxisIndex]["interval"] = seriesConfig.interval;
         yAxisIndices[seriesConfig.yAxisIndex]["minInterval"] = seriesConfig.minInterval;
         yAxisIndices[seriesConfig.yAxisIndex]["maxInterval"] = seriesConfig.maxInterval;
-        yAxisIndices[seriesConfig.yAxisIndex]["splitNumber"] = seriesConfig.splitNumber;
         yAxisIndices[seriesConfig.yAxisIndex]["labelFontSize"] = seriesConfig.labelFontSize;
-    }
-
-    for (let serie of series) {
-        if (serie.name.startsWith(DAY_NIGHT_KEY)) {
-            continue;
-        }
-        let legendItem = {
-            name: serie.name
-        }
-        if (serie.symbol !== undefined && serie.symbol !== 'none') {
-            legendItem.icon = serie.symbol;
-        }
-        legendData.push(legendItem);
     }
 
     let yAxis = [];
@@ -193,18 +166,14 @@ function getChartOption(seriesConfigs) {
         let obs_group = yAxisIndices[yAxisIndex]["obs_group"];
         let unit = yAxisIndices[yAxisIndex]["unit"];
         let decimals = yAxisIndices[yAxisIndex]["decimals"];
-        let interval = yAxisIndices[yAxisIndex]["interval"];
         let minInterval = yAxisIndices[yAxisIndex]["minInterval"];
         let maxInterval = yAxisIndices[yAxisIndex]["maxInterval"];
-        let splitNumber = yAxisIndices[yAxisIndex]["splitNumber"];
         let yAxisItem = {
             name: Array.isArray(unit) && unit.length > 1 ? unit[1] : unit,
             type: "value",
             alignTicks: true,
-            interval: interval,
             minInterval: minInterval,
             maxInterval: maxInterval,
-            splitNumber: splitNumber,
             nameTextStyle: {
                 fontWeight: 'bold',
             },
@@ -244,8 +213,7 @@ function getChartOption(seriesConfigs) {
 
     return {
         legend: {
-            type: "plain",
-            data: legendData
+            type: "plain"
         },
         color: colors,
         backgroundColor: backGroundColor,
@@ -271,23 +239,7 @@ function getChartOption(seriesConfigs) {
             type: "time",
             splitLine: {
                 show: true
-            },
-            axisLabel: {
-                formatter: function (value, idx) {
-                    let day = luxon.DateTime.fromMillis(value, { zone: stationTimezone }).startOf('day').toMillis();
-                    if (value === day) {
-                        return `{day|${formatDate(value, stationTimezone, { day: 'numeric' })}}`;
-                    } else {
-                        return formatTime(value, stationTimezone, luxon.DateTime.TIME_24_SIMPLE);
-                    }
-                },
-                rich: {
-                    day: {
-                        fontSize: '10px',
-                        fontWeight: 'bold'
-                    }
-                }
-            },
+            }
         },
         yAxis: yAxis,
         series: series
@@ -309,10 +261,6 @@ function getTooltip(seriesConfigs) {
         show: true,
         position: containsScatter ? "top" : "inside",
         formatter: function (params, ticket, callback) {
-            let seriesName = Array.isArray(params) ? params[0].seriesName : params.seriesName;
-            if (seriesName.includes(DAY_NIGHT)) {
-                return;
-            }
             let tooltipHTML = '<table>';
             let show = true;
             let marker;
@@ -362,21 +310,20 @@ function getTooltip(seriesConfigs) {
                     }
                     let fromDate = new Date(aggregateAxisValue - halfAggregateInterval);
                     let toDate = new Date(aggregateAxisValue + halfAggregateInterval);
-                    let from = formatDateTime(fromDate, stationTimezone);
-                    let to = formatTime(toDate, stationTimezone);
+                    let from = formatDateTime(fromDate);
+                    let to = formatTime(toDate);
                     if (i == 0 || aggregateInterval !== intervals[i - 1]) {
                         tooltipHTML += '<tr><td colspan="2" style="font-size: x-small;">' + from + " - " + to + '</td></tr>';
                     }
                 } else {
                     let date = new Date(aggregateAxisValue);
                     if (i == 0 || aggregateInterval !== intervals[i - 1]) {
-                        tooltipHTML += '<tr><td colspan="2" style="font-size: x-small;">' + formatDateTime(date, stationTimezone) + '</td></tr>';
+                        tooltipHTML += '<tr><td colspan="2" style="font-size: x-small;">' + formatDateTime(date) + '</td></tr>';
                     }
                 }
 
                 if (dataValue !== undefined && dataValue !== null) {
-                    let formattedDataValue = format(dataValue, seriesItem.decimals);
-                    formattedValue = formattedDataValue + getUnitString(formattedDataValue, unitString);
+                    formattedValue = format(dataValue, seriesItem.decimals) + getUnitString(dataValue, unitString);
                 }
                 tooltipHTML += ('<tr style="font-size: small;"><td>' + marker.replace(BG_REGEX, "background-color:" + seriesItem.lineColor + ";") + seriesItem.name + '</td><td style="text-align: right; padding-left: 10px; font-weight: bold;">' + formattedValue + '</td></tr>');
 
@@ -416,18 +363,17 @@ function getAggregateAxisValue(axisValue, data, halfAggregateInterval) {
     return aggregateAxisValue;
 }
 
-function getSeriesConfig(seriesConfig, series, colors, z) {
+function getSeriesConfig(seriesConfig, series, colors) {
     colors.push(seriesConfig.lineColor);
     if (seriesConfig.data === undefined) {
         seriesConfig.data = [];
     }
     let type = seriesConfig.plotType;
     if (seriesConfig.aggregateInterval !== undefined) {
-        seriesConfig.data = aggregate(seriesConfig.data, seriesConfig.aggregateInterval, seriesConfig.aggregateType, seriesConfig.decimals);
+        seriesConfig.data = aggregate(seriesConfig.data, seriesConfig.aggregateInterval, seriesConfig.aggregateType);
     }
     let serie = {
         name: decodeHtml(seriesConfig.name),
-        z: z,
         payloadKey: seriesConfig.payloadKey,
         weewxColumn: seriesConfig.weewxColumn,
         unit: seriesConfig.unit,
@@ -436,18 +382,12 @@ function getSeriesConfig(seriesConfig, series, colors, z) {
         barWidth: '100%', //only applies to barchart
         barGap: '-100%', //only applies to barchart
         symbol: seriesConfig.symbol === undefined ? 'none' : seriesConfig.symbol,
-        symbolKeepAspect: true,
         lineStyle: {
             width: seriesConfig.lineStyle === undefined || seriesConfig.lineStyle.width === undefined ? 1 : seriesConfig.lineStyle.width,
         },
         data: seriesConfig.data,
         yAxisIndex: seriesConfig.yAxisIndex,
     };
-
-
-    if (seriesConfig.symbolSize !== undefined) {
-        serie.symbolSize = new Function("return " + seriesConfig.symbolSize)();
-    }
 
     if (seriesConfig.plotType === SCATTER) {
         let groups = [weewxData.units.Groups[seriesConfig.obs_group]];
@@ -461,15 +401,19 @@ function getSeriesConfig(seriesConfig, series, colors, z) {
                 for (let referencedData of weewxData[dataReference]) {
                     if (referencedData[0] === entry[0]) {
                         entry.push(referencedData[1]);
-                        if (referencedData[1] === 0 || referencedData[1] === null) {
+                        if (referencedData[1] === 0) {
                             entry[1] = null;
                         }
                     }
                 }
             }
         }
+
+        serie.symbolSize = function (data) {
+            return 5 * Math.sqrt(data[2] / Math.PI);
+        };
         serie.emphasis = {
-            focus: 'none',
+            focus: 'series',
             label: {
                 show: true,
                 formatter: function (param) {
@@ -493,22 +437,29 @@ function getSeriesConfig(seriesConfig, series, colors, z) {
         let markPoint = {};
         markPoint.symbolSize = 0;
         markPoint.data = [];
-        for (let dataPoint of weewxData[seriesConfig.weewxColumn + "_" + DAILY_HIGH_LOW_KEY]) {
-            let name = DAILY_MAX;
-            let position = "top";
-            let value = dataPoint[1];
-            let valueTimestamp = dataPoint[0];
-            if (dataPoint[2] === "min") {
-                name = DAILY_MIN;
-                position = "bottom";
-            }
+        if (seriesConfig.showMaxMarkPoint) {
             markPoint.data.push({
-                coord: [valueTimestamp, value],
-                name: name,
+                type: "max",
+                name: "Max",
                 label: {
                     show: true,
-                    position: position,
-                    formatter: format(value, seriesConfig.decimals).toString(),
+                    position: "top",
+                    formatter: function (value) {
+                        return format(value.data.value, seriesConfig.decimals);
+                    },
+                }
+            });
+        }
+        if (seriesConfig.showMinMarkPoint) {
+            markPoint.data.push({
+                type: "min",
+                name: "Min",
+                label: {
+                    show: true,
+                    position: "bottom",
+                    formatter: function (value, ticket) {
+                        return format(value.data.value, seriesConfig.decimals);
+                    },
                 }
             });
         }
@@ -558,7 +509,7 @@ function getTimestampDiv(parentId, timestamp) {
     timestampDiv.id = parentId + "_timestamp";
     timestampDiv.setAttribute("class", "chartTimestamp");
     if (timestamp > 0) {
-        timestampDiv.innerHTML = formatDateTime(timestamp, stationTimezone);
+        timestampDiv.innerHTML = formatDateTime(timestamp);
     }
     outerDiv.appendChild(timestampDiv);
     return outerDiv;

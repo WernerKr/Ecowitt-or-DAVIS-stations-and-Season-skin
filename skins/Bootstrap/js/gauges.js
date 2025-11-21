@@ -1,7 +1,7 @@
 let maxOpacity = 255 * 0.55;
 function loadGauges() {
     let gaugePanel = document.getElementById("gaugePanel");
-    if(gaugePanel !== null && gaugePanel !== undefined && window.getComputedStyle(gaugePanel).display === 'none') {
+    if (gaugePanel !== null && gaugePanel !== undefined && window.getComputedStyle(gaugePanel).display === 'none') {
         gaugePanel.remove();
         document.getElementById("mainPanel").setAttribute("class", "col-12 mt-1");
         return;
@@ -26,7 +26,7 @@ function loadGauges() {
         gauge.weewxData.dataset = {
             weewxColumn: gaugeId
         };
-        gauge.weewxData.dataset.data = aggregate(JSON.parse(JSON.stringify(weewxData[gaugeId])), gauge.weewxData.aggregateInterval, gauge.weewxData.aggregateType);
+        gauge.weewxData.dataset.data = aggregate(JSON.parse(JSON.stringify(weewxData[gaugeId])), gauge.weewxData.aggregateInterval, gauge.weewxData.aggregateType, gauge.weewxData.decimals);
         gauges[documentGaugeId] = gauge;
         let colors = [];
         let gaugePitchPrecision = gauge.weewxData["gauge_pitch_precision"] === undefined ? 1 : gauge.weewxData["gauge_pitch_precision"];
@@ -35,17 +35,15 @@ function loadGauges() {
         let splitnumber = gauge.weewxData.splitnumber;
         let gaugeName = gauge.weewxData.gaugeName === undefined ? weewxData.labels.Generic[gaugeId] : gauge.weewxData.gaugeName;
         let axisTickSplitNumber = 5;
-        if (gauge.weewxData.heatMapEnabled !== undefined && gauge.weewxData.heatMapEnabled.toLowerCase() === "false") {
-            gauge.weewxData.heatMapEnabled = false;
-        } else {
-            gauge.weewxData.heatMapEnabled = true;
-        }
+        gauge.weewxData.heatMapEnabled = parseBooleanDefaultTrue(gauge.weewxData.heatMapEnabled);
+        gauge.weewxData.stuckNeedleEnabled = parseBooleanDefaultTrue(gauge.weewxData.stuckNeedleEnabled);
         if (gauge.weewxData.obs_group === "group_direction") {
             minvalue = 0;
             maxvalue = 360;
             splitnumber = 4;
             axisTickSplitNumber = 4;
             colors = [[0.25, gauge.weewxData.lineColorN], [0.5, gauge.weewxData.lineColorS], [0.75, gauge.weewxData.lineColorS], [1, gauge.weewxData.lineColorN]];
+            gauge.weewxData.directionValuesEnabled = parseBooleanDefaultFalse(gauge.weewxData.directionValuesEnabled);
         } else {
             let lineColors = Array.isArray(gauge.weewxData.lineColor) ? gauge.weewxData.lineColor : [gauge.weewxData.lineColor];
             let lineColorUntilValues = Array.isArray(gauge.weewxData.lineColorUntil) ? gauge.weewxData.lineColorUntil : [gauge.weewxData.lineColorUntil];
@@ -91,21 +89,56 @@ function loadGauges() {
             };
             gaugeOption.series[0].title.offsetCenter = ['0', '-25%'];
             gaugeOption.series[0].detail.offsetCenter = ['0', '30%'];
+            if (gauge.weewxData.directionValuesEnabled) {
+                gaugeOption.series[0].detail.formatter = function (value) {
+                    let ordinals = weewxData.units.Ordinates.directions === undefined ? ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N/A'] : weewxData.units.Ordinates.directions;
+                    if (isNaN(value)) {
+                        return ordinals[-1];
+                    }
+                    let sectorSize = 360.0 / ((ordinals.length) - 1);
+                    let degree = (value + sectorSize / 2.0) % 360.0;
+                    let sector = Math.floor(degree / sectorSize);
+                    return ordinals[sector];
+                };
+            }
         }
         gauge.setOption(gaugeOption);
     }
 }
+
+function parseBooleanDefaultTrue(value) {
+    return parseBoolean(value, true);
+}
+
+function parseBooleanDefaultFalse(value) {
+    return parseBoolean(value, false);
+}
+
+function parseBoolean(value, defaultValue) {
+    if (value !== undefined && value !== null) {
+        if (value.toLowerCase() === "false") {
+            return false;
+        } else if (value.toLowerCase() === "true") {
+            return true;
+        }
+    }
+    return defaultValue;
+}
+
 function getGaugeOption(name, min, max, splitNumber, axisTickSplitNumber, lineColor, unit, weewxData) {
     name = decodeHtml(name);
     let decimals = Number(weewxData.decimals);
     let value = null;
     let data = weewxData.dataset.data;
     if (data === undefined || data.length < 1) {
-        value = 0;
+        value = null;
     } else {
         let index = 1;
-        while(value === null && index <= data.length) {
+        while (value === null && index <= data.length) {
             value = data.slice(index++ * -1)[0][1];
+            if (!weewxData.stuckNeedleEnabled) {
+                break;
+            }
         }
     }
     let option = {
@@ -126,6 +159,7 @@ function getGaugeOption(name, min, max, splitNumber, axisTickSplitNumber, lineCo
                 }
             },
             pointer: {
+                show: !isNaN(parseFloat(value)),
                 width: 5,
                 itemStyle: {
                     color: '#428bca',
@@ -164,10 +198,14 @@ function getGaugeOption(name, min, max, splitNumber, axisTickSplitNumber, lineCo
                 fontSize: weewxData.detailFontSize === undefined ? 12 : weewxData.detailFontSize,
                 color: '#777',
                 formatter: function (value) {
-                    if (decimals !== undefined && decimals >= 0) {
-                        value = format(value, decimals);
+                    if (isNaN(value)) {
+                        return undefined;
+                    } else {
+                        if (decimals !== undefined && decimals >= 0) {
+                            value = format(value, decimals);
+                        }
+                        return value + getUnitString(value, unit);
                     }
-                    return value + getUnitString(value, unit);
                 },
                 offsetCenter: ['0', '70%']
             },
@@ -225,7 +263,7 @@ $(window).on('resize', function () {
 });
 
 function getHeatColor(max, min, splitNumber, axisTickSplitNumber, data) {
-    if(data === undefined || data === null ){
+    if (data === undefined || data === null) {
         return "#ffffff00";
     }
     let ticksNumber = splitNumber * axisTickSplitNumber;
@@ -237,7 +275,7 @@ function getHeatColor(max, min, splitNumber, axisTickSplitNumber, data) {
     let baseColor = '#ff0000';
     for (let item of data) {
         let value = item[1];
-        if(value === null || value === undefined) {
+        if (value === null || value === undefined) {
             continue;
         }
         let index = 0;
@@ -263,9 +301,9 @@ function getHeatColor(max, min, splitNumber, axisTickSplitNumber, data) {
     return color;
 }
 
-function getDecimalSeparator(locale) {
+function getDecimalSeparator() {
     let n = 1.1;
-    n = n.toLocaleString(locale).substring(1, 2);
+    n = n.toLocaleString(jsLocale).substring(1, 2);
     return n;
 }
 
@@ -275,9 +313,8 @@ function format(number, digits) {
         return number;
     }
     number = Number(number);
-    let localeInfo = locale.replace("_", "-");
-    let numString = parseFloat(number.toFixed(digits)).toLocaleString(localeInfo);
-    let decimalSeparator = getDecimalSeparator(localeInfo);
+    let numString = parseFloat(number.toFixed(digits)).toLocaleString(jsLocale);
+    let decimalSeparator = getDecimalSeparator();
     if (digits > 0 && !numString.includes(decimalSeparator)) {
         numString += decimalSeparator;
         for (let i = 0; i < digits; i++) {

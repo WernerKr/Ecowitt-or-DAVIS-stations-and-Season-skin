@@ -38,7 +38,7 @@ body {
 .footer {
   color: #555;
   font-family: sans-serif;
-  font-size: xx-small;
+  font-size: small;
 }
 .primaryLive, .primaryLive:active, .primaryLive:focus, .primaryLive:checked {
   background-color: #428bca;
@@ -62,12 +62,6 @@ body {
   font-weight: bold;
   font-size: calc(14px + 0.3vw);
 }
-
-caption {
-  caption-side: top;
-  text-align: left;
-}
-
 .historyTable {
   font-size: calc(5px + 0.5vw);
 }
@@ -104,7 +98,6 @@ thead.table-light th {
 }
 
 td.month, td.head, td.year, td.noaa, th.month, th.head, th.year, th.noaa {
-  color: #555;
   padding: 2px;
   white-space: nowrap;
   overflow: hidden;
