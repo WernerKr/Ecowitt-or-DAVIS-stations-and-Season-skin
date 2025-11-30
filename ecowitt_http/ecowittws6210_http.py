@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.2.8                                  Date: 10 Nov 2025
+Version: 0.2.9                                  Date: 30 Nov 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -118,8 +118,12 @@ Revision History
         - Stored Lightning time (lightning_disturber_count) didn't use local time
 
     10 Nov 2025            v0.2.8
-        - Correction for WS6210 and SDCard data
-
+        - Correction for WS6210 and SDCard data (but from SDCard PM2.5 1..4 are missing!
+        - for WS6210 use ecowittws6210_http driver -> use other Thunder time and correct PM2.5 1..4
+    30 Nov 2025            v0.2.9
+        - added rain_batt and piezorain_bat (0..5)
+        - lightning_distance/lightning_dist group_count changed to group_distance  
+        
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
 
@@ -237,7 +241,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.8'
+DRIVER_VERSION = '0.2.9'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
@@ -414,8 +418,11 @@ weewx.units.obs_group_dict['rain_week_reset'] = 'group_count'
 weewx.units.obs_group_dict['rain_source'] = 'group_count'
 weewx.units.obs_group_dict['piezo'] = 'group_count'
 
-weewx.units.obs_group_dict['lightning_dist'] = 'group_count'
-weewx.units.obs_group_dict['lightning_distance'] = 'group_count'
+weewx.units.obs_group_dict['rain_batt'] = 'group_count'
+weewx.units.obs_group_dict['piezorain_batt'] = 'group_count'
+
+weewx.units.obs_group_dict['lightning_dist'] = 'group_distance'
+weewx.units.obs_group_dict['lightning_distance'] = 'group_distance'
 weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
 weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
 weewx.units.obs_group_dict['lightning_noise_count'] = 'group_count'
@@ -530,9 +537,9 @@ DEFAULT_GROUPS = {
     'rain.0x12.voltage': 'group_volt',
     'rain.0x13.val': 'group_rain',
     'rain.0x13.voltage': 'group_volt',
+    'rain.0x13.battery': 'group_count',
     't_rain': 'group_rain',
     't_rainyear': 'group_rain',
-    #    'rain.0x13.battery': 'group_count',
     'rain.0x13.voltage': 'group_volt',
     'piezoRain.srain_piezo.val': 'group_boolean',
     'piezoRain.0x0D.val': 'group_rain',
@@ -552,6 +559,7 @@ DEFAULT_GROUPS = {
     'piezoRain.0x12.battery': 'group_count',
     'piezoRain.0x12.voltage': 'group_volt',
     'piezoRain.0x13.val': 'group_rain',
+    'piezoRain.0x13.battery': 'group_count',
     'piezoRain.0x13.voltage': 'group_volt',
     'piezoRain.srain_piezo': 'group_boolean',
     'piezoRain.0x13.ws85cap_volt': 'group_volt',
@@ -1776,6 +1784,9 @@ class HttpMapper(FieldMapper):
         'wh80_batt': 'ws80.battery',
         'wh85_batt': 'ws85.battery',
         'wh90_batt': 'ws90.battery',
+
+        'rain_batt': 'rain.0x13.battery',
+        'piezorain_batt': 'piezoRain.0x13.battery',
 
         'ws85cap_volt': 'piezoRain.0x13.ws85cap_volt',
         'ws90cap_volt': 'piezoRain.0x13.ws90cap_volt',
@@ -11615,10 +11626,9 @@ class EcowittHttpParser:
         unit.
 
         Ecowitt has added 'battery' and (battery) 'voltage' fields to some
-        observations. However, the driver obtains battery state data via the
-        get_sensors_info HTTP API command so the battery state data in this
-        object is not required. To avoid confusion pop the 'battery' key if it
-        exists. Also check for the 'voltage' key/value, if it exists convert
+        observations. The driver also obtains battery state data via the
+        get_sensors_info HTTP API command. 
+        Also check for the 'voltage' key/value, if it exists convert
         the value to a float and return the key/value in the response. If the
         'voltage' key does not exist it is ignored.
         The ws85_ver and ws90_ver key is are now new (from GW3000 V1.0.9.6)
@@ -11629,6 +11639,7 @@ class EcowittHttpParser:
 
         id:      common_list observation ID number. String.
         val:     rain value in driver rainfall unit. float.
+        battery: rain battery state (0..5)
         voltage: sensor battery voltage if provided. Float.
         new:
         ws85cap_volt: sensor cap voltage if provided. Float.
@@ -11669,6 +11680,12 @@ class EcowittHttpParser:
             # driver and save against the 'val' key
             _item['val'] = weewx.units.convert(rain_vt,
                                                weewx.units.std_groups[self.unit_system]['group_rain']).value
+
+        try:
+            _item['battery'] = int(item['battery'])
+        except (KeyError, TypeError, ValueError):
+            pass
+
         # process the 'voltage' key/value if it exists, wrap in a try.. except
         # in case there is a problem
         try:
@@ -11792,6 +11809,11 @@ class EcowittHttpParser:
             # driver and save against the 'val' key
             _item['val'] = weewx.units.convert(rainrate_vt,
                                                weewx.units.std_groups[self.unit_system]['group_rainrate']).value
+        try:
+            _item['battery'] = int(item['battery'])
+        except (KeyError, TypeError, ValueError):
+            pass
+
         # process the 'voltage' key/value if it exists, wrap in a try.. except
         # in case there is a problem
         try:
@@ -13501,7 +13523,7 @@ class DirectEcowittDevice:
                     'rain.0x11.val', 'rain.0x11.voltage',
                     'rain.0x12.val', 'rain.0x12.voltage',
                     'rain.0x13.val', 'rain.0x13.voltage',
-                    'rain.0x7C.val',
+                    'rain.0x13.battery', 'rain.0x7C.val',
                     'piezoRain.srain_piezo.val',
                     'piezoRain.0x0D.val', 'piezoRain.0x0D.voltage',
                     'piezoRain.0x0E.val', 'piezoRain.0x0E.voltage',
@@ -13509,7 +13531,7 @@ class DirectEcowittDevice:
                     'piezoRain.0x11.val', 'piezoRain.0x11.voltage',
                     'piezoRain.0x12.val', 'piezoRain.0x12.voltage',
                     'piezoRain.0x13.val', 'piezoRain.0x13.voltage',
-                    'piezoRain.0x7C.val',
+                    'piezoRain.0x13.battery','piezoRain.0x7C.val',
                     'piezoRain.0x13.ws85_ver', 'piezoRain.0x13.ws85cap_volt',
                     'piezoRain.0x13.ws90_ver', 'piezoRain.0x13.ws90cap_volt',
                     'wh25.intemp', 'wh25.inhumi', 'wh25.abs', 'wh25.rel',
