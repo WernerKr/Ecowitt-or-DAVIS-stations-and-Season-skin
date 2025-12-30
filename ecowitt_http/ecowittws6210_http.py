@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.2.9                                  Date: 30 Nov 2025
+Version: 0.3.0                                  Date: 30 Dec 2025
 
 Revision History
     3 July 2025            v0.1.0x
@@ -123,6 +123,9 @@ Revision History
     30 Nov 2025            v0.2.9
         - added rain_batt and piezorain_bat (0..5)
         - lightning_distance/lightning_dist group_count changed to group_distance  
+
+    30 Dec 2025            v0.3.0
+        - livedata 0xA1, 0xA2 -> WN38 Sensor
         
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -516,6 +519,10 @@ DEFAULT_GROUPS = {
     'common_list.0x19.val': 'group_speed',
     'common_list.0x19.battery': 'group_count',
     'common_list.0x19.voltage': 'group_volt',
+    'common_list.0xA1.val': 'group_temperature',
+    'common_list.0xA1.voltage': 'group_volt',
+    'common_list.0xA1.battery': 'group_count',
+    'common_list.0xA2.val': 'group_temperature',
     'console.battery': 'group_count',
     'console.console_batt_volt': 'group_volt',
     'console.console_ext_volt': 'group_volt',
@@ -968,8 +975,6 @@ DEFAULT_GROUPS = {
     'ws80.rssi': 'group_dbm',
     'ws85.rssi': 'group_dbm',
     'ws90.rssi': 'group_dbm',
-    'wn38.bgt': 'group_temperature',
-    'wn38.wbgt': 'group_temperature',
     'apName': 'group_string',
     'stationtype': 'group_string',
 }
@@ -1488,6 +1493,8 @@ class HttpMapper(FieldMapper):
         'radiation': 'common_list.0x15.val',
         'uvradiation': 'common_list.0x16.val',
         'UV': 'common_list.0x17.val',
+        'bgt': 'common_list.0xA1.val',
+        'wbgt': 'common_list.0xA2.val',
         'lightning_dist': 'lightning.distance',
         'lightning_disturber_count': 'lightning.timestamp',
         'lightning_num': 'lightning.num',
@@ -1636,8 +1643,6 @@ class HttpMapper(FieldMapper):
         'soilad14': 'ch_soil14nowAd',
         'soilad15': 'ch_soil15nowAd',
         'soilad16': 'ch_soil16nowAd',
-        'bgt': 'wn38.bgt',
-        'wbgt': 'wn38.wbgt',
     }
     # modular rain map
     default_rain_map = {
@@ -1779,6 +1784,7 @@ class HttpMapper(FieldMapper):
         'ldsbatt2': 'ch_lds.2.voltage',
         'ldsbatt3': 'ch_lds.3.voltage',
         'ldsbatt4': 'ch_lds.4.voltage',
+        'bgtbatt': 'common_list.0xA1.voltage',
         'wh68_batt': 'wh68.battery',
         'wh69_batt': 'wh69.battery',
         'wh80_batt': 'ws80.battery',
@@ -2065,6 +2071,8 @@ class SdMapper(FieldMapper):
         'common_list.0x6D.val': 'windDir_10min_avg',
         'common_list.0x15.val': 'Solar Rad',
         'common_list.0x17.val': 'UV-Index',
+        'common_list.0xA1.val': 'BGT',
+        'common_list.0xA2.val': 'WBGT',
         'rain.0x0E.val': 'Rain Rate',
         'rain.0x0F.val': 'Hourly Rain',
         'rain.0x0D.val': 'Event Rain',
@@ -2200,8 +2208,6 @@ class SdMapper(FieldMapper):
         'console.console_ext_volt': 'External Supply ',
         'console.battery_proz': 'Console Battery Percentage',
         'console.charge_stat': 'Charge',
-        'wn38.bgt': 'BGT',
-        'wn38.wbgt': 'WBGT',
     }
 
     def __init__(self, driver_debug=None, default_map=None, **mapper_config):
@@ -2962,7 +2968,7 @@ class EcowittHttpService(weewx.engine.StdService, EcowittCommon):
                        elif ('piezoRain.0x13.ws90_ver' in queue_data)  or (self.ws90 == 1) or ('ws90.version' in queue_data): 
                           event.packet['ws90_batt'] = queue_data['piezoRain.0x13.voltage']
 
-                    if 'wn38.wbgt' not in queue_data:
+                    if 'common_list.0xA2.val' not in queue_data:
                        if 'common_list.0x02.val' in queue_data  and 'common_list.0x07.val' in queue_data:
                          if queue_data['common_list.0x02.val'] != None and queue_data['common_list.0x07.val'] != None:
                            # tempc = (float(queue_data['common_list.0x02.val'])-32)*5/9
@@ -4589,6 +4595,7 @@ class EcowittNetCatchup(Catchup):
             'ldsbatt_2': 'ch_lds.2.voltage',
             'ldsbatt_3': 'ch_lds.3.voltage',
             'ldsbatt_4': 'ch_lds.4.voltage',
+            'bgtbatt': 'common_list.0xA1.voltage',
         }
     }
 
@@ -5086,7 +5093,7 @@ class EcowittDeviceCatchup:
                               'ch_temp.1.temp', 'ch_temp.2.temp', 'ch_temp.3.temp', 'ch_temp.4.temp',
                               'ch_temp.5.temp', 'ch_temp.6.temp', 'ch_temp.7.temp', 'ch_temp.8.temp',
                               'co2.temperature', 'co2.temp',
-                              'wn38.bgt', 'wn38.wbgt'),
+                              'common_list.0xA1.val', 'common_list.0xA2.val'),
         'group_speed' : ('common_list.0x0B.val', 'common_list.0x0C.val'),
         'group_pressure': ('wh25.abs', 'wh25.rel', 'common_list.5.val'),
         'group_pressurevpd': ('common_list.5.val'),
@@ -5900,7 +5907,7 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                        elif ('piezoRain.0x13.ws90_ver' in queue_data)  or (self.ws90 == 1) or ('ws90.version' in queue_data): 
                           packet['ws90_batt'] = queue_data['piezoRain.0x13.voltage']
 
-                    if 'wn38.wbgt' not in queue_data:
+                    if 'common_list.0xA2.val' not in queue_data:
                        if 'common_list.0x02.val' in queue_data  and 'common_list.0x07.val' in queue_data:
                          if queue_data['common_list.0x02.val'] != None and queue_data['common_list.0x07.val'] != None:
                            # tempc = (float(queue_data['common_list.0x02.val'])-32)*5/9
@@ -7116,6 +7123,8 @@ class EcowittHttpParser:
         '0x19': 'process_speed_object', # day max wind speed
         '0x6D': 'process_direction_object', # wind direction 10min
         '0x7C': 'process_rainfall_object', # rain 24h
+        '0xA1': 'process_temperature_object', # BGT
+        '0xA2': 'process_temperature_object', # WBGT
         'srain_piezo': 'process_boolean_object' # is raining (?)
     }
     rain_map = {
@@ -12027,9 +12036,9 @@ class EcowittSensors:
     # sensors whose battery state is determined from a binary value (0|1)
     batt_binary = ('wh68', 'wh69', 'wh25', 'wh26', 'wn31', 'wn32')
     # sensors whose battery state is determined from an integer value
-    batt_int = ('wn20', 'wh40', 'wh41', 'wh43', 'wh45', 'wh55', 'wh57')
+    batt_int = ('wn20', 'wn38', 'wh40', 'wh41', 'wh43', 'wh45', 'wh55', 'wh57')
     # sensors whose battery state is determined from a battery voltage value
-    batt_volt = ('wh68', 'wh51', 'wh54', 'wn34', 'wn35', 'ws80', 'ws85', 'ws90')
+    batt_volt = ('wh68', 'wh51', 'wh54', 'wn34', 'wn38', 'wn35', 'ws80', 'ws85', 'ws90')
     # map of 'dotted' get_livedata_info sensor voltage fields to sensor address
     sensor_with_voltage = {
         'rain.0x13.voltage': 3,		#wh40 
@@ -12071,7 +12080,8 @@ class EcowittSensors:
         'ch_lds.1.voltage': 66,
         'ch_lds.2.voltage': 67,
         'ch_lds.3.voltage': 68,
-        'ch_lds.4.voltage': 69
+        'ch_lds.4.voltage': 69,
+        'common_list.0xA1.voltage': 71,
     }
     # map of sensor address to composite sensor name (ie sensor model and
     # channel (as applicable))
@@ -13546,7 +13556,9 @@ class DirectEcowittDevice:
                     'common_list.0x15.val', 'common_list.0x15.voltage',
                     'common_list.0x16.val', 'common_list.0x16.voltage',
                     'common_list.0x17.val', 'common_list.0x17.voltage',
-                    'common_list.0x6D.val',
+                    'common_list.0x6D.val', 
+                    'common_list.0xA1.val', 'common_list.0xA1.battery', 'common_list.0xA1.voltage',
+                    'common_list.0xA2.val', 
                     'console.console_batt_volt', 'console.battery', 'console.console_ext_volt',
                     'console.charge_stat', 'console.battery_proz',
                     'co2.temperature', 'co2.temp', 'co2.humidity', 'co2.CO2', 'co2.CO2_24H', 'co2.battery',
@@ -13602,7 +13614,7 @@ class DirectEcowittDevice:
                     'wn35.ch3.battery', 'wn35.ch3.signal', 'wn35.ch4.battery', 'wn35.ch4.signal', 'wn34.ch11.rssi', 'wn34.ch12.rssi',
                     'wn35.ch5.battery', 'wn35.ch5.signal', 'wn35.ch6.battery', 'wn35.ch6.signal', 'wn34.ch13.rssi', 'wn34.ch14.rssi',
                     'wn35.ch7.battery', 'wn35.ch7.signal', 'wn35.ch8.battery', 'wn35.ch8.signal', 'wn34.ch15.rssi', 'wn34.ch16.rssi',
-                    'wn38.battery', 'wn38.signal', 'wn38.rssi', 'wn38.bgt', 'wn38.wbgt',
+                    'wn38.battery', 'wn38.signal', 'wn38.rssi',
                     'wh40.battery', 'wh40.signal', 'wh40.rssi',
                     'wh41.ch1.battery', 'wh41.ch1.signal', 'wh41.ch2.battery', 'wh41.ch2.signal', 'wh41.ch1.rssi', 'wh41.ch2.rssi',
                     'wh41.ch3.battery', 'wh41.ch3.signal', 'wh41.ch4.battery', 'wh41.ch4.signal', 'wh41.ch3.rssi', 'wh41.ch4.rssi',
