@@ -4,6 +4,20 @@
 # Modified 2025 - now only Ecowitt client Werner Krenn
 
 """
+Version: 0.1.7                                  Date: 30 Dec 2025
+
+Revision History
+    30 Nov 2025            v0.1.7
+        - lightning_distance group_count changed to group_distance  
+
+    26 Sep 2025            v0.1.6
+        - "kPa" = "%.3f"
+        - bgt, wbgt, wbgtcat
+    30 Dec 2025            v0.1.7
+        - bgtbatt, wn38_sig, wn38_rssi, lightning_distance = group_distance 
+
+
+===============================================================================
 This driver runs a simple web server or sniffs network traffic in order to
 capture data directly from an internet weather reporting device including:
 
@@ -168,7 +182,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Ecowittcustom'
-DRIVER_VERSION = '0.1.6'
+DRIVER_VERSION = '0.1.7'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -182,6 +196,7 @@ weewx.units.MetricUnits["group_dbm"] = "dBm"
 weewx.units.MetricWXUnits["group_dbm"] = "dBm"
 weewx.units.default_unit_format_dict["dBm"] = "%.0f"
 weewx.units.default_unit_label_dict["dBm"] = " dBm"
+
 
 weewx.units.obs_group_dict['co2'] = 'group_fraction'
 weewx.units.obs_group_dict['co2_Temp'] = 'group_temperature'
@@ -251,7 +266,8 @@ weewx.units.obs_group_dict['soilMoist14'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist15'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist16'] = 'group_percent'
 
-weewx.units.obs_group_dict['lightning_distance'] = 'group_count'
+weewx.units.obs_group_dict['lightning_distance'] = 'group_distance'
+
 weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
 weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
 weewx.units.obs_group_dict['lightning_num'] = 'group_count'
@@ -282,6 +298,7 @@ weewx.units.obs_group_dict['drain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['wrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['mrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['yrain_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['train_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['p_rain'] = 'group_rain'
 weewx.units.obs_group_dict['rain24'] = 'group_rain'
@@ -379,6 +396,7 @@ weewx.units.obs_group_dict['soilad15'] = 'group_count'
 weewx.units.obs_group_dict['soilad16'] = 'group_count'
 
 """
+#not used!
 weewx.units.obs_group_dict['wh24_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh25_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh26_sig'] = 'group_count'
@@ -454,6 +472,7 @@ weewx.units.obs_group_dict['ws80_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws90_sig'] = 'group_count'
 weewx.units.obs_group_dict['ws85_sig'] = 'group_count'
 weewx.units.obs_group_dict['wh85_sig'] = 'group_percent'
+# not used!
 """
 
 weewx.units.obs_group_dict['wn20_rssi'] = 'group_dbm'
@@ -492,6 +511,7 @@ weewx.units.obs_group_dict['wn35_ch5_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['wn35_ch6_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['wn35_ch7_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['wn35_ch8_rssi'] = 'group_dbm'
+weewx.units.obs_group_dict['wn38_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['wh40_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['wh41_ch1_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['wh41_ch2_rssi'] = 'group_dbm'
@@ -624,15 +644,6 @@ weewx.units.default_unit_label_dict["air_ch2"] = "mm"
 weewx.units.default_unit_label_dict["air_ch3"] = "mm"
 weewx.units.default_unit_label_dict["air_ch4"] = "mm"
 
-
-"""
-weewx.units.USUnits["group_lengthmm"] = "lmm"
-weewx.units.MetricUnits["group_lengthmm"] = "lmm"
-weewx.units.MetricWXUnits["group_lengthmm"] = "lmm"
-weewx.units.default_unit_label_dict["lmm"] = "mm"
-weewx.units.default_unit_format_dict["lmm"] = "%.0f"
-"""
-
 weewx.units.obs_group_dict['vpd'] = 'group_pressurevpd'
 weewx.units.USUnits["group_pressurevpd"] = "inHg"
 weewx.units.MetricUnits["group_pressurevpd"] = "kPa"
@@ -642,6 +653,7 @@ weewx.units.default_unit_format_dict["kPa"] = "%.3f"
 weewx.units.obs_group_dict['bgt'] = 'group_temperature'
 weewx.units.obs_group_dict['wbgt'] = 'group_temperature'
 weewx.units.obs_group_dict['wbgtcat'] = 'group_count'
+weewx.units.obs_group_dict['bgtbatt'] = 'group_volt'
 
 
 def loader(config_dict, _):
@@ -900,6 +912,7 @@ class Consumer(object):
         'wrain_piezo': 'wrain_piezo',
         'mrain_piezo': 'mrain_piezo',
         'yrain_piezo': 'yrain_piezo',
+        'train_piezo': 'train_piezo',
         'srain_piezo': 'srain_piezo',
         'ws90cap_volt': 'ws90cap_volt',
         'ws85cap_volt': 'ws85cap_volt',
@@ -971,6 +984,7 @@ class Consumer(object):
         'wn35_ch6_sig': 'wh35sig6',
         'wn35_ch7_sig': 'wh35sig7',
         'wn35_ch8_sig': 'wh35sig8',
+        'wn38_sig': 'wn38sig',
         'wh40_sig': 'wh40sig',
         'wh41_ch1_sig': 'wh41sig1',
         'wh41_ch2_sig': 'wh41sig2',
@@ -1047,6 +1061,7 @@ class Consumer(object):
         'wn35_ch6_rssi': 'wh35rssi6',
         'wn35_ch7_rssi': 'wh35rssi7',
         'wn35_ch8_rssi': 'wh35rssi8',
+        'wn38_rssi': 'wn38rssi',
         'wh40_rssi': 'wh40rssi',
         'wh41_ch1_rssi': 'wh41rssi1',
         'wh41_ch2_rssi': 'wh41rssi2',
@@ -1162,6 +1177,8 @@ class Consumer(object):
         'bgt': 'bgt',
         'wbgt': 'wbgt',
         'wbgtcat': 'wbgtcat',
+        'bgtbatt': 'bgtbatt',
+
     }
 
     def default_sensor_map(self):
@@ -1884,6 +1901,7 @@ class EcowittClient(Consumer):
             'wrain_piezo' : 'wrain_piezo',
             'mrain_piezo' : 'mrain_piezo',
             'yrain_piezo' : 'yrain_piezo',
+            'train_piezo' : 'train_piezo',
             'srain_piezo': 'srain_piezo',
             'ws90_ver' : 'ws90_ver',
             'ws85_ver' : 'ws85_ver',
@@ -1955,6 +1973,7 @@ class EcowittClient(Consumer):
             'wh35sig6': 'wh35sig6',
             'wh35sig7': 'wh35sig7',
             'wh35sig8': 'wh35sig8',
+            'wn38sig': 'wn38sig',
             'wh40sig': 'wh40sig',
             'wh41sig1': 'wh41sig1',
             'wh41sig2': 'wh41sig2',
@@ -2028,6 +2047,7 @@ class EcowittClient(Consumer):
             'wh35rssi6': 'wh35rssi6',
             'wh35rssi7': 'wh35rssi7',
             'wh35rssi8': 'wh35rssi8',
+            'wn38rssi': 'wn38rssi',
             'wh40rssi': 'wh40rssi',
             'wh41rssi1': 'wh41rssi1',
             'wh41rssi2': 'wh41rssi2',
@@ -2140,6 +2160,7 @@ class EcowittClient(Consumer):
             'bgt': 'bgt',
             'wbgt': 'wbgt',
             'wbgtcat': 'wbgtcat',
+            'bgtbatt': 'bgtbatt',
        }
 
         IGNORED_LABELS = [
@@ -2249,8 +2270,11 @@ class EcowittClient(Consumer):
                         if n != 'model' and n != 'stationtype':
                            if data[n] == '--':
                               pkt[self.LABEL_MAP[n]] = None
-                           else: 
-                              pkt[self.LABEL_MAP[n]] = self.decode_float(data[n]) if data[n] != '' else 0
+                           else:
+                              if n == 'lightning':
+                                  pkt[self.LABEL_MAP[n]] = (self.decode_float(data[n])*0.621371) if data[n] != '' else 0
+                              else:
+                                 pkt[self.LABEL_MAP[n]] = self.decode_float(data[n]) if data[n] != '' else 0
                     elif n in self.IGNORED_LABELS:
                         val = data[n]
                         if n == 'PASSKEY':
