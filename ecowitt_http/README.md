@@ -123,6 +123,11 @@ you can find script files that extend an existing database schema for the values
         - for WS6210 use ecowittws6210_http driver -> With Firmware V1.1.1.2: 
 		  here uses original Thunder time and too PM2.5 1..4 
 		  because this data differs from the other Ecowitt supported gateways/stations 
+    30 Nov 2025            v0.2.9
+        - added rain_batt and piezorain_bat (0..5)
+        - lightning_distance/lightning_dist group_count changed to group_distance  
+    30 Dec 2025            v0.3.0
+        - livedata 0xA1, 0xA2 -> WN38 Sensor
 		  
 Tested and completed:
 ```
