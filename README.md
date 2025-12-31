@@ -20,6 +20,10 @@ Revision History
    26 Sep 2025            v0.1.6
       - "kPa" = "%.3f" -> VPD
       - wbgtcat
+
+   30 Dec 2025            v0.1.7
+      - bgt, wbgt, bgtbatt, wn38_sig, wn38_rssi, lightning_distance = group_distance 
+
 ```
 ![Ecowitt_ecowitt](https://github.com/user-attachments/assets/bbc8312e-f51c-4e47-aebf-d29fb8353d73)
 ![Ecowitt_wunderground](https://github.com/user-attachments/assets/333c1192-edc7-41c6-9ecf-50521fa526fb)
@@ -825,6 +829,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
