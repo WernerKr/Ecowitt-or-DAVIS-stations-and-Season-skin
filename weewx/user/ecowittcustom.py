@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # Copyright 2016-2020 Matthew Wall
 # Distributed under the terms of the GNU Public License (GPLv3)
-# Modified 2025 - now only Ecowitt client Werner Krenn
+# Modified 2025,2026 - now only Ecowitt client Werner Krenn
 
 """
-Version: 0.1.7                                  Date: 30 Dec 2025
+Version: 0.1.8                                  Date: 14 Feb 2026
 
 Revision History
-    30 Nov 2025            v0.1.7
+    30 Nov 2025            v0.1.5
         - lightning_distance group_count changed to group_distance  
 
     26 Sep 2025            v0.1.6
@@ -15,7 +15,15 @@ Revision History
         - bgt, wbgt, wbgtcat
     30 Dec 2025            v0.1.7
         - bgtbatt, wn38_sig, wn38_rssi, lightning_distance = group_distance 
-
+    14 Feb 2026            v0.1.8		
+        - add last24hourlyrainin
+        - Soil_EC 1..16: 
+          soil_ec_humN -> soilmoisture1..16, 
+          soil_ec_hum_adN -> soilad1..16, 
+          soil_ec_tempN -> soilmTemp1..16, 
+          soil_ecN -> soilECN1..16, 
+          soil_ec_adN -> soilECad1..16, 
+          soil_ec_battN -> soilbatt1..16
 
 ===============================================================================
 This driver runs a simple web server or sniffs network traffic in order to
@@ -67,7 +75,7 @@ variants of the Fine Offset GW1000, including:
   GW1000B - 915MHz	US
   GW1000BU - 915MHz with better rang
 
-Also valid for GW1100, GW1200, GW2000, GW3000, WS39xx, WS38xx, wN1980, WN1900, HP2550, HP2560, HP3500 and so much more
+Also valid for GW1100, GW1200, GW2000, GW3000, WS39xx, WS38xx, WS6210, wN1980, WN1900, HP2550, HP2560, HP3500 and so much more
 
 The transmission to wunderground can be captured using the 'wu-client' mode.
 The transmission using ecowitt protocol (see the 'customize' page in the WSView Plus
@@ -182,7 +190,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Ecowittcustom'
-DRIVER_VERSION = '0.1.7'
+DRIVER_VERSION = '0.1.8'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -197,6 +205,12 @@ weewx.units.MetricWXUnits["group_dbm"] = "dBm"
 weewx.units.default_unit_format_dict["dBm"] = "%.0f"
 weewx.units.default_unit_label_dict["dBm"] = " dBm"
 
+weewx.units.obs_group_dict['micro_siemens_per_centimeter'] = 'group_usiecm'
+weewx.units.USUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+weewx.units.MetricUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+weewx.units.MetricWXUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+weewx.units.default_unit_label_dict['micro_siemens_per_centimeter'] = ' µS/cm' #umho/cm - µS/cm
+weewx.units.default_unit_format_dict["micro_siemens_per_centimeter"] = '%.0f'
 
 weewx.units.obs_group_dict['co2'] = 'group_fraction'
 weewx.units.obs_group_dict['co2_Temp'] = 'group_temperature'
@@ -232,14 +246,31 @@ weewx.units.obs_group_dict['soilTemp5'] = 'group_temperature'
 weewx.units.obs_group_dict['soilTemp6'] = 'group_temperature'
 weewx.units.obs_group_dict['soilTemp7'] = 'group_temperature'
 weewx.units.obs_group_dict['soilTemp8'] = 'group_temperature'
-weewx.units.obs_group_dict['soilTemp9'] = 'group_temperature'
-weewx.units.obs_group_dict['soilTemp10'] = 'group_temperature'
-weewx.units.obs_group_dict['soilTemp11'] = 'group_temperature'
-weewx.units.obs_group_dict['soilTemp12'] = 'group_temperature'
-weewx.units.obs_group_dict['soilTemp13'] = 'group_temperature'
-weewx.units.obs_group_dict['soilTemp14'] = 'group_temperature'
-weewx.units.obs_group_dict['soilTemp15'] = 'group_temperature'
-weewx.units.obs_group_dict['soilTemp16'] = 'group_temperature'
+#weewx.units.obs_group_dict['soilTemp9'] = 'group_temperature'
+#weewx.units.obs_group_dict['soilTemp10'] = 'group_temperature'
+#weewx.units.obs_group_dict['soilTemp11'] = 'group_temperature'
+#weewx.units.obs_group_dict['soilTemp12'] = 'group_temperature'
+#weewx.units.obs_group_dict['soilTemp13'] = 'group_temperature'
+#weewx.units.obs_group_dict['soilTemp14'] = 'group_temperature'
+#weewx.units.obs_group_dict['soilTemp15'] = 'group_temperature'
+#weewx.units.obs_group_dict['soilTemp16'] = 'group_temperature'
+
+weewx.units.obs_group_dict['soilmTemp1'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp2'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp3'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp4'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp5'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp6'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp7'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp8'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp9'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp10'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp11'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp12'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp13'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp14'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp15'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp16'] = 'group_temperature'
 
 weewx.units.obs_group_dict['leafWet1'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet2'] = 'group_percent'
@@ -394,6 +425,40 @@ weewx.units.obs_group_dict['soilad13'] = 'group_count'
 weewx.units.obs_group_dict['soilad14'] = 'group_count'
 weewx.units.obs_group_dict['soilad15'] = 'group_count'
 weewx.units.obs_group_dict['soilad16'] = 'group_count'
+
+weewx.units.obs_group_dict['soilECad1'] = 'group_count'
+weewx.units.obs_group_dict['soilECad2'] = 'group_count'
+weewx.units.obs_group_dict['soilECad3'] = 'group_count'
+weewx.units.obs_group_dict['soilECad4'] = 'group_count'
+weewx.units.obs_group_dict['soilECad5'] = 'group_count'
+weewx.units.obs_group_dict['soilECad6'] = 'group_count'
+weewx.units.obs_group_dict['soilECad7'] = 'group_count'
+weewx.units.obs_group_dict['soilECad8'] = 'group_count'
+weewx.units.obs_group_dict['soilECad9'] = 'group_count'
+weewx.units.obs_group_dict['soilECad10'] = 'group_count'
+weewx.units.obs_group_dict['soilECad11'] = 'group_count'
+weewx.units.obs_group_dict['soilECad12'] = 'group_count'
+weewx.units.obs_group_dict['soilECad13'] = 'group_count'
+weewx.units.obs_group_dict['soilECad14'] = 'group_count'
+weewx.units.obs_group_dict['soilECad15'] = 'group_count'
+weewx.units.obs_group_dict['soilECad16'] = 'group_count'
+
+weewx.units.obs_group_dict['soilEC1'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC2'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC3'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC4'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC5'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC6'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC7'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC8'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC9'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC10'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC11'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC12'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC13'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC14'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC15'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC16'] = 'group_usiecm'
 
 """
 #not used!
@@ -896,6 +961,7 @@ class Consumer(object):
         'hourRain': 'hourlyrainin',
         'dayRain': 'dailyrainin',
         'rain24': 'last24hrainin',
+        'rain24': 'last24hourlyrainin',
         'weekRain': 'weeklyrainin',
         'monthRain': 'monthlyrainin',
         'yearRain': 'rainyear',
@@ -948,6 +1014,54 @@ class Consumer(object):
         'soilad14': 'soilad14',
         'soilad15': 'soilad15',
         'soilad16': 'soilad16',
+        'soilEC1': 'soilEC1',
+        'soilEC2': 'soilEC2',
+        'soilEC3': 'soilEC3',
+        'soilEC4': 'soilEC4',
+        'soilEC5': 'soilEC5',
+        'soilEC6': 'soilEC6',
+        'soilEC7': 'soilEC7',
+        'soilEC8': 'soilEC8',
+        'soilEC9': 'soilEC9',
+        'soilEC10': 'soilEC10',
+        'soilEC11': 'soilEC11',
+        'soilEC12': 'soilEC12',
+        'soilEC13': 'soilEC13',
+        'soilEC14': 'soilEC14',
+        'soilEC15': 'soilEC15',
+        'soilEC16': 'soilEC16',
+        'soilmTemp1': 'soilmTemp1',
+        'soilmTemp2': 'soilmTemp2',
+        'soilmTemp3': 'soilmTemp3',
+        'soilmTemp4': 'soilmTemp4',
+        'soilmTemp5': 'soilmTemp5',
+        'soilmTemp6': 'soilmTemp6',
+        'soilmTemp7': 'soilmTemp7',
+        'soilmTemp8': 'soilmTemp8',
+        'soilmTemp9': 'soilmTemp9',
+        'soilmTemp10': 'soilmTemp10',
+        'soilmTemp11': 'soilmTemp11',
+        'soilmTemp12': 'soilmTemp12',
+        'soilmTemp13': 'soilmTemp13',
+        'soilmTemp14': 'soilmTemp14',
+        'soilmTemp15': 'soilmTemp15',
+        'soilmTemp16': 'soilmTemp16',
+        'soilECad1': 'soilECad1',
+        'soilECad2': 'soilECad2',
+        'soilECad3': 'soilECad3',
+        'soilECad4': 'soilECad4',
+        'soilECad5': 'soilECad5',
+        'soilECad6': 'soilECad6',
+        'soilECad7': 'soilECad7',
+        'soilECad8': 'soilECad8',
+        'soilECad9': 'soilECad9',
+        'soilECad10': 'soilECad10',
+        'soilECad11': 'soilECad11',
+        'soilECad12': 'soilECad12',
+        'soilECad13': 'soilECad13',
+        'soilECad14': 'soilECad14',
+        'soilECad15': 'soilECad15',
+        'soilECad16': 'soilECad16',
         'heap': 'heap',
         'wh24_sig': 'wh24sig',
         'wh25_sig': 'wh25sig',
@@ -1762,6 +1876,38 @@ class EcowittClient(Consumer):
             'soilmoisture14': 'soil_moisture_14',
             'soilmoisture15': 'soil_moisture_15',
             'soilmoisture16': 'soil_moisture_16',
+            'soil_ec_hum1': 'soil_moisture_1',
+            'soil_ec_hum2': 'soil_moisture_2',
+            'soil_ec_hum3': 'soil_moisture_3',
+            'soil_ec_hum4': 'soil_moisture_4',
+            'soil_ec_hum5': 'soil_moisture_5',
+            'soil_ec_hum6': 'soil_moisture_6',
+            'soil_ec_hum7': 'soil_moisture_7',
+            'soil_ec_hum8': 'soil_moisture_8',
+            'soil_ec_hum9': 'soil_moisture_9',
+            'soil_ec_hum10': 'soil_moisture_10',
+            'soil_ec_hum11': 'soil_moisture_11',
+            'soil_ec_hum12': 'soil_moisture_12',
+            'soil_ec_hum13': 'soil_moisture_13',
+            'soil_ec_hum14': 'soil_moisture_14',
+            'soil_ec_hum15': 'soil_moisture_15',
+            'soil_ec_hum16': 'soil_moisture_16',
+            'soil_ec_temp1': 'soilmTemp1',
+            'soil_ec_temp2': 'soilmTemp2',
+            'soil_ec_temp3': 'soilmTemp3',
+            'soil_ec_temp4': 'soilmTemp4',
+            'soil_ec_temp5': 'soilmTemp5',
+            'soil_ec_temp6': 'soilmTemp6',
+            'soil_ec_temp7': 'soilmTemp7',
+            'soil_ec_temp8': 'soilmTemp8',
+            'soil_ec_temp9': 'soilmTemp9',
+            'soil_ec_temp10': 'soilmTemp10',
+            'soil_ec_temp11': 'soilmTemp11',
+            'soil_ec_temp12': 'soilmTemp12',
+            'soil_ec_temp13': 'soilmTemp13',
+            'soil_ec_temp14': 'soilmTemp14',
+            'soil_ec_temp15': 'soilmTemp15',
+            'soil_ec_temp16': 'soilmTemp16',
             'soilbatt1': 'soilbatt1',
             'soilbatt2': 'soilbatt2',
             'soilbatt3': 'soilbatt3',
@@ -1778,6 +1924,22 @@ class EcowittClient(Consumer):
             'soilbatt14': 'soilbatt14',
             'soilbatt15': 'soilbatt15',
             'soilbatt16': 'soilbatt16',
+            'soil_ec_batt1': 'soilbatt1',
+            'soil_ec_batt2': 'soilbatt2',
+            'soil_ec_batt3': 'soilbatt3',
+            'soil_ec_batt4': 'soilbatt4',
+            'soil_ec_batt5': 'soilbatt5',
+            'soil_ec_batt6': 'soilbatt6',
+            'soil_ec_batt7': 'soilbatt7',
+            'soil_ec_batt8': 'soilbatt8',
+            'soil_ec_batt9': 'soilbatt9',
+            'soil_ec_batt10': 'soilbatt10',
+            'soil_ec_batt11': 'soilbatt11',
+            'soil_ec_batt12': 'soilbatt12',
+            'soil_ec_batt13': 'soilbatt13',
+            'soil_ec_batt14': 'soilbatt14',
+            'soil_ec_batt15': 'soilbatt15',
+            'soil_ec_batt16': 'soilbatt16',
             'windspeedmph': 'wind_speed',
             'windgustmph': 'wind_gust',
             'winddir': 'wind_dir',
@@ -1889,6 +2051,7 @@ class EcowittClient(Consumer):
             'hourlyrainin' : 'hourlyrainin',
             'dailyrainin' : 'dailyrainin',
             'last24hrainin': 'last24hrainin',
+            'last24hourlyrainin': 'last24hourlyrainin',
             'weeklyrainin' : 'weeklyrainin',
             'monthlyrainin' : 'monthlyrainin',
             'yearlyrainin' : 'yearlyrainin',
@@ -1937,6 +2100,54 @@ class EcowittClient(Consumer):
             'soilad14': 'soilad14',
             'soilad15': 'soilad15',
             'soilad16': 'soilad16',
+            'soil_ec_ad1': 'soilECad1',
+            'soil_ec_ad2': 'soilECad2',
+            'soil_ec_ad3': 'soilECad3',
+            'soil_ec_ad4': 'soilECad4',
+            'soil_ec_ad5': 'soilECad5',
+            'soil_ec_ad6': 'soilECad6',
+            'soil_ec_ad7': 'soilECad7',
+            'soil_ec_ad8': 'soilECad8',
+            'soil_ec_ad9': 'soilECad9',
+            'soil_ec_ad10': 'soilECad10',
+            'soil_ec_ad11': 'soilECad11',
+            'soil_ec_ad12': 'soilECad12',
+            'soil_ec_ad13': 'soilECad13',
+            'soil_ec_ad14': 'soilECad14',
+            'soil_ec_ad15': 'soilECad15',
+            'soil_ec_ad16': 'soilECad16',
+            'soil_ec_hum_ad1': 'soilad1',
+            'soil_ec_hum_ad2': 'soilad2',
+            'soil_ec_hum_ad3': 'soilad3',
+            'soil_ec_hum_ad4': 'soilad4',
+            'soil_ec_hum_ad5': 'soilad5',
+            'soil_ec_hum_ad6': 'soilad6',
+            'soil_ec_hum_ad7': 'soilad7',
+            'soil_ec_hum_ad8': 'soilad8',
+            'soil_ec_hum_ad9': 'soilad9',
+            'soil_ec_hum_ad10': 'soilad10',
+            'soil_ec_hum_ad11': 'soilad11',
+            'soil_ec_hum_ad12': 'soilad12',
+            'soil_ec_hum_ad13': 'soilad13',
+            'soil_ec_hum_ad14': 'soilad14',
+            'soil_ec_hum_ad15': 'soilad15',
+            'soil_ec_hum_ad16': 'soilad16',
+            'soil_ec1': 'soilEC1',
+            'soil_ec2': 'soilEC2',
+            'soil_ec3': 'soilEC3',
+            'soil_ec4': 'soilEC4',
+            'soil_ec5': 'soilEC5',
+            'soil_ec6': 'soilEC6',
+            'soil_ec7': 'soilEC7',
+            'soil_ec8': 'soilEC8',
+            'soil_ec9': 'soilEC9',
+            'soil_ec10': 'soilEC10',
+            'soil_ec11': 'soilEC11',
+            'soil_ec12': 'soilEC12',
+            'soil_ec13': 'soilEC13',
+            'soil_ec14': 'soilEC14',
+            'soil_ec15': 'soilEC15',
+            'soil_ec16': 'soilEC16',
             'heap': 'heap',
             'wh24sig': 'wh24sig',
             'wh25sig': 'wh25sig',
