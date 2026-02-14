@@ -129,7 +129,7 @@ you can find script files that extend an existing database schema for the values
         - added rain_batt and piezorain_bat (0..5)
         - lightning_distance/lightning_dist group_count changed to group_distance  
     30 Dec 2025            v0.3.0
-        - livedata 0xA1, 0xA2 -> WN38 Sensor
+        - livedata 0xA1, 0xA2 -> WN38 Sensor = BGT Sensor
 		  
 Tested and completed:
 ```
