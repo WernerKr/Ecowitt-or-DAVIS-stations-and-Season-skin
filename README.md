@@ -26,7 +26,7 @@ Revision History
 
     14 Feb 2026            v0.1.8		
         - add last24hourlyrainin
-        - Soil_EC 1..16: 
+        - Soil_EC 1..16: WH52 Sensor
           soil_ec_humN -> soilmoisture1..16, 
           soil_ec_hum_adN -> soilad1..16, 
           soil_ec_tempN -> soilmTemp1..16, 
@@ -670,6 +670,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
