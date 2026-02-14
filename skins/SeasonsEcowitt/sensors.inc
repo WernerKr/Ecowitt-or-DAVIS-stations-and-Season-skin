@@ -15,7 +15,8 @@
 ## 2035-08-21 add WS6210
 ## 2025-08-26 renamed wn31 to wh31
 ## 2025-08-29 variable $redcolorrssi for  red colour text at rssi
-
+## 2025-11-12 WS6210 Charge, consolebattp, wh40_batt
+## 2025-11-14 rain_batt, piezorain_batt 
 
 ## remember the current time - we will use it more than once.
 #import time
@@ -112,10 +113,11 @@ $gettext('never')
                           ('leak_Batt3', 'get_multi_battery_status'),
                           ('leak_Batt4', 'get_multi_battery_status'),
                           ('lightning_Batt', 'get_multi_battery_status'),
-                          ('wh40_batt', 'get_multi_battery_status'),
                           ('wh80_batt', 'get_multi_battery_status'),
                           ('wh85_batt', 'get_multi_battery_status'),
                           ('wh90_batt', 'get_multi_battery_status'),
+                          ('rain_batt', 'get_multi_battery_status'),
+                          ('piezorain_batt', 'get_multi_battery_status'),
                           ('ws6210_batt', 'get_multi_battery_status'),
                          ]
 ##
@@ -186,6 +188,7 @@ $gettext('never')
                      ('wh54_ch2_sig'),
                      ('wh54_ch3_sig'),
                      ('wh54_ch4_sig'),
+                     ('wn38_sig'),
                      ('wh57_sig'),
                      ('wh68_sig'),
                      ('wh69_sig'),
@@ -262,6 +265,7 @@ $gettext('never')
                      ('wh54_ch2_'),
                      ('wh54_ch3_'),
                      ('wh54_ch4_'),
+                     ('wn38_'),
                      ('wh57_'),
                      ('wh68_'),
                      ('wh69_'),
@@ -340,6 +344,7 @@ $gettext('never')
 ('wh54_ch2_sig'),
 ('wh54_ch3_sig'),
 ('wh54_ch4_sig'),
+('wn38_sig'),
 ('wh57_sig'),
 ('wh68_sig'),
 ('wh69_sig'),
@@ -351,7 +356,7 @@ $gettext('never')
 
 ##
 #set $battery_statuses = [ "outTempBatteryStatus", "inTempBatteryStatus", "windBatteryStatus", "rainBatteryStatus", "hailBatteryStatus", "snowBatteryStatus", "uvBatteryStatus", "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
-#set $battery_statuses_ecowitt = [ "wh24_batt", "wh25_batt", "wh26_batt", "wh65_batt", "wh68_batt", "wh69_batt", "consolebattp" ]
+#set $battery_statuses_ecowitt = [ "wh24_batt", "wh25_batt", "wh26_batt", "wh40_batt", "wh65_batt", "wh68_batt", "wh69_batt"]
 
 ##set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
 #set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus2", "batteryStatus7", "batteryStatus8" ]
@@ -420,6 +425,7 @@ $gettext('never')
 ("ldsbatt2",2.4),
 ("ldsbatt3",2.4),
 ("ldsbatt4",2.4),
+("bgtbatt",1.2),
 ("console_batt",2.4),
 ("consoleext_batt",2.4),
 ]
@@ -657,6 +663,7 @@ $gettext('never')
    #end if
  #end for
 
+
  #for $battery in $sensor_batt_data
     #try
       #if (($getattr($recent, $battery[0]).has_data) or ($getattr($current, $battery[0]).has_data))
@@ -696,6 +703,39 @@ $gettext('never')
       #pass
     #end try
  #end for
+
+ #if $ecowitt == 1
+  ##set $xt = ''
+  ##if $current.stationtype.has_data
+   ##if 'WS62'in $current.stationtype.raw
+    ##set $xt = 'WS62'
+   ##end if
+  ##end if
+  ##if $current.model.has_data
+    ##if 'WS62'in $current.model.raw
+     ##set $xt = 'WS62'
+    ##end if
+  ##end if
+
+  ##if $xt == 'WS62'
+   #set $x = 'charge_stat'
+   #if (($getattr($recent, $x).has_data and $userecentbat == 1) or $getattr($current, $x).has_data) 
+     <tr>
+      <td class="label">$obs.label[$x]</td>
+      #set $xv = $getattr($current, $x) 
+      <td class="data">$xv</td>
+     </tr>
+   #end if
+   #set $x = 'consolebattp'
+   #if (($getattr($recent, $x).has_data and $userecentbat == 1) or $getattr($current, $x).has_data) 
+     <tr>
+      <td class="label">$obs.label[$x]</td>
+      #set $xv = $getattr($current, $x) 
+      <td class="data">$xv</td>
+     </tr>
+   #end if
+  ##end if
+ #end if
 
 #end if
 
