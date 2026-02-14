@@ -22,7 +22,18 @@ Revision History
       - wbgtcat
 
    30 Dec 2025            v0.1.7
-      - bgt, wbgt, bgtbatt, wn38_sig, wn38_rssi, lightning_distance = group_distance 
+      - bgt, wbgt, bgtbatt, wn38_sig, wn38_rssi, lightning_distance = group_distance
+
+    14 Feb 2026            v0.1.8		
+        - add last24hourlyrainin
+        - Soil_EC 1..16: 
+          soil_ec_humN -> soilmoisture1..16, 
+          soil_ec_hum_adN -> soilad1..16, 
+          soil_ec_tempN -> soilmTemp1..16, 
+          soil_ecN -> soilECN1..16, 
+          soil_ec_adN -> soilECad1..16, 
+          soil_ec_battN -> soilbatt1..16
+
 
 ```
 ![Ecowitt_ecowitt](https://github.com/user-attachments/assets/bbc8312e-f51c-4e47-aebf-d29fb8353d73)
@@ -659,6 +670,7 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
+
 
 
 
