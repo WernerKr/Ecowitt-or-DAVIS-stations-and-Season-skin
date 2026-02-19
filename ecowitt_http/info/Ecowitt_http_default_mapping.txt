@@ -14,7 +14,8 @@ Ecowitt HTTP driver/service default field map:
          batteryStatus6: wn31.ch6.battery
          batteryStatus7: wn31.ch7.battery
          batteryStatus8: wn31.ch8.battery
-                    bgt: wn38.bgt
+                    bgt: common_list.0xA1.val
+                bgtbatt: common_list.0xA1.voltage
             charge_stat: console.charge_stat
                     co2: co2.CO2
                 co2_24h: co2.CO2_24H
@@ -121,6 +122,7 @@ lightning_disturber_count: lightning.timestamp
              p_rainrate: piezoRain.0x0E.val
              p_rainyear: piezoRain.0x13.val
                   piezo: rain_piezo
+         piezorain_batt: piezoRain.0x13.battery
                   pm1_0: co2.PM1
             pm1_24h_co2: co2.PM1_24H
          pm1_24hAQI_co2: co2.PM1_24HAQI
@@ -164,6 +166,7 @@ lightning_disturber_count: lightning.timestamp
                  rain24: rain.0x7C.val
            rain24_piezo: piezoRain.0x7C.val
       rain_annual_reset: rain_reset_year
+              rain_batt: rain.0x13.battery
          rain_day_reset: rain_reset_day
             rain_source: rain_priority
         rain_week_reset: rain_reset_week
@@ -188,22 +191,54 @@ lightning_disturber_count: lightning.timestamp
                soilad14: ch_soil14nowAd
                soilad15: ch_soil15nowAd
                soilad16: ch_soil16nowAd
+                soilEC1: ch_ec.1.ec
+                soilEC2: ch_ec.2.ec
+                soilEC3: ch_ec.3.ec
+                soilEC4: ch_ec.4.ec
+                soilEC5: ch_ec.5.ec
+                soilEC6: ch_ec.6.ec
+                soilEC7: ch_ec.7.ec
+                soilEC8: ch_ec.8.ec
+                soilEC9: ch_ec.9.ec
+               soilEC10: ch_ec.10.ec
+               soilEC11: ch_ec.11.ec
+               soilEC12: ch_ec.12.ec
+               soilEC13: ch_ec.13.ec
+               soilEC14: ch_ec.14.ec
+               soilEC15: ch_ec.15.ec
+               soilEC16: ch_ec.16.ec
              soilMoist1: ch_soil.1.humidity
+            soilMoist1e: ch_ec.1.humidity
              soilMoist2: ch_soil.2.humidity
+            soilMoist2e: ch_ec.2.humidity
              soilMoist3: ch_soil.3.humidity
+            soilMoist3e: ch_ec.3.humidity
              soilMoist4: ch_soil.4.humidity
+            soilMoist4e: ch_ec.4.humidity
              soilMoist5: ch_soil.5.humidity
+            soilMoist5e: ch_ec.5.humidity
              soilMoist6: ch_soil.6.humidity
+            soilMoist6e: ch_ec.6.humidity
              soilMoist7: ch_soil.7.humidity
+            soilMoist7e: ch_ec.7.humidity
              soilMoist8: ch_soil.8.humidity
+            soilMoist8e: ch_ec.8.humidity
              soilMoist9: ch_soil.9.humidity
+            soilMoist9e: ch_ec.9.humidity
             soilMoist10: ch_soil.10.humidity
+           soilMoist10e: ch_ec.10.humidity
             soilMoist11: ch_soil.11.humidity
+           soilMoist11e: ch_ec.11.humidity
             soilMoist12: ch_soil.12.humidity
+           soilMoist12e: ch_ec.12.humidity
             soilMoist13: ch_soil.13.humidity
+           soilMoist13e: ch_ec.13.humidity
             soilMoist14: ch_soil.14.humidity
+           soilMoist14e: ch_ec.14.humidity
             soilMoist15: ch_soil.15.humidity
+           soilMoist15e: ch_ec.15.humidity
             soilMoist16: ch_soil.16.humidity
+           soilMoist16e: ch_ec.16.humidity
          soilMoistBatt1: ch_soil.1.voltage
         soilMoistBatt1s: wh51.ch1.battery
          soilMoistBatt2: ch_soil.2.voltage
@@ -236,6 +271,22 @@ lightning_disturber_count: lightning.timestamp
        soilMoistBatt15s: wh51.ch15.battery
         soilMoistBatt16: ch_soil.16.voltage
        soilMoistBatt16s: wh51.ch16.battery
+             soilmTemp1: ch_ec.1.temp
+             soilmTemp2: ch_ec.2.temp
+             soilmTemp3: ch_ec.3.temp
+             soilmTemp4: ch_ec.4.temp
+             soilmTemp5: ch_ec.5.temp
+             soilmTemp6: ch_ec.6.temp
+             soilmTemp7: ch_ec.7.temp
+             soilmTemp8: ch_ec.8.temp
+             soilmTemp9: ch_ec.9.temp
+            soilmTemp10: ch_ec.10.temp
+            soilmTemp11: ch_ec.11.temp
+            soilmTemp12: ch_ec.12.temp
+            soilmTemp13: ch_ec.13.temp
+            soilmTemp14: ch_ec.14.temp
+            soilmTemp15: ch_ec.15.temp
+            soilmTemp16: ch_ec.16.temp
               soilTemp1: ch_temp.1.temp
               soilTemp2: ch_temp.2.temp
               soilTemp3: ch_temp.3.temp
@@ -269,11 +320,13 @@ lightning_disturber_count: lightning.timestamp
                 thi_ch2: ch_lds.2.air
                 thi_ch3: ch_lds.3.air
                 thi_ch4: ch_lds.4.air
+              totalRain: rain.0x14.val
+            train_piezo: rain.0x14.val
                 upgrade: upgrade
                      UV: common_list.0x17.val
             uvradiation: common_list.0x16.val
                     vpd: common_list.5.val
-                   wbgt: wn38.wbgt
+                   wbgt: common_list.0xA2.val
                weekRain: rain.0x11.val
               wh25_batt: wh25.battery
               wh25_rssi: wh25.rssi
