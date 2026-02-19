@@ -7,7 +7,7 @@ A WeeWX driver for devices using Ecowitt local HTTP API.
 Copyright (C) 2024-25 Gary Roderick                     gjroderick<at>gmail.com
 
 Modified Werner Krenn started July 2025
-
+Copyright (C) 2026 Werner Krenn   
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -24,6 +24,8 @@ this program.  If not, see https://www.gnu.org/licenses/.
 Version: 0.3.0                                  Date: 30 Dec 2025
 
 Revision History
+    X  May 2025            v0.1.0a28  Gary Roderick   		
+
     3 July 2025            v0.1.0x
         - WH45/WH46 = co2 missed - added
         - changed some keys that are the same as my ecowittcustom driver
@@ -58,7 +60,7 @@ Revision History
                 to the supported fields, because compatible with Ecowitt Custom Driver and the GW1000 Driver
 
 
-    10 July 2025            v0.1.0
+    10 July 2025        v0.1.0
         - initial release
     11 July 2025		v0.1.1
         -lightning 
@@ -67,13 +69,13 @@ Revision History
     13 July 2025		v0.1.3
         - calc vpd if data from Ecowitt.net - because this value is not provided.
         - changed lighting_distance to lighting_dist 
-    14 July 2025		v0.1.4         
+    14 July 2025		v0.1.4
         - 'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4' from Ecowitt.net added
         - wh68_batt, wh69_batt
-    15 July 2025		v0.1.5     
-        - p_rain is back      
+    15 July 2025		v0.1.5
+        - p_rain is back 
 
-    25 July 2025		v0.1.6     
+    25 July 2025		v0.1.6
         - new rssi, rain voltage, winddir_avg10m, last24hrainin, last24hrain_piezo, LDS total_heat, wn20 (Mini rain)      
           ws85cap_volt, ws90cap_volt 
 
@@ -126,6 +128,7 @@ Revision History
 
     30 Dec 2025            v0.3.0
         - livedata 0xA1, 0xA2 -> WN38 Sensor
+
         
 This driver is based on the Ecowitt local HTTP API. At the time of release the
 following sensors are supported:
@@ -146,8 +149,8 @@ WH41/43:    PM2.5, 24-hour average PM2.5, signal level, battery state.
 WH45        CO2, PM2.5, PM10, signal level, battery state. single device only
 WH46        CO2, PM2.5, PM10, PM1, PM4, signal level, battery state. single device only	
 WH51        SoilMoisture Sensors 1..16
-WH54        LDS Sensor 1..4	
-WH55        Leak Sensor 1..4	
+WH54        LDS Sensor 1..4
+WH55        Leak Sensor 1..4
 WH57        Lightning, signal level, battery state. single device only
 WH68        signal level, battery state
 WH69        signal level, battery state
@@ -244,7 +247,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.9'
+DRIVER_VERSION = '0.3.0'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
@@ -311,6 +314,13 @@ weewx.units.default_unit_format_dict["dBm"] = "%.0f"
 weewx.units.default_unit_label_dict["dBm"] = " dBm"
 
 weewx.units.default_unit_format_dict["hPa"] = "%.2f"
+
+#weewx.units.obs_group_dict['micro_siemens_per_centimeter'] = 'group_usiecm'
+#weewx.units.USUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+#weewx.units.MetricUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+#weewx.units.MetricWXUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+#weewx.units.default_unit_label_dict['micro_siemens_per_centimeter'] = ' µS/cm' #umho/cm - µS/cm
+#weewx.units.default_unit_format_dict["micro_siemens_per_centimeter"] = '%.0f'
 
 weewx.units.obs_group_dict['leafWet1'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet2'] = 'group_percent'
@@ -2068,6 +2078,7 @@ class SdMapper(FieldMapper):
         'common_list.0x0C.val': 'Gust',
         'common_list.0x0A.val': 'Wind Direction',
         'common_list.0x6D.val': 'windDir_10min_avg',
+        #'common_list.0x6D.val': '10Min.Avg Wind Direction',
         'common_list.0x15.val': 'Solar Rad',
         'common_list.0x17.val': 'UV-Index',
         'common_list.0xA1.val': 'BGT',
@@ -4277,7 +4288,9 @@ class EcowittNetCatchup(Catchup):
                          'leaf_ch1', 'leaf_ch2', 'leaf_ch3', 'leaf_ch4',
                          'leaf_ch5', 'leaf_ch6', 'leaf_ch7', 'leaf_ch8',
                          'battery',
-                         'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4')
+                         'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4',
+                         'black_globe_temperature',
+                        )
     # Map from Ecowitt.net history fields to internal driver fields. Map is
     # keyed by Ecowitt.net history 'data set'. Individual key: value pairs are
     # Ecowitt.net field:driver field.
@@ -4537,6 +4550,10 @@ class EcowittNetCatchup(Catchup):
             'depth_ch4': 'ch_lds.4.depth',
             'lds_heat_ch4': 'ch_lds.4.total_heat'
         },
+        'black_globe_temperature': {
+            'bgt': 'common_list.0xA1.val',
+            'wbgt': 'common_list.0xA2.val',
+        },
         'battery': {
             'ws1900_console': 'wh25.ws1900_batt',
             'ws1800_console': 'wh25.ws1800_batt',
@@ -4584,8 +4601,8 @@ class EcowittNetCatchup(Catchup):
             'ldsbatt_2': 'ch_lds.2.voltage',
             'ldsbatt_3': 'ch_lds.3.voltage',
             'ldsbatt_4': 'ch_lds.4.voltage',
-            'bgtbatt': 'common_list.0xA1.voltage',
-        }
+            'bgt_sensor': 'common_list.0xA1.voltage',
+       }
     }
 
     def __init__(self, **options):
@@ -5368,7 +5385,7 @@ class EcowittDeviceCatchup:
             "group_time"        : "unix_epoch",
             "group_uv"          : "uv_index",
             "group_volt"        : "volt",
-            "group_volume"      : "liter"
+            "group_volume"      : "liter",
         }
         required_groups = {'group_temperature', 'group_speed', 'group_speed2',
                            'group_pressure', 'group_pressurevpd','group_rain', 'group_rainrate',
@@ -6861,13 +6878,13 @@ class EcowittHttpApi:
         page 2 or a combined all pages of sensor state data depending on the
         'page' parameter.
 
-        page: specify which page of sensor state data to return, 0 = return all
-              pages, 1 = return page 1, 2 = return page 2
+        page: specify which page of sensor state data to return, 0 = return all	
+              pages, 1 = return page 1, 2 = return page 2, 3 = return page 3, 4 = return page 4  # GW1100 V2.4.5 has now 4 pages!
 
         Returns a dict of data from the 'get_sensors_info' API command.
         """
 
-        page_1 = page_2 = None
+        page_1 = page_2 = page_3 = page_4 = None
         if page in [0, 1]:
             try:
                 page_1 = self.request('get_sensors_info', data={'page': 1})
@@ -6878,6 +6895,24 @@ class EcowittHttpApi:
                 page_2 = self.request('get_sensors_info', data={'page': 2})
             except (socket.timeout, urllib.error.URLError) as e:
                 raise DeviceIOError(f"Failed to obtain 'get_sensors_info' page 2 data: {e}")
+
+        #"GW1100" 
+        if page in [0, 3]:
+            try:
+                page_3 = self.request('get_sensors_info', data={'page': 3})
+            except (socket.timeout, urllib.error.URLError) as e:
+                raise DeviceIOError(f"Failed to obtain 'get_sensors_info' page 3 data: {e}")
+        if page in [0, 4] and page_3 is not None:
+            try:
+                page_4 = self.request('get_sensors_info', data={'page': 4})
+            except (socket.timeout, urllib.error.URLError) as e:
+                raise DeviceIOError(f"Failed to obtain 'get_sensors_info' page 4 data: {e}")
+
+        if page_1 is not None and page_2 is not None and page_3 is not None and page_4 is not None:
+            return page_1 + page_2 + page_3 + page_4
+        if page_1 is not None and page_2 is not None and page_3 is not None:
+            return page_1 + page_2 + page_3
+
         if page_1 is not None and page_2 is not None:
             return page_1 + page_2
         if page_1 is None:
@@ -7038,7 +7073,7 @@ class EcowittHttpParser:
         'group_direction': 'degree_compass',
         'group_fraction': 'ppm',
         'group_concentration': 'microgram_per_meter_cubed',
-        'group_boolean': 'boolean'
+        'group_boolean': 'boolean',
     }
     # lookup to find WeeWX equivalent of a lower case Ecowitt unit string
     unit_lookup = {
@@ -7063,7 +7098,7 @@ class EcowittHttpParser:
         'mph': 'mile_per_hour',
         'knots': 'knot',
         '%': 'percent',
-        'w/m2': 'watt_per_meter_squared'
+        'w/m2': 'watt_per_meter_squared',
     }
     # processor function lookup used to select an appropriate processor
     # function for enumerated observation fields/codes in various common_list
@@ -12029,7 +12064,7 @@ class EcowittSensors:
     # sensors whose battery state is determined from an integer value
     batt_int = ('wn20', 'wn38', 'wh40', 'wh41', 'wh43', 'wh45', 'wh55', 'wh57')
     # sensors whose battery state is determined from a battery voltage value
-    batt_volt = ('wh68', 'wh51', 'wh54', 'wn34', 'wn35', 'wn38' 'ws80', 'ws85', 'ws90')
+    batt_volt = ('wh68', 'wh51', 'wh54', 'wn34', 'wn35', 'wn38', 'ws80', 'ws85', 'ws90')
     # map of 'dotted' get_livedata_info sensor voltage fields to sensor address
     sensor_with_voltage = {
         'rain.0x13.voltage': 3,		#wh40 
