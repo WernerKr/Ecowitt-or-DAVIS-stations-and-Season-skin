@@ -829,16 +829,16 @@ skin.conf
 https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/compare_gw3000_live_data.txt
 
 ## Default Mapping:
-https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/Ecowitt_http_default_mapping.txt
+https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/info/Ecowitt_http_default_mapping.txt
 
 ## WeeWx Fields:
-https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/Ecowitt_http_weewx-fields.txt
+https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/info/Ecowitt_http_weewx-fields.txt
 
 ## Example Data from ecowitt.net:
 
 ecowitt_net_api.txt -> 634.420 Byte !!!
 
-https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/ecowitt_net_api.txt
+https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/info/ecowitt_net_api.txt
 
 ## Skin with data from Ecowitt_http:
 https://www.pc-wetterstation.de/wetter/weewx8/
