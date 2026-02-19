@@ -826,7 +826,7 @@ skin.conf
 
 
 ## Live data comparison GW3000 original driver V0.1.0a28 with the driver V0.2.5
-https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/compare_gw3000_live_data.txt
+https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/info/compare_gw3000_live_data.txt
 
 ## Default Mapping:
 https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/info/Ecowitt_http_default_mapping.txt
