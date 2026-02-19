@@ -1,0 +1,67 @@
+Using configuration file [1m/etc/weewx/weewx.conf[0m
+
+Interrogating [1m WS3910A_V1.4.0[0m at [1m192.168.0.95[0m
+WN20       sensor is registering...    
+WH25       sensor ID: DB             signal: 4 rssi: -51 battery: 0 (OK)
+WH26       sensor is disabled          
+WN31 CH1   sensor ID: 7E             signal: 4 rssi: -96 battery: 0 (OK)
+WN31 CH2   sensor ID: 1D             signal: 4 rssi: -98 battery: 0 (OK)
+WN31 CH3   sensor ID: 49             signal: 4 rssi: -67 battery: 0 (OK)
+WN31 CH4   sensor ID: 3B             signal: 4 rssi: -88 battery: 0 (OK)
+WN31 CH5   sensor ID: 68             signal: 4 rssi: -69 battery: 0 (OK)
+WN31 CH6   sensor ID: 56             signal: 4 rssi: -90 battery: 0 (OK)
+WN31 CH7   sensor ID: E3             signal: 4 rssi: -81 battery: 0 (OK)
+WN31 CH8   sensor ID: C0             signal: 4 rssi: -89 battery: 0 (OK)
+WN34 CH1   sensor ID: 27AD           signal: 4 rssi: -72 battery: 5 (1.52V) (OK)
+WN34 CH2   sensor ID: 27B3           signal: 3 rssi: -67 battery: 5 (1.54V) (OK)
+WN34 CH3   sensor ID: 2B7A           signal: 3 rssi: -72 battery: 5 (1.54V) (OK)
+WN34 CH4   sensor ID: 2BF1           signal: 4 rssi: -89 battery: 4 (1.4V) (OK)
+WN34 CH5   sensor ID: 2BFB           signal: 4 rssi: -74 battery: 4 (1.42V) (OK)
+WN34 CH6   sensor ID: 2BEB           signal: 3 rssi: -77 battery: 3 (1.38V) (OK)
+WN34 CH7   sensor ID: 2BD2           signal: 4 rssi: -85 battery: 5 (1.52V) (OK)
+WN34 CH8   sensor ID: 51B7           signal: 4 rssi: -74 battery: 5 (1.76V) (OK)
+WN35 CH1   sensor ID: 2908           signal: 4 rssi: -67 battery: 5 (1.7V) (OK)
+WN35 CH2   sensor is registering...    
+WN35 CH3   sensor is registering...    
+WN35 CH4   sensor is registering...    
+WN35 CH5   sensor is registering...    
+WN35 CH6   sensor is registering...    
+WN35 CH7   sensor is registering...    
+WN35 CH8   sensor is registering...    
+WN38       sensor is registering...    
+WH40       sensor ID: E724           signal: 4 rssi: -96 battery: 4 (OK)
+WH41 CH1   sensor ID: C864           signal: 4 rssi: -56 battery: 6 (DC)
+WH41 CH2   sensor ID: 29             signal: 4 rssi: -83 battery: 5 (OK)
+WH41 CH3   sensor ID: 3EC9E          signal: 4 rssi: -97 battery: 6 (DC)
+WH41 CH4   sensor ID: B1             signal: 4 rssi: -81 battery: 5 (OK)
+WH45       sensor ID: 28FC           signal: 4 rssi: -76 battery: 6 (DC)
+WH51 CH1   sensor ID: C54A           signal: 4 rssi: -95 battery: 5 (1.7V) (OK)
+WH51 CH2   sensor ID: C94E           signal: 4 rssi: -59 battery: 5 (1.7V) (OK)
+WH51 CH3   sensor ID: C4DB           signal: 4 rssi: -67 battery: 5 (1.7V) (OK)
+WH51 CH4   sensor ID: D175           signal: 4 rssi: -52 battery: 5 (1.7V) (OK)
+WH51 CH5   sensor ID: D36D           signal: 4 rssi: -86 battery: 5 (1.7V) (OK)
+WH51 CH6   sensor ID: D2F6           signal: 4 rssi: -79 battery: 5 (1.7V) (OK)
+WH51 CH7   sensor ID: D2BA           signal: 4 rssi: -67 battery: 4 (1.4V) (OK)
+WH51 CH8   sensor ID: EC89           signal: 4 rssi: -80 battery: 5 (1.6V) (OK)
+WH51 CH9   sensor ID: D0EA           signal: 4 rssi: -64 battery: 4 (1.4V) (OK)
+WH51 CH10  sensor ID: CEB1           signal: 4 rssi: -73 battery: 5 (1.5V) (OK)
+WH51 CH11  sensor is registering...    
+WH51 CH12  sensor is registering...    
+WH51 CH13  sensor is registering...    
+WH51 CH14  sensor is registering...    
+WH51 CH15  sensor is registering...    
+WH51 CH16  sensor is registering...    
+WH54 CH1   sensor ID: 295D           signal: 4 rssi: -82 battery: 4 (2.84V) (OK)
+WH54 CH2   sensor is registering...    
+WH54 CH3   sensor is registering...    
+WH54 CH4   sensor is registering...    
+WH55 CH1   sensor ID: CD9E           signal: 3 rssi: -79 battery: 4 (OK)
+WH55 CH2   sensor ID: 10CDF8         signal: 4 rssi: -83 battery: 5 (OK)
+WH55 CH3   sensor ID: 20CCF3         signal: 4 rssi: -95 battery: 5 (OK)
+WH55 CH4   sensor ID: 30CD16         signal: 4 rssi: -81 battery: 5 (OK)
+WH57       sensor ID: D127           signal: 4 rssi: -65 battery: 4 (OK)
+WH68       sensor is registering...    
+WH69       sensor ID: 10             signal: 4 rssi: -76 battery: 0 (OK)
+WS80       sensor ID: 67E1           signal: 4 rssi: -102 battery: 5 (--)
+WS85       sensor ID: 2848           signal: 4 rssi: -83 battery: 5 (--)
+WS90       sensor ID: 2D89           signal: 4 rssi: -102 battery: 5 (--)
