@@ -6,6 +6,12 @@
 
 ## 2025-07-11 settings for lightning changed (lightning_num = new)
 ## 2025-09-02 new AQI values from EcowittHttp
+## 2025-11-09 leak1..4 with names
+## 2025-11-30 correction for lightning_distance
+## 2026-02-16 windir10 and windspeed10
+## 2026-02-26 new last_rain - need time_since.py
+##            and setting in skin.conf: search_list_extensions = user.historygenerator3.MyXSearch, user.time_since.TimeSince     
+
 
 #set $ecowitt_hw = [('GW1000'),
                     ('GW1100'),
@@ -67,7 +73,7 @@
 ('barometer','#25ea2f','trend','1'),
 ('pressure','','trend','1'),
 ('cloudbase','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+('- - - - - - - - - - - - - - - - - W S 8 5','','','3'),
 ('windSpeed','#0000ff','current','1'),
 ('windSpeed','#0000ff','day','1'),
 ('windGust','#4282b4','current','1'),
@@ -671,6 +677,64 @@
         #end if
         <td class="data">$xt1</td>
       </tr>
+
+    #elif $x[0] == 'rainDur' and $x[2] == 'deltatime'
+      <tr>
+        <td class="label"><font color=$color>$obs.label[$x[0]]$ztx</font></td>
+         #try
+          #set $xt = $getattr($day, $x[0])
+           #set $ztx = $gettext("hrs.")
+           #set $xt1 = $xt.sum.long_form(format_string="%(hour)d:%(minute)02d:%(second)02d")
+          #except
+           #set $xt1 = '??:??:??'
+          #end try
+          <td class="data">$xt1 $ztx</td>
+       </tr>
+      #try
+       #set $test = $time_at('rain>0')
+       #if $test != "$time_at('rain>0')"
+       <tr>
+        <td class="label">$obs.label.last_rain am</td>
+        <td class="data">$time_at('rain>0')</td>
+       </tr> 
+       <tr>
+        <td class="label">vor</td>
+        <td class="data"><font size="2">$time_since('rain>0').long_form(format_string="%(day)d%(day_label)s, %(hour)d:%(minute)02d:%(second)02d")</font></td>
+        ##<td class="data"><font size="2">$time_since('rain>0').long_form</font></td>
+       </tr>
+       #end if 
+     #except
+      #pass
+     #end try
+    #elif $x[0] == 'hailDur' and $x[2] == 'deltatime'
+      <tr>
+        <td class="label"><font color=$color>$obs.label[$x[0]]$ztx</font></td>
+         #try
+          #set $xt = $getattr($day, $x[0])
+           #set $ztx = $gettext("hrs.")
+           #set $xt1 = $xt.sum.long_form(format_string="%(hour)d:%(minute)02d:%(second)02d")
+          #except
+           #set $xt1 = '??:??:??'
+          #end try
+          <td class="data">$xt1 $ztx</td>
+       </tr>
+      #try
+       #set $test = $time_at('hail>0')
+       #if $test != "$time_at('hail>0')"
+       <tr>
+        <td class="label">$obs.label.last_rain am</td>
+        <td class="data">$time_at('hail>0')</td>
+       </tr> 
+       <tr>
+        <td class="label">vor</td>
+        <td class="data"><font size="2">$time_since('hail>0').long_form(format_string="%(day)d%(day_label)s, %(hour)d:%(minute)02d:%(second)02d")</font></td>
+        ##<td class="data"><font size="2">$time_since('hail>0').long_form</font></td>
+       </tr>
+       #end if 
+     #except
+      #pass
+     #end try
+
     #elif $x[0] == 'hail'
       <tr>
         <td class="label"><font color=$color>$obs.label[$x[0]]$ztx</font></td>
@@ -686,6 +750,7 @@
         #end if
         <td class="data">$xt1</td>
       </tr>
+
     #elif 'leak_' in $x[0] 
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]$ztx</font></span></td>
