@@ -44,7 +44,7 @@ If you also use Oliver's FOSHKplugin, and the corresponding Wi-Fi station also p
 or the gateways always provide the signals, the Ecowitt Custom function in the Ecowitt protocol sends 
 the data to the FOSHKplugin, and FOSHKplugin forwards the data to the Ecowittcustom driver for WeeWx.
 
-This provides the functionality of the GW1000 driver with all newer data (e.g. inbuilt WS3910 CO2 sensor, LDS sensor WH54, VPD) 
+This provides the functionality of the old GW1000 driver or the new Ecowitt_Http driver with all newer data (e.g. inbuilt WS3910 CO2 sensor, LDS sensor WH54, VPD) 
 that is no longer provided by the Ecowitt API (last Telnet v1.7.0 - 2024.05.27 [WH46]).
 ```
 Ecowitt protocol:
@@ -186,7 +186,7 @@ Example for the skin:
 - VantagePro: https://www.pc-wetterstation.de/wetter/weewx3
 - Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx4
 - Ecowittcustom & GW1000 & FOSHKplugin (GW2000):  https://www.pc-wetterstation.de/wetter/weewx5
-
+- EcowittHttp (GW3000):  https://www.pc-wetterstation.de/wetter/weewx8
 
 #### Calculation of the sunshine duration and now too rain duration:
 
@@ -264,6 +264,7 @@ Code:
      [[wx_binding]]
         schema = schemas.wview.schema
         schema_new = schemas.wview_ecowitt.schema # -> is entered in this way by the installation!
+        schema_all = schemas.wview_ecowitt_all.schema # -> is entered in this way by the installation!
 # Change to
         #schema = schemas.wview.schema
         schema = schemas.wview_ecowitt.schema
@@ -271,6 +272,7 @@ Code:
 # Now there are more database schemas are available:
  - wview_ecowittrssi.py            # with the rssi fields
  - wview_ecowittrssisoilad.py      # with the rssi and soilad fields
+ - wview_ecowitt_all.py            # with current all available Ecowitt fields
 
 Possibly also the database name from weewx.sdb to weewx_ecowitt.sdb
 to change.
@@ -282,6 +284,7 @@ Code:
          database_type = SQLite
          database_name_new = weewx_ecowitt.sdb
          database_name_new = weewx_ecowittrssi.sdb
+
      change to
          # database_name = weewx.sdb
          database_type = SQLite
@@ -366,7 +369,7 @@ Code:
 # Set to type of station hardware. There must be a corresponding stanza
 # in this file with a 'driver' parameter indicating the driver to be used.
   station_type = Ecowittcustom		# with Ecowittcustom driver
-  #station_type = GW1000			# with GW1000 driver
+  #station_type = EcowittHttp			# with EcowittHttp driver
 
 [[SeasonsReport]]
   skin = Seasons
@@ -424,7 +427,7 @@ Code:
     # added user.sunrainduration.SunshineDuration for calculation sunshinehours
     # addet user.GTS.GTSService for calculation dayET, ET24, GTS, GTSdate and other
     [[Services]]
-        data_services = user.gw1000.Gw1000Service
+        data_services = user.ecowitt_http.EcowittHttpService
         # or data_services = ,
         process_services = weewx.engine.StdConvert, weewx.engine.StdCalibrate, weewx.engine.StdQC, weewx.wxservices.StdWXCalculate, user.sunrainduration.SunshineDuration
         xtype_services = weewx.wxxtypes.StdWXXTypes, weewx.wxxtypes.StdPressureCooker, weewx.wxxtypes.StdRainRater, weewx.wxxtypes.StdDelta, user.GTS.GTSService
@@ -446,12 +449,15 @@ Code:
 
 ##############################################################################
 
-# Options for extension 'ecowitt-client' = ecowittcustom (or gw1000 too) 
+# Options for extension 'ecowitt-client' = ecowittcustom (or ecowitt_http too) 
 [Accumulator]
    [[model]]
         accumulator = firstlast
         extractor = last
    [[stationtype]]
+        accumulator = firstlast
+        extractor = last
+   [[apName]]
         accumulator = firstlast
         extractor = last
 
@@ -670,18 +676,4 @@ Code:
         extractor = last
     [[console_batt]]
         extractor = last
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
