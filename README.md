@@ -674,6 +674,19 @@ Code:
         extractor = last
     [[ws1900batt]]
         extractor = last
-    [[console_batt]]
-        extractor = last
+
+``` 
+### Information for soilEC Sensor:
+
+ It appears that this sensor sporadically causes "spikes."
+ This can be countered by adding the following entry to the weewx.conf file (here for Soil EC Sensor 12):
+ 
+<img width="500" height="180" alt="daysoilEC12_bad" src="https://github.com/user-attachments/assets/ddb61ae5-06c8-4fc3-b637-85345c6da62d" />
+<img width="500" height="180" alt="daysoilEC12_ok" src="https://github.com/user-attachments/assets/47c534e1-efd0-4381-abd6-ea2eeea2a5e6" />
+
+``` 
+[Accumulator]
+ [[soilEC12]]
+  extractor = min
+ ```     
 
