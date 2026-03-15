@@ -130,6 +130,12 @@ you can find script files that extend an existing database schema for the values
         - lightning_distance/lightning_dist group_count changed to group_distance  
     30 Dec 2025            v0.3.0
         - livedata 0xA1, 0xA2 -> WN38 Sensor = BGT Sensor
+    17 Feb 2026            v0.3.1 (not public)
+        - WH52 Sensor -> like WH51 soilmoisture sensor additional Temp and EC
+        - add bgt data (WN38 Sensor) from ecowitt cloud
+    07 Mar 2026            v0.3.2 (not public)
+        - ch_lds.x.air -> air_chx (former  thi_chx )
+        - ch_lds.x.total_height -> thi_chx
 		  
 Tested and completed:
 ```
