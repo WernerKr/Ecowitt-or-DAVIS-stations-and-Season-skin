@@ -678,15 +678,23 @@ Code:
 ``` 
 ### Information for soilEC Sensor:
 
- It appears that this sensor sporadically causes "spikes."
+ It appears that this sensor sporadically causes "spikes." value = 4095
  This can be countered by adding the following entry to the weewx.conf file (here for Soil EC Sensor 12):
  
 <img width="500" height="180" alt="daysoilEC12_bad" src="https://github.com/user-attachments/assets/ddb61ae5-06c8-4fc3-b637-85345c6da62d" />
 <img width="500" height="180" alt="daysoilEC12_ok" src="https://github.com/user-attachments/assets/47c534e1-efd0-4381-abd6-ea2eeea2a5e6" />
 
-``` 
+```
+[StdQC]
+  [[MinMax]]
+     soilEC12 = 0, 4094, micro_siemens_per_centimeter
+
 [Accumulator]
  [[soilEC12]]
   extractor = min
  ```     
+#### I received the following information from Ecowitt:
+
+  This is a bug in our gateway side: when the gateway has not received the sensor, it fills up the RAM with FF, and this leads to this error. 
+  We will fix the gateway bug by upgrading it in the next release
 
