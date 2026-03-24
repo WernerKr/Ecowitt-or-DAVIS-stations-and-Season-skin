@@ -11,7 +11,7 @@ under https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin
 
 you can find script files that extend an existing database schema for the values of Ecowitt stations 
 
-## For WS6210 use ecowittws6210_http driver -> uses other Thunder time and correct PM2.5 1..4
+### For WS6210 use ecowittws6210_http driver -> uses other Lightning/Thunder time and correct PM2.5 1..4
 
     X  May 2025            v0.1.0a28  Gary Roderick
 	
