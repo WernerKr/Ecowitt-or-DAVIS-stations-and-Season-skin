@@ -1,26 +1,42 @@
 ## about module for weewx skins
 ## Copyright Tom Keffer, Matthew Wall
 ## See LICENSE.txt for your rights
-## Werner Krenn 2025/06/14
-## 2025-08-21 add data from WS6210
+## Werner Krenn 2026/03/09
 
 #errorCatcher Echo
 #encoding UTF-8
 
-#set $xt = ''
+#set $xt5 = ""
+#set $xt4 = ""
+#set $xt = ""
 #if $current.stationtype.has_data
  #if not 'EasyWeather' in $current.stationtype.raw
-  #set $xt = $current.stationtype.raw
+  #if $current.stationtype.raw not in $station.hardware  
+   #set $xt = $current.stationtype.raw
+   #set $xt4 = $current.stationtype.raw[7:] 
+  #end if
  #elif $current.model.has_data
   #set $xt = $current.model.raw 
+  #set $xt5 = $xt
  #end if
 #end if
-#set $xt1 = ''
+
+#set $xt1 = ""
 #if $current.stationtype.has_data
  #if 'EasyWeather' in $current.stationtype.raw
   #set $xt1 = $current.stationtype.raw
  #end if
 #end if
+
+#set $xt3 = ""
+#set $xt2 = ""
+#try
+ #if '_' in $station.hardware
+   #set $xt2 = $station.hardware[8:]
+ #end if
+#except
+ #pass
+#end try
 
 
 <div id='about_widget' class="widget">
@@ -33,9 +49,20 @@
   <table>
     <tr>
       <td class="label">$gettext("Hardware")</td>
+     #try
+       #if $current.apName.has_data
+        #set $xt3 = $current.apName
+       #end if
+     #except
+      #pass
+     #end try
+     #if $xt3 != "" and $xt2 != "" and $xt4 == ""
+       <td class="data">$xt3$xt2</td>
+     #else
        <td class="data">$station.hardware</td>
+     #end if
     </tr>
-    #if $xt !=''
+    #if ( $xt !='' and $xt4 != "" and $xt3 == "") or $xt5 != ""
     <tr>
       <td class="label">      </td>
        <td class="data">$xt</td>
@@ -50,6 +77,17 @@
     #end if
 
    #try
+     #if $current.apName.has_data and $xt2 == ""
+     <tr> 
+      <td class="label">$gettext("apName")</td>
+      <td class="data">$current.apName$xt4</td>
+     </tr>
+     #end if
+   #except
+     #pass
+   #end try
+
+   #try
     #if $current.upgrade.has_data
     <tr> 
       <td class="label">$gettext("Station Auto upgrade")</td>
@@ -62,20 +100,6 @@
       <td class="data">$current.newVersion</td>
     </tr>
     #end if
-    #if $current.charge_stat.has_data
-    <tr> 
-      <td class="label">$gettext("Charge")</td>
-      <td class="data">$current.charge_stat</td>
-    </tr>
-    #end if
-    #if $current.consolebattp.has_data
-    <tr> 
-      <td class="label">$gettext("ChargeProz")</td>
-      <td class="data">$current.consolebattp</td>
-    </tr>
-    #end if
-
-
     #if $current.runtime.has_data
     <tr> 
       <td class="label">$gettext("Station uptime")</td>

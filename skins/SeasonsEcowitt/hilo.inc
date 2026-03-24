@@ -4,6 +4,8 @@
 #errorCatcher Echo
 #encoding UTF-8
 
+## 2026-03-10 added soilmTemp1..16, soilEC1..16
+
 #set $archive_data = [('day', $day), ('week', $week), ('month', $month), ('year', $year), ('alltime', $alltime)]
 
 #set $ecowitt_hw = [('GW1000'),
@@ -17,6 +19,7 @@
                     ('WN1980'),
                     ('WS39'),
                     ('WS38'),
+                    ('WS62'),
                     ('HP2550'),
                     ('ecowitt-client'),
                     ]
@@ -26,7 +29,8 @@
 ## The list of observations determines which database fields will be shown in
 ## the summary as well as the order in which they will be displayed.
 ## observ-Array -> (1:value, 2:labelcolor, ''=black, 3:''=min&max or max or sum or wx_binding?, 4:don't show, although values are available = 0)
-## 3: ='wx_binding?' -> example: 'wx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
+## 3: ='wx_binding?' or 'sumwx_binding?' or 'maxwx_binding?' or 'minwx_binding?' or 'avgwx_binding?' or 'maxwx_binding?, Text' or ...  
+## -> example: 'wx_binding3, WS90' or 'maxwx_binding3, WS90' Data are from the Database settings 'wx_binding3' and here additional to the label is ' WS90' added
 ## labelcolor can be general disabled -> #set $usefontcolor = 0
 
 #set $observ = [('outTemp','#e85d0d','','1'),
@@ -64,6 +68,7 @@
  ('sunshine_time','red','max','1'),
 ('luminosity','','max','0'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+('Luftqualitäts Sensoren','','','3'),
 ('co2','#32e5d9','','1'),
 ('co2_Temp','#f20e3c','','1'),
 ('co2_Hum','#0e25f2','','1'),
@@ -76,8 +81,10 @@
 ('pm25_3','#0e25f2','','1'),
 ('pm25_4','#0e25f2','','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+('weitere Sensoren','','','3'),
 ('inTemp','#c95716','','1'),
 ('inHumidity','#17c4ef','','1'),
+('co2in','#32e5d9','','1'),
 ('extraTemp1','#e85d0d','','1'),
 ('extraHumid1','#e85d0d','','1'),
 ('extraTemp2','#1a50bc','','1'),
@@ -103,6 +110,23 @@
 ('soilTemp6','#5127db','','1'),
 ('soilTemp7','#42b4b4','','1'),
 ('soilTemp8','#b442b4','','1'),
+('soilmTemp1','#4282b4','','1'),
+('soilmTemp2','#b44242','','1'),
+('soilmTemp3','#42b442','','1'),
+('soilmTemp4','#42b4b4','','1'),
+('soilmTemp5','#f90415','','1'),
+('soilmTemp6','#5127db','','1'),
+('soilmTemp7','#42b4b4','','1'),
+('soilmTemp8','#b442b4','','1'),
+('soilmTemp9','','','1'),
+('soilmTemp10','','','1'),
+('soilmTemp11','','','1'),
+('soilmTemp12','','','1'),
+('soilmTemp13','','','1'),
+('soilmTemp14','','','1'),
+('soilmTemp15','','','1'),
+('soilmTemp16','','','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('soilMoist1','#e85d0d','','1'),
 ('soilMoist2','#1a50bc','','1'),
 ('soilMoist3','#b44242','','1'),
@@ -119,6 +143,22 @@
 ('soilMoist14','','','1'),
 ('soilMoist15','','','1'),
 ('soilMoist16','','','1'),
+('soilEC1','#e85d0d','','1'),
+('soilEC2','#1a50bc','','1'),
+('soilEC3','#b44242','','1'),
+('soilEC4','#42B4B4','','1'),
+('soilEC5','#b442b4','','1'),
+('soilEC6','#0000ff','','1'),
+('soilEC7','#f90415','','1'),
+('soilEC8','#5127db','','1'),
+('soilEC9','','','1'),
+('soilEC10','','','1'),
+('soilEC11','','','1'),
+('soilEC12','','','1'),
+('soilEC13','','','1'),
+('soilEC14','','','1'),
+('soilEC15','','','1'),
+('soilEC16','','','1'),
 ('leafTemp1','#5427db','','1'),
 ('leafTemp2','#e85d0d','','1'),
 ('leafTemp3','#e85d0d','','1'),
@@ -131,7 +171,7 @@
 ('leafWet6','#5127db','','1'),
 ('leafWet7','#5127db','','1'),
 ('leafWet8','#5127db','','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','0'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('leak_1','#006eff','','1'),
 ('leak_2','#006eff','','1'),
 ('leak_3','#006eff','','1'),
@@ -183,7 +223,6 @@
           ##</th>
         <td></td>
       </tr>
-
 
 #for $x in $observ
   #set $ztx = '' 
