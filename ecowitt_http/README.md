@@ -194,7 +194,8 @@ loop_on_init = 1
 [EcowittHttp]
     # the driver to use
     driver = user.ecowitt_http
-   
+    # driver = user.ecowittws6210_http
+  
     # how often to poll the device
     poll_interval = 20
     # how many attempts to contact the device before giving up
