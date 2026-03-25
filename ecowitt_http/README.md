@@ -835,6 +835,18 @@ skin.conf
 ```
 <img width="500" height="180" alt="daysoilMoistAd" src="https://github.com/user-attachments/assets/4be58f6d-f097-42bf-b993-3ff025dc869f" />
 
+#### New Soil EC (electrical conductivity) value:
+
+skin.conf
+```
+        [[[daysoilEC12]]]
+            [[[[soilEC12]]]]
+		color = "#25ea2f" 
+
+
+```
+<img width="500" height="180" alt="daysoilEC12" src="https://github.com/user-attachments/assets/5a760356-dab2-4951-bbe4-595885c374a0" />
+
 
 ## Live data comparison GW3000 original driver V0.1.0a28 with the driver V0.2.5
 https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/info/compare_gw3000_live_data.txt
