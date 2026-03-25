@@ -11,7 +11,7 @@ under https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin
 
 you can find script files that extend an existing database schema for the values of Ecowitt stations 
 
-### For WS6210 use ecowittws6210_http driver -> uses other Lightning/Thunder time and correct PM2.5 1..4
+### For WS6210 use ecowittws6210_http driver -> uses other Lightning/Thunder time and corrected PM2.5 1..4 from SDCard (Pm2.5)
 
     X  May 2025            v0.1.0a28  Gary Roderick
 	
@@ -83,7 +83,7 @@ you can find script files that extend an existing database schema for the values
         - test_service: 
           Distinguishes between WeeWx V4.x and V5.x
         - correction for rain, hail (p_rain). This data was missed, wenn data from SDcard 
-        - new debug Option: raindelta
+		- new debug Option: raindelta
     
     07 Aug 2025            v0.2.1
         - wn31_sig and wn31_rssi renamed to wh31_sig and wh31_rssi
@@ -135,9 +135,11 @@ you can find script files that extend an existing database schema for the values
     17 Feb 2026            v0.3.1 (not public)
         - WH52 Sensor -> like WH51 soilmoisture sensor additional Temp and EC
         - add bgt data (WN38 Sensor) from ecowitt cloud
-    07 Mar 2026            v0.3.2 (not public)
+    22 Mar 2026            v0.3.2 (only WS6210 public!)
         - ch_lds.x.air -> air_chx (former  thi_chx )
         - ch_lds.x.total_height -> thi_chx
+        - added soilECad1..16 - data only via ecowitt cloud
+        - Preparation for WQT01 sensor
 		  
 Tested and completed:
 ```
