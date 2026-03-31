@@ -6,30 +6,27 @@ as a crude "cron" to download necessary files.
 Pat O'Brien, August 19, 2018
 """
 
-from __future__ import print_function  # Python 2/3 compatibility
-from __future__ import with_statement
-
 import calendar
 import datetime
 import json
 import locale
+import logging
 import os
-import os.path
-import sys
 import syslog
 import time
+from urllib.request import Request, urlopen
+import urllib.error
 from collections import OrderedDict
 from math import asin, atan2, cos, degrees, pi, radians, sin, sqrt
 from re import match
 
 import configobj
-
 import weeutil.weeutil
 import weewx
 import weewx.reportengine
-import weewx.station
 import weewx.tags
 import weewx.units
+from weeutil.config import accumulateLeaves
 from weeutil.weeutil import (
     TimeSpan,
     archiveDaySpan,
@@ -46,66 +43,103 @@ from weeutil.weeutil import (
 from weewx.cheetahgenerator import SearchList
 from weewx.tags import TimespanBinder
 
-if sys.version_info[0] >= 3:
-    from weeutil.config import search_up
-
-# Check weewx version. Many things like search_up, weeutil.weeutil.KeyDict
-# (label_dict) are from 3.9
-if weewx.__version__ < "3.9":
+if weewx.__version__ < "5":
     raise weewx.UnsupportedFeature(
-        "weewx 3.9 and newer is required, found %s" % weewx.__version__
+        f"WeeWX 5 and newer is required, found {weewx.__version__}"
     )
 
-if weewx.__version__ < "4":
-
-    def logmsg(level, msg):
-        syslog.syslog(level, "Belchertown Extension: %s" % msg)
-
-    def logdbg(msg):
-        logmsg(syslog.LOG_DEBUG, msg)
-
-    def loginf(msg):
-        logmsg(syslog.LOG_INFO, msg)
-
-    def logerr(msg):
-        logmsg(syslog.LOG_ERR, msg)
-
-    from weeutil.weeutil import accumulateLeaves
-    import syslog
-else:
-    # weewx 4.0+
-    from weeutil.config import accumulateLeaves
-    import weeutil.logger
-    import logging
-
-    log = logging.getLogger(__name__)
-
-    def logdbg(msg):
-        log.debug(msg)
-
-    def loginf(msg):
-        log.info(msg)
-
-    def logerr(msg):
-        log.error(msg)
-
+log = logging.getLogger(__name__)
 
 # Print version in syslog for easier troubleshooting
-VERSION = "1.3.2kw"
-loginf("version %s" % VERSION)
+VERSION = "1.7beta2-new-belchertown"
+log.info(f"version {VERSION}")
 
-# Define these as global so they can be used in both the search list extension
-# and custom graphs section
-aqi = ""
-aqi_category = ""
-aqi_time = 0
-aqi_location = ""
+# Default timeout for all HTTP requests (seconds)
+DEFAULT_HTTP_TIMEOUT = 15
+
+# HTTP Headers for different services
+HTTP_HEADERS = {
+    "PIRATE_WEATHER": {
+        "User-Agent": "weewx-belchertown-new/pirateweather",
+        "Connection": "keep-alive",
+    },
+    "AERIS_WEATHER": {
+        "User-Agent": "weewx-belchertown-new/aerisweather",
+        "Connection": "keep-alive",
+    },
+}
+
+
+# Module-level helper functions for HTTP and JSON processing
+
+
+def _http_get_json(url, timeout=DEFAULT_HTTP_TIMEOUT):
+    """Fetch JSON data from the Pirate Weather API."""
+    req = Request(url, headers=HTTP_HEADERS["PIRATE_WEATHER"])
+    with urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _extract_fields(source, fields):
+    """Extract specified fields from a source dictionary."""
+    return {field: source.get(field) for field in fields}
+
+
+def _pw_transform_to_belch(pw):
+    """Map Dark Sky-style JSON from Pirate Weather to the compact structure
+    this skin uses: current, hourly[], daily[], alerts[].
+    """
+    CURRENT_FIELDS = [
+        "summary", "icon", "temperature", "apparentTemperature", "windSpeed",
+        "windGust", "windBearing", "humidity", "pressure", "visibility",
+        "dewPoint", "precipIntensity", "precipProbability", "cloudCover",
+        "uvIndex", "time"
+    ]
+    HOURLY_FIELDS = [
+        "time", "summary", "icon", "temperature", "apparentTemperature",
+        "windSpeed", "windGust", "windBearing", "precipIntensity",
+        "precipProbability", "cloudCover", "uvIndex"
+    ]
+    DAILY_FIELDS = [
+        "time", "summary", "icon", "temperatureHigh", "temperatureLow",
+        "windSpeed", "windGust", "windBearing", "precipIntensity",
+        "precipProbability", "cloudCover", "uvIndex"
+    ]
+    ALERT_FIELDS = ["title", "expires", "description", "severity", "uri"]
+
+    current_data = pw.get("currently") or {}
+    hourly_list = (pw.get("hourly") or {}).get("data", [])
+    daily_list = (pw.get("daily") or {}).get("data", [])
+    alerts_list = pw.get("alerts") or []
+
+    return {
+        "current": _extract_fields(current_data, CURRENT_FIELDS),
+        "hourly": [_extract_fields(h, HOURLY_FIELDS) for h in hourly_list],
+        "daily": [_extract_fields(d, DAILY_FIELDS) for d in daily_list],
+        "alerts": [_extract_fields(a, ALERT_FIELDS) for a in alerts_list],
+        "provider": "pirateweather",
+        "generated_at": int(time.time()),
+    }
+
+
+def _parse_aeris_json(obj):
+    """Robustly parse JSON whether it's str or bytes."""
+    try:
+        return json.loads(obj)
+    except (ValueError, TypeError):
+        pass
+    
+    try:
+        if isinstance(obj, (bytes, bytearray)):
+            return json.loads(obj.decode("utf-8"))
+        return json.loads(obj.decode("utf-8", "replace"))
+    except Exception as e:
+        log.error(f"Error parsing forecast JSON: {e}")
+        return {}
 
 
 class getData(SearchList):
-    """
-    Collect all custom data and calculations, then return search list extension
-    """
+    """Collect all custom data and calculations, then return search list extension."""
 
     def __init__(self, generator):
         SearchList.__init__(self, generator)
@@ -117,163 +151,178 @@ class getData(SearchList):
         function named radians which converts from degrees to radians.
         """
 
-        if not isinstance((pointA, pointB), tuple):
+        if not isinstance(pointA, tuple) or not isinstance(pointB, tuple):
             raise TypeError("Only tuples are supported as arguments")
-        lat1 = pointA[0]
-        lon1 = pointA[1]
-        lat2 = pointB[0]
-        lon2 = pointB[1]
-        # convert decimal degrees to radians
-        lat1r, lon1r, lat2r, lon2r = map(radians, [lat1, lon1, lat2, lon2])
-        # Haversine formula
+
+        lat1r = radians(pointA[0])
+        lon1r = radians(pointA[1])
+        lat2r = radians(pointB[0])
+        lon2r = radians(pointB[1])
+
+        # Haversine formula (minimized repeated trig calls)
         dlat = lat2r - lat1r
         dlon = lon2r - lon1r
-        a = sin(dlat / 2) ** 2 + cos(lat1r) * cos(lat2r) * sin(dlon / 2) ** 2
+        sin_dlat_2 = sin(dlat * 0.5)
+        sin_dlon_2 = sin(dlon * 0.5)
+        a = sin_dlat_2 * sin_dlat_2 + cos(lat1r) * cos(lat2r) * sin_dlon_2 * sin_dlon_2
         c = 2 * asin(sqrt(a))
-        # Radius of earth in kilometers is 6371. Use 3956 for miles
-        if distance_unit == "km":
-            r = 6371
-        else:
-            # Assume mile
-            r = 3956
-        bearing = self.get_gps_bearing(pointA, pointB)
-        # Returns distance as object 0 and bearing as object 1
-        return [(c * r), self.get_cardinal_direction(bearing), bearing]
 
-    def get_gps_bearing(self, pointA, pointB):
-        """
-        https://gist.github.com/jeromer/2005586
-        Calculates the bearing between two points.
-        :Parameters:
-          - pointA: The tuple representing the latitude/longitude for the
-            first point. Latitude and longitude must be in decimal degrees
-          - pointB: The tuple representing the latitude/longitude for the
-            second point. Latitude and longitude must be in decimal degrees
-        :Returns:
-          The bearing in degrees
-        :Returns Type:
-          float
-        """
-        if not isinstance((pointA, pointB), tuple):
-            raise TypeError("Only tuples are supported as arguments")
-        lat1 = radians(pointA[0])
-        lat2 = radians(pointB[0])
-        diffLong = radians(pointB[1] - pointA[1])
-        x = sin(diffLong) * cos(lat2)
-        y = cos(lat1) * sin(lat2) - (sin(lat1) * cos(lat2) * cos(diffLong))
-        initial_bearing = atan2(x, y)
+        # Radius of earth: kilometers or miles
+        r = 6371 if distance_unit == "km" else 3956
+
+        # Inline bearing calculation to avoid extra function call
+        x = sin(dlon) * cos(lat2r)
+        y = cos(lat1r) * sin(lat2r) - sin(lat1r) * cos(lat2r) * cos(dlon)
+        initial_bearing = degrees(atan2(x, y))
         # Now we have the initial bearing but math.atan2 return values
         # from -180 to + 180 degrees which is not what we want for a compass bearing
         # The solution is to normalize the initial bearing as shown below
-        initial_bearing = degrees(initial_bearing)
-        compass_bearing = (initial_bearing + 360) % 360
-        return compass_bearing
+        bearing = (initial_bearing + 360) % 360
+
+        # Returns distance (index 0), cardinal (index 1), raw bearing (index 2)
+        return [(c * r), self.get_cardinal_direction(bearing), bearing]
 
     def get_cardinal_direction(self, degree, return_only_labels=False):
-        default_ordinate_names = [
-            "N",
-            "NNE",
-            "NE",
-            "ENE",
-            "E",
-            "ESE",
-            "SE",
-            "SSE",
-            "S",
-            "SSW",
-            "SW",
-            "WSW",
-            "W",
-            "WNW",
-            "NW",
-            "NNW",
-            "N/A",
+        """
+        Divides compass into 16 wedges and returns direction label.
+        """
+        DEFAULT_DIRECTIONS = [
+            "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+            "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
         ]
-        try:
-            ordinate_names = weeutil.weeutil.option_as_list(
-                self.generator.skin_dict["Units"]["Ordinates"]["directions"]
+        
+        skin_dict = self.generator.skin_dict
+        ordinate_names = (
+            skin_dict.get("Units", {}).get("Ordinates", {}).get("directions", None)
+        )
+        
+        if ordinate_names is not None:
+            names = (
+                ordinate_names if isinstance(ordinate_names, list)
+                else weeutil.weeutil.option_as_list(ordinate_names)
             )
-        except KeyError:
-            ordinate_names = default_ordinate_names
-
+        else:
+            names = DEFAULT_DIRECTIONS
+            
         if return_only_labels:
-            return ordinate_names
+            return names
+            
+        try:
+            idx = int(((float(degree) - 11.25) / 22.5) + 1) % 16
+            return names[idx]
+        except (ValueError, TypeError):
+            return names[0]
 
-        if 0 <= degree <= 11.25:
-            return ordinate_names[0]
-        if 11.26 <= degree <= 33.75:
-            return ordinate_names[1]
-        if 33.76 <= degree <= 56.25:
-            return ordinate_names[2]
-        if 56.26 <= degree <= 78.75:
-            return ordinate_names[3]
-        if 78.76 <= degree <= 101.25:
-            return ordinate_names[4]
-        if 101.26 <= degree <= 123.75:
-            return ordinate_names[5]
-        if 123.76 <= degree <= 146.25:
-            return ordinate_names[6]
-        if 146.26 <= degree <= 168.75:
-            return ordinate_names[7]
-        if 168.76 <= degree <= 191.25:
-            return ordinate_names[8]
-        if 191.26 <= degree <= 213.75:
-            return ordinate_names[9]
-        if 213.76 <= degree <= 236.25:
-            return ordinate_names[10]
-        if 236.26 <= degree <= 258.75:
-            return ordinate_names[11]
-        if 258.76 <= degree <= 281.25:
-            return ordinate_names[12]
-        if 281.26 <= degree <= 303.75:
-            return ordinate_names[13]
-        if 303.76 <= degree <= 326.25:
-            return ordinate_names[14]
-        if 326.26 <= degree <= 348.75:
-            return ordinate_names[15]
-        if 348.76 <= degree <= 360:
-            return ordinate_names[0]
+    def _get_radar_html(self, extras_dict, lat, lon, zoom, width, height,
+                        rain, wind, temp, marker):
+        """Generate radar HTML based on provider configuration."""
+        custom = extras_dict.get("radar_html", "")
+        if custom:
+            return custom
+        
+        if extras_dict.get("aeris_map") == "1":
+            return self._build_aeris_radar(
+                extras_dict, width, height, lat, lon, zoom, dark=False
+            )
+        return self._build_windy_radar(
+            width, height, lat, lon, zoom, rain, wind, temp, marker == "true"
+        )
+
+    def _get_radar_html_dark(self, extras_dict, lat, lon, zoom, width, height):
+        """Generate dark mode radar HTML based on provider configuration."""
+        custom = extras_dict.get("radar_html_dark", "")
+        if custom:
+            return custom
+        
+        if extras_dict.get("aeris_map") == "1":
+            return self._build_aeris_radar(
+                extras_dict, width, height, lat, lon, zoom, dark=True
+            )
+        return "None"
+
+    def _get_radar_html_kiosk(self, extras_dict, skin_dict):
+        """Generate kiosk mode radar HTML."""
+        width = extras_dict.get("radar_width_kiosk", "")
+        height = extras_dict.get("radar_height_kiosk", "")
+        src = skin_dict.get("Extras", {}).get("radar_html_kiosk", "")
+        return f'<iframe width="{width}px" height="{height}px" src="{src}" frameborder="0"></iframe>'
+
+    def _build_aeris_radar(self, extras_dict, width, height, lat, lon, zoom, dark=False):
+        """Build Aeris API radar embed HTML."""
+        theme = "flat-dk" if dark else "flat"
+        blend = "lighten" if dark else "darken"
+        city_suffix = "-dk" if dark else ""
+        water_suffix = "-dk" if dark else ""
+        
+        return (
+            f'<img style="object-fit:cover;width:{width}px;height:{height}px" '
+            f'src="https://maps.aerisapi.com/{extras_dict["forecast_api_id"]}'
+            f'_{extras_dict["forecast_api_secret"]}/{theme},water-depth{water_suffix},'
+            f'counties:60,rivers,interstates:60,admin-cities{city_suffix},'
+            f'alerts-severe:50:blend({blend}),radar:blend({blend})/'
+            f'{width}x{height}/{lat},{lon},{zoom}/current.png" '
+            f'referrerpolicy="no-referrer"></img>'
+        )
+
+    def _build_windy_radar(self, width, height, lat, lon, zoom, rain, wind, temp, marker):
+        """Build Windy.com embedded radar HTML."""
+        marker_str = "true" if marker else "false"
+        return (
+            f'<iframe width="{width}px" height="{height}px" '
+            f'src="https://embed.windy.com/embed2.html?lat={lat}&lon={lon}'
+            f'&zoom={zoom}&level=surface&overlay=radar&menu=&message=true'
+            f'&marker={marker_str}&calendar=&pressure=&type=map'
+            f'&location=coordinates&detail=&detailLat={lat}&detailLon={lon}'
+            f'&metricRain={rain}&metricWind={wind}&metricTemp={temp}'
+            f'&radarRange=-1" frameborder="0"></iframe>'
+        )
+
+    def _convert_temperature(self, value, from_unit, formatter):
+        """Convert temperature value and format for display."""
+        conversion_tuple = (value, from_unit, "group_temperature")
+        converted = self.generator.converter.convert(conversion_tuple)[0]
+        return formatter % converted
 
     def get_extension_list(self, timespan, db_lookup):
         """
         Build the data needed for the Belchertown skin
         """
-
-        global aqi
-        global aqi_category
-        global aqi_time
-        global aqi_location
+        # Cache frequently accessed objects
+        config_dict = self.generator.config_dict
+        skin_dict = self.generator.skin_dict
+        extras_dict = self.generator.skin_dict["Extras"]
+        db_binder = self.generator.db_binder
 
         # Look for the debug flag which can be used to show more logging
-        weewx.debug = int(self.generator.config_dict.get("debug", 0))
+        weewx.debug = int(config_dict.get("debug", 0))
 
         # Setup label dict for text and titles
         try:
-            d = self.generator.skin_dict["Labels"]["Generic"]
+            d = skin_dict["Labels"]["Generic"]
         except KeyError:
             d = {}
         label_dict = weeutil.weeutil.KeyDict(d)
 
         # Setup database manager
-        binding = self.generator.config_dict["StdReport"].get(
-            "data_binding", "wx_binding"
-        )
-        manager = self.generator.db_binder.get_manager(binding)
+        binding = config_dict["StdReport"].get("data_binding", "wx_binding")
+        manager = db_binder.get_manager(binding)
 
-        belchertown_debug = self.generator.skin_dict["Extras"].get(
-            "belchertown_debug", 0
-        )
+        belchertown_debug = int(extras_dict.get("belchertown_debug", 0))
+
+        if belchertown_debug > 0:
+            log.info(f"'belchertown_debug' set to {belchertown_debug}")
 
         # Find the right HTML ROOT
-        if "HTML_ROOT" in self.generator.skin_dict:
+        weewx_root = config_dict["WEEWX_ROOT"]
+        if "HTML_ROOT" in skin_dict:
             html_root = os.path.join(
-                self.generator.config_dict["WEEWX_ROOT"],
-                self.generator.skin_dict["HTML_ROOT"],
+                weewx_root,
+                skin_dict["HTML_ROOT"],
             )
         else:
             html_root = os.path.join(
-                self.generator.config_dict["WEEWX_ROOT"],
-                self.generator.config_dict["StdReport"]["HTML_ROOT"],
+                weewx_root,
+                config_dict["StdReport"]["HTML_ROOT"],
             )
 
         # Setup UTC offset hours for moment.js in index.html
@@ -284,11 +333,11 @@ class getData(SearchList):
         ) / 60
 
         try:
-            moment_js_tz = self.generator.skin_dict["Units"]["TimeZone"].get("time_zone")
+            moment_js_tz = skin_dict["Units"]["TimeZone"].get("time_zone")
         except KeyError:
             moment_js_tz = ""
 
-# Highcharts UTC offset is the opposite of normal. Positive values are
+        # Highcharts UTC offset is the opposite of normal. Positive values are
         # west, negative values are east of UTC.
         # https://api.highcharts.com/highcharts/time.timezoneOffset Multiplying
         # by -1 will reverse the number sign and keep 0 (not -0).
@@ -297,7 +346,8 @@ class getData(SearchList):
 
         # If theme locale is auto, get the system locale for use with
         # moment.js, and the system decimal for use with highcharts
-        if self.generator.skin_dict["Extras"]["belchertown_locale"] == "auto":
+        belchertown_locale = extras_dict["belchertown_locale"]
+        if belchertown_locale == "auto":
             system_locale, locale_encoding = locale.getdefaultlocale()
         else:
             try:
@@ -305,24 +355,18 @@ class getData(SearchList):
                 # format. Example: "en_US.UTF-8", or "de_DE.UTF-8"
                 locale.setlocale(
                     locale.LC_ALL,
-                    self.generator.skin_dict["Extras"]["belchertown_locale"],
+                    belchertown_locale,
                 )
                 system_locale, locale_encoding = locale.getlocale()
-            except Exception as error:
+            except Exception as e:
                 # The system can't find the locale requested, so just set the
                 # variables anyways for JavaScript's use.
-                system_locale, locale_encoding = self.generator.skin_dict["Extras"][
-                    "belchertown_locale"
-                ].split(".")
+                system_locale, locale_encoding = belchertown_locale.split(".")
                 if belchertown_debug:
-                    logerr(
-                        "Locale: Error using locale %s. "
+                    log.error(
+                        f"Error using locale {belchertown_locale}. "
                         "This locale may not be installed on your system and you may see unexpected results. "
-                        "Belchertown skin JavaScript will try to use this locale. Full error: %s"
-                        % (
-                            self.generator.skin_dict["Extras"]["belchertown_locale"],
-                            error,
-                        )
+                        f"Python could not set the requested locale, but Belchertown skin JavaScript will attempt to use the provided locale string. Full error: {e}"
                     )
 
         if system_locale is None:
@@ -340,34 +384,25 @@ class getData(SearchList):
         except:
             system_locale_js = "en-US"  # Error finding locale, set to en-US
 
-        highcharts_decimal = self.generator.skin_dict["Extras"].get(
-            "highcharts_decimal", None
-        )
+        # Cache locale conversion for highcharts settings
+        locale_conv = locale.localeconv()
+
+        highcharts_decimal = extras_dict.get("highcharts_decimal", None)
         # Change the Highcharts decimal to the locale if the option is missing
         # or on auto mode, otherwise use whats defined in Extras
         if highcharts_decimal is None or highcharts_decimal == "auto":
-            try:
-                highcharts_decimal = locale.localeconv()["decimal_point"]
-            except:
-                # Locale not found, default back to a period
-                highcharts_decimal = "."
+            highcharts_decimal = locale_conv.get("decimal_point", ".")
 
-        highcharts_thousands = self.generator.skin_dict["Extras"].get(
-            "highcharts_thousands", None
-        )
+        highcharts_thousands = extras_dict.get("highcharts_thousands", None)
         # Change the Highcharts thousands separator to the locale if the option
         # is missing or on auto mode, otherwise use whats defined in Extras
         if highcharts_thousands is None or highcharts_thousands == "auto":
-            try:
-                highcharts_thousands = locale.localeconv()["thousands_sep"]
-            except:
-                # Locale not found, default back to a comma
-                highcharts_thousands = ","
+            highcharts_thousands = locale_conv.get("thousands_sep", ",")
 
         # Get the archive interval for the highcharts gapsize
         try:
             archive_interval_ms = (
-                int(self.generator.config_dict["StdArchive"]["archive_interval"]) * 1000
+                int(config_dict["StdArchive"]["archive_interval"]) * 1000
             )
         except KeyError:
             archive_interval_ms = (
@@ -384,18 +419,13 @@ class getData(SearchList):
         # ('week', ['chart1', 'chart5', 'chart6', 'chart2', 'chart3', 'chart4']),
         # ('month', ['this_is_chart1', 'chart2_is_here', 'chart3', 'windSpeed_and_windDir', 'chart5', 'chart6', 'chart7']),
         # ('year', ['chart1', 'chart2', 'chart3', 'chart4', 'chart5'])])
-        chart_config_path = os.path.join(
-            self.generator.config_dict["WEEWX_ROOT"],
-            self.generator.skin_dict["SKIN_ROOT"],
-            self.generator.skin_dict.get("skin", ""),
-            "graphs.conf",
+        skin_root_path = os.path.join(
+            weewx_root,
+            skin_dict["SKIN_ROOT"],
+            skin_dict.get("skin", ""),
         )
-        default_chart_config_path = os.path.join(
-            self.generator.config_dict["WEEWX_ROOT"],
-            self.generator.skin_dict["SKIN_ROOT"],
-            self.generator.skin_dict.get("skin", ""),
-            "graphs.conf.example",
-        )
+        chart_config_path = os.path.join(skin_root_path, "graphs.conf")
+        default_chart_config_path = os.path.join(skin_root_path, "graphs.conf.example")
         if os.path.exists(chart_config_path):
             chart_dict = configobj.ConfigObj(chart_config_path, file_error=True)
         else:
@@ -412,10 +442,8 @@ class getData(SearchList):
         # header. If no title defined, use the chart group name
         graphpage_titles = OrderedDict()
         for chartgroup in chart_dict.sections:
-            if "title" in chart_dict[chartgroup]:
-                graphpage_titles[chartgroup] = chart_dict[chartgroup]["title"]
-            else:
-                graphpage_titles[chartgroup] = chartgroup
+            chart_group_config = chart_dict[chartgroup]
+            graphpage_titles[chartgroup] = chart_group_config.get("title", chartgroup)
 
         # Create a dict of chart group page content for use on the graphs page
         # below the header.
@@ -426,100 +454,49 @@ class getData(SearchList):
 
         # Setup the Graphs page button row based on the skin extras option and
         # the button_text from graphs.conf
-        graph_page_buttons = ""
-        graph_page_graphgroup_buttons = []
-        for chartgroup in chart_dict.sections:
-            if (
-                "show_button" in chart_dict[chartgroup]
-                and chart_dict[chartgroup]["show_button"].lower() == "true"
-            ):
-                graph_page_graphgroup_buttons.append(chartgroup)
+        graph_page_graphgroup_buttons = [
+            chartgroup
+            for chartgroup in chart_dict.sections
+            if chart_dict[chartgroup].get("show_button", "").lower() == "true"
+        ]
+        button_parts = []
         for gg in graph_page_graphgroup_buttons:
-            if "button_text" in chart_dict[gg]:
-                button_text = chart_dict[gg]["button_text"]
-            else:
-                button_text = gg
-            graph_page_buttons += (
-                '<a href="./?graph='
-                + gg
-                + '"><button type="button" class="btn btn-primary">'
-                + button_text
-                + "</button></a>"
+            button_text = chart_dict[gg].get("button_text", gg)
+            button_parts.append(
+                f'<a href="./?graph={gg}"><button type="button" class="btn btn-primary">{button_text}</button></a>'
             )
-            graph_page_buttons += " "  # Spacer between the button
+        graph_page_buttons = " ".join(button_parts)
 
-        # Set a default radar URL using station's lat/lon. Moved from skin.conf
-        # so we can get station lat/lon from weewx.conf. A lot of stations out
-        # there with Belchertown 0.1 through 0.7 are showing the visitor's
-        # location and not the proper station location because nobody edited
-        # the radar_html which did not have lat/lon set previously.
-        lat = self.generator.config_dict["Station"]["latitude"]
-        lon = self.generator.config_dict["Station"]["longitude"]
-        radar_width = self.generator.skin_dict["Extras"]["radar_width"]
-        radar_height = self.generator.skin_dict["Extras"]["radar_height"]
-        if "radar_zoom" in self.generator.skin_dict["Extras"]:
-            zoom = self.generator.skin_dict["Extras"]["radar_zoom"]
-        else:
-            zoom = "8"
-        if (
-            "radar_marker" in self.generator.skin_dict["Extras"]
-            and self.generator.skin_dict["Extras"]["radar_marker"] == "1"
-        ):
-            marker = "true"
-        else:
-            marker = ""
+        # Set a default radar URL using station's lat/lon
+        lat = config_dict["Station"]["latitude"]
+        lon = config_dict["Station"]["longitude"]
+        radar_width = extras_dict["radar_width"]
+        radar_height = extras_dict["radar_height"]
+        radar_rain = extras_dict["radar_rain"]
+        radar_temp = extras_dict["radar_temp"]
+        radar_wind = extras_dict["radar_wind"]
+        zoom = extras_dict.get("radar_zoom", "8")
+        marker = "true" if (
+            "radar_marker" in extras_dict and extras_dict["radar_marker"] == "1"
+        ) else ""
 
-        # Set default radar html code, and override with user-specified value
-        if self.generator.skin_dict["Extras"].get("radar_html") == "":
-            if self.generator.skin_dict["Extras"].get("aeris_map") == "1":
-                radar_html = '<img style="object-fit:cover;width:{}px;height:{}px" src="https://maps.aerisapi.com/{}_{}/flat,water-depth,counties:60,rivers,interstates:60,admin-cities,alerts-severe:50:blend(darken),radar:blend(darken)/{}x{}/{},{},{}/current.png"></img>'.format(
-                    radar_width,
-                    radar_height,
-                    self.generator.skin_dict["Extras"]["forecast_api_id"],
-                    self.generator.skin_dict["Extras"]["forecast_api_secret"],
-                    radar_width,
-                    radar_height,
-                    lat,
-                    lon,
-                    zoom,
-                )
-            else:
-                radar_html = '<iframe width="{}px" height="{}px" src="https://embed.windy.com/embed2.html?lat={}&lon={}&zoom={}&level=surface&overlay=radar&menu=&message=true&marker={}&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat={}&detailLon={}&metricWind=&metricTemp=&radarRange=-1" frameborder="0"></iframe>'.format(
-                    radar_width, radar_height, lat, lon, zoom, marker, lat, lon
-                )
-        else:
-            radar_html = self.generator.skin_dict["Extras"]["radar_html"]
+        radar_html = self._get_radar_html(
+            extras_dict, lat, lon, zoom, radar_width, radar_height,
+            radar_rain, radar_wind, radar_temp, marker
+        )
+        radar_html_dark = self._get_radar_html_dark(
+            extras_dict, lat, lon, zoom, radar_width, radar_height
+        )
+        radar_html_kiosk = (
+            self._get_radar_html_kiosk(extras_dict, skin_dict)
+            if extras_dict.get("radar_html_kiosk") != ""
+            else radar_html
+        )
 
-        if self.generator.skin_dict["Extras"].get("radar_html_dark") == "":
-            if self.generator.skin_dict["Extras"].get("aeris_map") == "1":
-                radar_html_dark = '<img style="object-fit:cover;width:{}px;height:{}px" src="https://maps.aerisapi.com/{}_{}/flat-dk,water-depth-dk,counties:60,rivers,interstates:60,admin-cities-dk,alerts-severe:50:blend(lighten),radar:blend(lighten)/{}x{}/{},{},{}/current.png"></img>'.format(
-                    radar_width,
-                    radar_height,
-                    self.generator.skin_dict["Extras"]["forecast_api_id"],
-                    self.generator.skin_dict["Extras"]["forecast_api_secret"],
-                    radar_width,
-                    radar_height,
-                    lat,
-                    lon,
-                    zoom,
-                )
-            else:
-                radar_html_dark = "None"
-        else:
-            radar_html_dark = self.generator.skin_dict["Extras"]["radar_html_dark"]
-
-        # If the kiosk radar is different then the homepage one.
-        if self.generator.skin_dict["Extras"].get("radar_html_kiosk") == "":
-            radar_html_kiosk = radar_html
-        else:
-            radar_width_kiosk = self.generator.skin_dict["Extras"]["radar_width_kiosk"]
-            radar_height_kiosk = self.generator.skin_dict["Extras"]["radar_height_kiosk"]
-            radar_html_kiosk = '<iframe width="{}px" height="{}px" src="{}" frameborder="0"></iframe>'.format(
-                radar_width_kiosk,
-                radar_height_kiosk,
-                self.generator.skin_dict["Extras"]["radar_html_kiosk"]
-            )
-
+        if extras_dict.get("radar_html_kiosk") != "":
+            radar_width_kiosk = extras_dict["radar_width_kiosk"]
+            radar_height_kiosk = extras_dict["radar_height_kiosk"]
+            radar_html_kiosk = f'<iframe width="{radar_width_kiosk}px" height="{radar_height_kiosk}px" src="{skin_dict["Extras"]["radar_html_kiosk"]}" frameborder="0"></iframe>'
 
         # ==============================================================================
         # Build the all time stats.
@@ -529,42 +506,39 @@ class getData(SearchList):
 
         # Find the beginning of the current year
         now = datetime.datetime.now()
-        date_time = "01/01/%s 00:00:00" % now.year
-        pattern = "%m/%d/%Y %H:%M:%S"
-        year_start_epoch = int(time.mktime(time.strptime(date_time, pattern)))
-
-        date_time = "%s/%s/%s 00:00:00" % (now.month, now.day, now.year)
-        today_start_epoch = int(time.mktime(time.strptime(date_time, pattern)))
+        year_start_epoch = int(datetime.datetime(now.year, 1, 1, 0, 0).timestamp())
+        today_start_epoch = int(
+            datetime.datetime(now.year, now.month, now.day, 0, 0).timestamp()
+        )
 
         # Setup the converter
         # Get the target unit nickname (something like 'US' or 'METRIC'):
-        target_unit_nickname = self.generator.config_dict["StdConvert"]["target_unit"]
+        target_unit_nickname = config_dict["StdConvert"]["target_unit"]
         # Get the target unit: weewx.US, weewx.METRIC, weewx.METRICWX
         target_unit = weewx.units.unit_constants[target_unit_nickname.upper()]
         # Bind to the appropriate standard converter units
         converter = weewx.units.StdUnitConverters[target_unit]
 
         # Temperature Range Lookups
-
-        # 1. The database query finds the result based off the total column.
-        # 2. We need to convert the min, max to the site's requested unit.
-        # 3. We need to recalculate the min/max range because the unit may have changed.
-
+        # Use parameterized queries for safety and clarity
+        temp_range_sql = """
+            SELECT dateTime, (max - min) as total, min, max
+            FROM archive_day_outTemp
+            WHERE dateTime >= ? AND dateTime < ? AND min IS NOT NULL AND max IS NOT NULL
+            ORDER BY total {order} LIMIT 1;
+        """
+        
         year_outTemp_max_range_query = wx_manager.getSql(
-            "SELECT dateTime, ROUND( (max - min), 1 ) as total, ROUND( min, 1 ) as min, ROUND( max, 1 ) as max FROM archive_day_outTemp WHERE dateTime >= %s AND dateTime < %s AND min IS NOT NULL AND max IS NOT NULL ORDER BY total DESC LIMIT 1;"
-            % (year_start_epoch, today_start_epoch)
+            temp_range_sql.format(order="DESC"), (year_start_epoch, today_start_epoch)
         )
         year_outTemp_min_range_query = wx_manager.getSql(
-            "SELECT dateTime, ROUND( (max - min), 1 ) as total, ROUND( min, 1 ) as min, ROUND( max, 1 ) as max FROM archive_day_outTemp WHERE dateTime >= %s AND dateTime < %s AND min IS NOT NULL AND max IS NOT NULL ORDER BY total ASC LIMIT 1;"
-            % (year_start_epoch, today_start_epoch)
+            temp_range_sql.format(order="ASC"), (year_start_epoch, today_start_epoch)
         )
         at_outTemp_max_range_query = wx_manager.getSql(
-            "SELECT dateTime, ROUND( (max - min), 1 ) as total, ROUND( min, 1 ) as min, ROUND( max, 1 ) as max FROM archive_day_outTemp WHERE dateTime < %s AND min IS NOT NULL AND max IS NOT NULL ORDER BY total DESC LIMIT 1;"
-            % today_start_epoch
+            temp_range_sql.format(order="DESC"), (0, today_start_epoch)
         )
         at_outTemp_min_range_query = wx_manager.getSql(
-            "SELECT dateTime, ROUND( (max - min), 1 ) as total, ROUND( min, 1 ) as min, ROUND( max, 1 ) as max FROM archive_day_outTemp WHERE dateTime < %s AND min IS NOT NULL AND max IS NOT NULL ORDER BY total ASC LIMIT 1;"
-            % today_start_epoch
+            temp_range_sql.format(order="ASC"), (0, today_start_epoch)
         )
 
         # Find the group_name for outTemp in database
@@ -576,42 +550,24 @@ class getData(SearchList):
         ]
 
         # Find the number of decimals to round to based on the skin.conf
-        outTemp_round = self.generator.skin_dict["Units"]["StringFormats"].get(
+        outTemp_round = skin_dict["Units"]["StringFormats"].get(
             skin_outTemp_unit, "%.1f"
         )
 
         # Largest Daily Temperature Range Conversions
-        # Max temperature for this day
         if year_outTemp_max_range_query is not None:
-            year_outTemp_max_range_max_tuple = (
-                year_outTemp_max_range_query[3],
-                outTemp_unit,
-                "group_temperature",
+            max_val = self._convert_temperature(
+                year_outTemp_max_range_query[3], outTemp_unit, outTemp_round
             )
-            year_outTemp_max_range_max = (
-                outTemp_round
-                % self.generator.converter.convert(year_outTemp_max_range_max_tuple)[0]
+            min_val = self._convert_temperature(
+                year_outTemp_max_range_query[2], outTemp_unit, outTemp_round
             )
-            # Min temperature for this day
-            year_outTemp_max_range_min_tuple = (
-                year_outTemp_max_range_query[2],
-                outTemp_unit,
-                "group_temperature",
-            )
-            year_outTemp_max_range_min = (
-                outTemp_round
-                % self.generator.converter.convert(year_outTemp_max_range_min_tuple)[0]
-            )
-            # Largest Daily Temperature Range total
-            year_outTemp_max_range_total = outTemp_round % (
-                float(year_outTemp_max_range_max) - float(year_outTemp_max_range_min)
-            )
-            # Replace the SQL Query output with the converted values
+            total = outTemp_round % (float(max_val) - float(min_val))
             year_outTemp_range_max = [
                 year_outTemp_max_range_query[0],
-                locale.format_string("%g", float(year_outTemp_max_range_total)),
-                locale.format_string("%g", float(year_outTemp_max_range_min)),
-                locale.format_string("%g", float(year_outTemp_max_range_max)),
+                locale.format_string("%g", float(total)),
+                locale.format_string("%g", float(min_val)),
+                locale.format_string("%g", float(max_val)),
             ]
         else:
             year_outTemp_range_max = [
@@ -621,38 +577,19 @@ class getData(SearchList):
                 locale.format_string("%.1f", 0),
             ]
 
-        # Smallest Daily Temperature Range Conversions
-        # Max temperature for this day
         if year_outTemp_min_range_query is not None:
-            year_outTemp_min_range_max_tuple = (
-                year_outTemp_min_range_query[3],
-                outTemp_unit,
-                "group_temperature",
+            max_val = self._convert_temperature(
+                year_outTemp_min_range_query[3], outTemp_unit, outTemp_round
             )
-            year_outTemp_min_range_max = (
-                outTemp_round
-                % self.generator.converter.convert(year_outTemp_min_range_max_tuple)[0]
+            min_val = self._convert_temperature(
+                year_outTemp_min_range_query[2], outTemp_unit, outTemp_round
             )
-            # Min temperature for this day
-            year_outTemp_min_range_min_tuple = (
-                year_outTemp_min_range_query[2],
-                outTemp_unit,
-                "group_temperature",
-            )
-            year_outTemp_min_range_min = (
-                outTemp_round
-                % self.generator.converter.convert(year_outTemp_min_range_min_tuple)[0]
-            )
-            # Smallest Daily Temperature Range total
-            year_outTemp_min_range_total = outTemp_round % (
-                float(year_outTemp_min_range_max) - float(year_outTemp_min_range_min)
-            )
-            # Replace the SQL Query output with the converted values
+            total = outTemp_round % (float(max_val) - float(min_val))
             year_outTemp_range_min = [
                 year_outTemp_min_range_query[0],
-                locale.format_string("%g", float(year_outTemp_min_range_total)),
-                locale.format_string("%g", float(year_outTemp_min_range_min)),
-                locale.format_string("%g", float(year_outTemp_min_range_max)),
+                locale.format_string("%g", float(total)),
+                locale.format_string("%g", float(min_val)),
+                locale.format_string("%g", float(max_val)),
             ]
         else:
             year_outTemp_range_min = [
@@ -662,38 +599,19 @@ class getData(SearchList):
                 locale.format_string("%.1f", 0),
             ]
 
-        # All Time - Largest Daily Temperature Range Conversions
-        # Max temperature
         if at_outTemp_max_range_query is not None:
-            at_outTemp_max_range_max_tuple = (
-                at_outTemp_max_range_query[3],
-                outTemp_unit,
-                "group_temperature",
+            max_val = self._convert_temperature(
+                at_outTemp_max_range_query[3], outTemp_unit, outTemp_round
             )
-            at_outTemp_max_range_max = (
-                outTemp_round
-                % self.generator.converter.convert(at_outTemp_max_range_max_tuple)[0]
+            min_val = self._convert_temperature(
+                at_outTemp_max_range_query[2], outTemp_unit, outTemp_round
             )
-            # Min temperature for this day
-            at_outTemp_max_range_min_tuple = (
-                at_outTemp_max_range_query[2],
-                outTemp_unit,
-                "group_temperature",
-            )
-            at_outTemp_max_range_min = (
-                outTemp_round
-                % self.generator.converter.convert(at_outTemp_max_range_min_tuple)[0]
-            )
-            # Largest Daily Temperature Range total
-            at_outTemp_max_range_total = outTemp_round % (
-                float(at_outTemp_max_range_max) - float(at_outTemp_max_range_min)
-            )
-            # Replace the SQL Query output with the converted values
+            total = outTemp_round % (float(max_val) - float(min_val))
             at_outTemp_range_max = [
                 at_outTemp_max_range_query[0],
-                locale.format_string("%g", float(at_outTemp_max_range_total)),
-                locale.format_string("%g", float(at_outTemp_max_range_min)),
-                locale.format_string("%g", float(at_outTemp_max_range_max)),
+                locale.format_string("%g", float(total)),
+                locale.format_string("%g", float(min_val)),
+                locale.format_string("%g", float(max_val)),
             ]
         else:
             at_outTemp_range_max = [
@@ -752,15 +670,13 @@ class getData(SearchList):
         skin_rain_unit = self.generator.converter.group_unit_dict["group_rain"]
 
         # Find the number of decimals to round the result based on the skin.conf
-        rain_round = self.generator.skin_dict["Units"]["StringFormats"].get(
-            skin_rain_unit, "%.2f"
-        )
+        rain_round = skin_dict["Units"]["StringFormats"].get(skin_rain_unit, "%.2f")
 
-        # Rainiest Day
-        rainiest_day_query = wx_manager.getSql(
-            "SELECT dateTime, sum FROM archive_day_rain WHERE dateTime >= %s ORDER BY sum DESC LIMIT 1;"
-            % year_start_epoch
-        )
+        rainiest_day_sql = """
+            SELECT dateTime, sum FROM archive_day_rain
+            WHERE dateTime >= ? ORDER BY sum DESC LIMIT 1;
+        """
+        rainiest_day_query = wx_manager.getSql(rainiest_day_sql, (year_start_epoch,))
         if rainiest_day_query is not None:
             rainiest_day_tuple = (rainiest_day_query[1], rain_unit, "group_rain")
             rainiest_day_converted = (
@@ -771,12 +687,16 @@ class getData(SearchList):
                 locale.format_string("%g", float(rainiest_day_converted)),
             ]
         else:
-            rainiest_day = [calendar.timegm(time.gmtime()), locale.format_string("%.2f", 0)]
+            rainiest_day = [
+                calendar.timegm(time.gmtime()),
+                locale.format_string("%.2f", 0),
+            ]
 
-        # All Time Rainiest Day
-        at_rainiest_day_query = wx_manager.getSql(
-            "SELECT dateTime, sum FROM archive_day_rain ORDER BY sum DESC LIMIT 1"
-        )
+        at_rainiest_day_sql = """
+            SELECT dateTime, sum FROM archive_day_rain
+            ORDER BY sum DESC LIMIT 1;
+        """
+        at_rainiest_day_query = wx_manager.getSql(at_rainiest_day_sql)
         at_rainiest_day_tuple = (at_rainiest_day_query[1], rain_unit, "group_rain")
         at_rainiest_day_converted = (
             rain_round % self.generator.converter.convert(at_rainiest_day_tuple)[0]
@@ -788,42 +708,58 @@ class getData(SearchList):
 
         # Find what kind of database we're working with and specify the
         # correctly tailored SQL Query for each type of database
-        data_binding = self.generator.config_dict["StdArchive"]["data_binding"]
-        database = self.generator.config_dict["DataBindings"][data_binding]["database"]
-        database_type = self.generator.config_dict["Databases"][database][
-            "database_type"
-        ]
-        driver = self.generator.config_dict["DatabaseTypes"][database_type]["driver"]
+        data_binding = config_dict["StdArchive"]["data_binding"]
+        database = config_dict["DataBindings"][data_binding]["database"]
+        database_type = config_dict["Databases"][database]["database_type"]
+        driver = config_dict["DatabaseTypes"][database_type]["driver"]
+        current_year = str(now.year)
         if driver == "weedb.sqlite":
-            year_rainiest_month_sql = (
-                'SELECT strftime("%%m", datetime(dateTime, "unixepoch", "localtime")) as month, SUM( sum ) as total FROM archive_day_rain WHERE strftime("%%Y", datetime(dateTime, "unixepoch", "localtime")) = "%s" GROUP BY month ORDER BY total DESC LIMIT 1;'
-                % time.strftime("%Y", time.localtime(time.time()))
-            )
-            at_rainiest_month_sql = 'SELECT strftime("%m", datetime(dateTime, "unixepoch", "localtime")) as month, strftime("%Y", datetime(dateTime, "unixepoch", "localtime")) as year, SUM( sum ) as total FROM archive_day_rain GROUP BY month, year ORDER BY total DESC LIMIT 1;'
-            year_rain_data_sql = (
-                'SELECT dateTime, sum FROM archive_day_rain WHERE strftime("%%Y", datetime(dateTime, "unixepoch", "localtime")) = "%s" AND count > 0;'
-                % time.strftime("%Y", time.localtime(time.time()))
-            )
-            # The all stats from http://www.weewx.com/docs/customizing.htm
-            # doesn't seem to calculate "Total Rainfall for" all time stat
-            # correctly.
-            at_rain_highest_year_sql = 'SELECT strftime("%Y", datetime(dateTime, "unixepoch", "localtime")) as year, SUM( sum ) as total FROM archive_day_rain GROUP BY year ORDER BY total DESC LIMIT 1;'
+            year_rainiest_month_sql = """
+                SELECT strftime('%m', datetime(dateTime, 'unixepoch', 'localtime')) AS month, SUM(sum) AS total
+                FROM archive_day_rain
+                WHERE strftime('%Y', datetime(dateTime, 'unixepoch', 'localtime')) = ?
+                GROUP BY month ORDER BY total DESC LIMIT 1;
+            """
+            at_rainiest_month_sql = """
+                SELECT strftime('%m', datetime(dateTime, 'unixepoch', 'localtime')) AS month, strftime('%Y', datetime(dateTime, 'unixepoch', 'localtime')) AS year, SUM(sum) AS total
+                FROM archive_day_rain
+                GROUP BY month, year ORDER BY total DESC LIMIT 1;
+            """
+            year_rain_data_sql = """
+                SELECT dateTime, sum FROM archive_day_rain
+                WHERE strftime('%Y', datetime(dateTime, 'unixepoch', 'localtime')) = ?;
+            """
+            at_rain_highest_year_sql = """
+                SELECT strftime('%Y', datetime(dateTime, 'unixepoch', 'localtime')) AS year, SUM(sum) AS total
+                FROM archive_day_rain
+                GROUP BY year ORDER BY total DESC LIMIT 1;
+            """
         elif driver == "weedb.mysql":
-            year_rainiest_month_sql = 'SELECT FROM_UNIXTIME( dateTime, "%%m" ) AS month, ROUND( SUM( sum ), 2 ) AS total FROM archive_day_rain WHERE year( FROM_UNIXTIME( dateTime ) ) = "{0}" GROUP BY month ORDER BY total DESC LIMIT 1;'.format(
-                time.strftime("%Y", time.localtime(time.time()))
-            )  # Why does this one require .format() but the other's don't?
-            at_rainiest_month_sql = 'SELECT FROM_UNIXTIME( dateTime, "%%m" ) AS month, FROM_UNIXTIME( dateTime, "%%Y" ) AS year, ROUND( SUM( sum ), 2 ) AS total FROM archive_day_rain GROUP BY month, year ORDER BY total DESC LIMIT 1;'
-            year_rain_data_sql = (
-                'SELECT dateTime, ROUND( sum, 2 ) FROM archive_day_rain WHERE year( FROM_UNIXTIME( dateTime ) ) = "%s" AND count > 0;'
-                % time.strftime("%Y", time.localtime(time.time()))
-            )
-            # The all stats from http://www.weewx.com/docs/customizing.htm
-            # doesn't seem to calculate "Total Rainfall for" all time stat
-            # correctly.
-            at_rain_highest_year_sql = 'SELECT FROM_UNIXTIME( dateTime, "%%Y" ) AS year, ROUND( SUM( sum ), 2 ) AS total FROM archive_day_rain GROUP BY year ORDER BY total DESC LIMIT 1;'
+            year_rainiest_month_sql = """
+                SELECT FROM_UNIXTIME(dateTime, '%%m') AS month, ROUND(SUM(sum), 2) AS total
+                FROM archive_day_rain
+                WHERE YEAR(FROM_UNIXTIME(dateTime)) = ?
+                GROUP BY month ORDER BY total DESC LIMIT 1;
+            """
+            at_rainiest_month_sql = """
+                SELECT FROM_UNIXTIME(dateTime, '%%m') AS month, FROM_UNIXTIME(dateTime, '%%Y') AS year, ROUND(SUM(sum), 2) AS total
+                FROM archive_day_rain
+                GROUP BY month, year ORDER BY total DESC LIMIT 1;
+            """
+            year_rain_data_sql = """
+                SELECT dateTime, ROUND(sum, 2) FROM archive_day_rain
+                WHERE year(FROM_UNIXTIME(dateTime)) = ?;
+            """
+            at_rain_highest_year_sql = """
+                SELECT FROM_UNIXTIME(dateTime, '%%Y') AS year, ROUND(SUM(sum), 2) AS total
+                FROM archive_day_rain
+                GROUP BY year ORDER BY total DESC LIMIT 1;
+            """
 
         # Rainiest month
-        year_rainiest_month_query = wx_manager.getSql(year_rainiest_month_sql)
+        year_rainiest_month_query = wx_manager.getSql(
+            year_rainiest_month_sql, (current_year,)
+        )
         if year_rainiest_month_query is not None:
             year_rainiest_month_tuple = (
                 year_rainiest_month_query[1],
@@ -852,7 +788,7 @@ class getData(SearchList):
         )
         at_rainiest_month_name = calendar.month_name[int(at_rainiest_month_query[0])]
         at_rainiest_month = [
-            "%s, %s" % (at_rainiest_month_name, at_rainiest_month_query[1]),
+            f"{at_rainiest_month_name}, {at_rainiest_month_query[1]}",
             locale.format_string("%g", float(at_rainiest_month_converted)),
         ]
 
@@ -872,25 +808,20 @@ class getData(SearchList):
         ]
 
         # Consecutive days with/without rainfall
-        # dateTime needs to be epoch. Conversion done in the template using #echo
         year_days_with_rain_total = 0
         year_days_without_rain_total = 0
         year_days_with_rain_output = {}
         year_days_without_rain_output = {}
-        year_rain_query = wx_manager.genSql(year_rain_data_sql)
+        year_rain_query = wx_manager.genSql(year_rain_data_sql, (current_year,))
         for row in year_rain_query:
-            # Original MySQL way: CASE WHEN sum!=0 THEN @total+1 ELSE 0 END
             if row[1] != 0:
                 year_days_with_rain_total += 1
             else:
                 year_days_with_rain_total = 0
-
-            # Original MySQL way: CASE WHEN sum=0 THEN @total+1 ELSE 0 END
             if row[1] == 0:
                 year_days_without_rain_total += 1
             else:
                 year_days_without_rain_total = 0
-
             year_days_with_rain_output[row[0]] = year_days_with_rain_total
             year_days_without_rain_output[row[0]] = year_days_without_rain_total
 
@@ -920,14 +851,19 @@ class getData(SearchList):
                 calendar.timegm(time.gmtime()),
             ]
 
+        epoch_prev = 0
         at_days_with_rain_total = 0
         at_days_without_rain_total = 0
         at_days_with_rain_output = {}
         at_days_without_rain_output = {}
         at_rain_query = wx_manager.genSql(
-            "SELECT dateTime, ROUND( sum, 2 ) FROM archive_day_rain WHERE count > 0;"
+            "SELECT dateTime, ROUND( sum, 2 ), count FROM archive_day_rain;"
         )
         for row in at_rain_query:
+            if round((row[0] / 86400)) - epoch_prev != 1 or row[2] == 0:
+                at_days_with_rain_total = 0
+                at_days_without_rain_total = 0
+            epoch_prev = round((row[0] / 86400))
             # Original MySQL way: CASE WHEN sum!=0 THEN @total+1 ELSE 0 END
             if row[1] != 0:
                 at_days_with_rain_total += 1
@@ -949,6 +885,7 @@ class getData(SearchList):
             )
         else:
             at_days_with_rain = (0, 0)
+
         if len(at_days_without_rain_output) > 0:
             at_days_without_rain = max(
                 zip(
@@ -959,7 +896,7 @@ class getData(SearchList):
         else:
             at_days_without_rain = (0, 0)
 
-        # This portion is right from the weewx sample
+        # This portion is right from the WeeWX sample
         # http://www.weewx.com/docs/customizing.htm
 
         all_stats = TimespanBinder(
@@ -999,38 +936,42 @@ class getData(SearchList):
             # final_year = years[-1]
             years = sorted(set(years))[::-1]
 
+            # Build NOAA header HTML using list then join for efficiency
+            noaa_parts = []
             for y in years:
                 # Link to the year file
-                if os.path.exists(noaa_dir + "NOAA-%s.txt" % y):
-                    noaa_header_html += (
-                        '<a href="?yr=%s" class="noaa_rep_nav"><b>%s</b></a>:' % (y, y)
+                year_file = f"{noaa_dir}NOAA-{y}.txt"
+                if os.path.exists(year_file):
+                    noaa_parts.append(
+                        f"""<a href="?yr={y}" class="noaa_rep_nav"><b>{y}</b></a>:"""
                     )
                 else:
-                    noaa_header_html += (
-                        '<span class="noaa_rep_nav"><b>%s</b></span>:' % y
+                    noaa_parts.append(
+                        f"""<span class="noaa_rep_nav"><b>{y}</b></span>:"""
                     )
 
                 # Loop through all 12 months and find if the file exists.  If
                 # the file doesn't exist, just show the month name in the
                 # header without a href link.  There is no month 13, but we
                 # need to loop to 12, so 13 is where it stops.
+                month_links = []
                 for i in range(1, 13):
-                    month_num = format(
-                        i, "02"
-                    )  # Pad the number with a 0 since the NOAA files use 2 digit month
+                    month_num = f"{i:02d}"  # Pad the number with a 0 since the NOAA files use 2 digit month
                     month_abbr = calendar.month_abbr[i]
-                    if os.path.exists(noaa_dir + "NOAA-%s-%s.txt" % (y, month_num)):
-                        noaa_header_html += (
-                            ' <a href="?yr=%s&amp;mo=%s" class="noaa_rep_nav"><b>%s</b></a>'
-                            % (y, month_num, month_abbr)
+                    month_file = f"{noaa_dir}NOAA-{y}-{month_num}.txt"
+                    if os.path.exists(month_file):
+                        month_links.append(
+                            f"""<a href="?yr={y}&amp;mo={month_num}" class="noaa_rep_nav"><b>{month_abbr}</b></a>"""
                         )
                     else:
-                        noaa_header_html += (
-                            ' <span class="noaa_rep_nav"><b>%s</b></span>' % month_abbr
+                        month_links.append(
+                            f"""<span class="noaa_rep_nav"><b>{month_abbr}</b></span>"""
                         )
 
-                # Row build complete, push next row to new line
-                noaa_header_html += "<br>"
+                noaa_parts.append(" ".join(month_links))
+                noaa_parts.append("<br>")
+
+            noaa_header_html = "".join(noaa_parts)
 
             # Find the current month's NOAA file for the default file to show
             # on JavaScript page load.  The NOAA files are generated as part of
@@ -1039,12 +980,10 @@ class getData(SearchList):
             now = datetime.datetime.now()
             current_year = str(now.year)
             current_month = str(format(now.month, "02"))
-            if os.path.exists(
-                noaa_dir + "NOAA-%s-%s.txt" % (current_year, current_month)
-            ):
-                default_noaa_file = "NOAA-%s-%s.txt" % (current_year, current_month)
+            if os.path.exists(noaa_dir + f"NOAA-{current_year}-{current_month}.txt"):
+                default_noaa_file = f"NOAA-{current_year}-{current_month}.txt"
             else:
-                default_noaa_file = "NOAA-%s.txt" % current_year
+                default_noaa_file = f"NOAA-{current_year}.txt"
         except:
             # There's an error - I've seen this on first run and the NOAA
             # folder is not created yet. Skip this section.
@@ -1054,519 +993,735 @@ class getData(SearchList):
         # Forecast Data
         # ==============================================================================
 
-        if (
-            self.generator.skin_dict["Extras"]["forecast_enabled"] == "1"
-            and self.generator.skin_dict["Extras"]["forecast_api_id"] != ""
-            or "forecast_dev_file" in self.generator.skin_dict["Extras"]
-        ):
+        # provider switch (default Xweather/Aeris)
+        forecast_provider = extras_dict.get("forecast_provider", "").strip().lower()
+        if forecast_provider not in ("", "pirateweather", "aeris", "xweather"):
+            forecast_provider = ""
 
-            forecast_file = html_root + "/json/forecast.json"
-            forecast_api_id = self.generator.skin_dict["Extras"]["forecast_api_id"]
-            forecast_api_secret = self.generator.skin_dict["Extras"][
-                "forecast_api_secret"
-            ]
-            forecast_units = self.generator.skin_dict["Extras"][
-                "forecast_units"
-            ].lower()
-            latitude = self.generator.config_dict["Station"]["latitude"]
-            longitude = self.generator.config_dict["Station"]["longitude"]
-            forecast_stale_timer = self.generator.skin_dict["Extras"]["forecast_stale"]
-            forecast_is_stale = False
+        # Ensure AQI variables are always defined to avoid NameError when forecast is disabled or fails
+        # aqi and aqi_category are global so they can be used by Highcharts
+        global aqi, aqi_category
+        aqi = "No Data"
+        aqi_category = ""
+        aqi_location = ""
+        aqi_time = ""
 
-            def aeris_coded_weather(data):
-                # https://www.aerisweather.com/support/docs/api/reference/weather-codes/
-                output = ""
-                coverage_code = data.split(":")[0]
-                intensity_code = data.split(":")[1]
-                weather_code = data.split(":")[2]
+        # ----------------------------
+        # Pirate Weather
+        # ----------------------------
 
-                cloud_dict = {
-                    "CL": label_dict["forecast_cloud_code_CL"],
-                    "FW": label_dict["forecast_cloud_code_FW"],
-                    "SC": label_dict["forecast_cloud_code_SC"],
-                    "BK": label_dict["forecast_cloud_code_BK"],
-                    "OV": label_dict["forecast_cloud_code_OV"],
-                }
-
-                coverage_dict = {
-                    "AR": label_dict["forecast_coverage_code_AR"],
-                    "BR": label_dict["forecast_coverage_code_BR"],
-                    "C": label_dict["forecast_coverage_code_C"],
-                    "D": label_dict["forecast_coverage_code_D"],
-                    "FQ": label_dict["forecast_coverage_code_FQ"],
-                    "IN": label_dict["forecast_coverage_code_IN"],
-                    "IS": label_dict["forecast_coverage_code_IS"],
-                    "L": label_dict["forecast_coverage_code_L"],
-                    "NM": label_dict["forecast_coverage_code_NM"],
-                    "O": label_dict["forecast_coverage_code_O"],
-                    "PA": label_dict["forecast_coverage_code_PA"],
-                    "PD": label_dict["forecast_coverage_code_PD"],
-                    "S": label_dict["forecast_coverage_code_S"],
-                    "SC": label_dict["forecast_coverage_code_SC"],
-                    "VC": label_dict["forecast_coverage_code_VC"],
-                    "WD": label_dict["forecast_coverage_code_WD"],
-                }
-
-                intensity_dict = {
-                    "VL": label_dict["forecast_intensity_code_VL"],
-                    "L": label_dict["forecast_intensity_code_L"],
-                    "H": label_dict["forecast_intensity_code_H"],
-                    "VH": label_dict["forecast_intensity_code_VH"],
-                }
-
-                weather_dict = {
-                    "A": label_dict["forecast_weather_code_A"],
-                    "BD": label_dict["forecast_weather_code_BD"],
-                    "BN": label_dict["forecast_weather_code_BN"],
-                    "BR": label_dict["forecast_weather_code_BR"],
-                    "BS": label_dict["forecast_weather_code_BS"],
-                    "BY": label_dict["forecast_weather_code_BY"],
-                    "F": label_dict["forecast_weather_code_F"],
-                    "FR": label_dict["forecast_weather_code_FR"],
-                    "H": label_dict["forecast_weather_code_H"],
-                    "IC": label_dict["forecast_weather_code_IC"],
-                    "IF": label_dict["forecast_weather_code_IF"],
-                    "IP": label_dict["forecast_weather_code_IP"],
-                    "K": label_dict["forecast_weather_code_K"],
-                    "L": label_dict["forecast_weather_code_L"],
-                    "R": label_dict["forecast_weather_code_R"],
-                    "RW": label_dict["forecast_weather_code_RW"],
-                    "RS": label_dict["forecast_weather_code_RS"],
-                    "SI": label_dict["forecast_weather_code_SI"],
-                    "WM": label_dict["forecast_weather_code_WM"],
-                    "S": label_dict["forecast_weather_code_S"],
-                    "SW": label_dict["forecast_weather_code_SW"],
-                    "T": label_dict["forecast_weather_code_T"],
-                    "UP": label_dict["forecast_weather_code_UP"],
-                    "VA": label_dict["forecast_weather_code_VA"],
-                    "WP": label_dict["forecast_weather_code_WP"],
-                    "ZF": label_dict["forecast_weather_code_ZF"],
-                    "ZL": label_dict["forecast_weather_code_ZL"],
-                    "ZR": label_dict["forecast_weather_code_ZR"],
-                    "ZY": label_dict["forecast_weather_code_ZY"],
-                }
-
-                # Check if the weather_code is in the cloud_dict and use that
-                # if it's there. If not then it's a combined weather code.
-                if weather_code in cloud_dict:
-                    return cloud_dict[weather_code]
-
-                # Add the coverage if it's present, and full observation
-                # forecast is requested
-                if coverage_code:
-                    output += coverage_dict[coverage_code] + " "
-                # Add the intensity if it's present
-                if intensity_code:
-                    output += intensity_dict[intensity_code] + " "
-                # Weather output
-                output += weather_dict[weather_code]
-                return output
-
-            def aeris_icon(data):
-                # https://www.aerisweather.com/support/docs/api/reference/icon-list/
-                iconlist_file_path = os.path.join(
-                    self.generator.config_dict["WEEWX_ROOT"],
-                    self.generator.skin_dict["SKIN_ROOT"],
-                    self.generator.skin_dict.get("skin", ""),
-                    "images/aeris-icon-list.json",
-                )
-                if os.path.exists(iconlist_file_path):
-                    icon_name = data.split(".")[0]  # Remove .png
-                    with open(iconlist_file_path, "r") as dict:
-                        icon_dict = json.load(dict)
-                    return icon_dict[icon_name]
-                else:
-                    logerr("aeris-icon-list.json is missing in " + iconlist_file_path)
-                    return 'unknown'
-
-            forecast_lang = self.generator.skin_dict["Extras"]["forecast_lang"].lower()
-            if self.generator.skin_dict["Extras"]["forecast_aeris_use_metar"] == "1":
-                forecast_current_url = (
-                    "https://api.aerisapi.com/observations/%s,%s?&format=json&filter=allstations&filter=metar&limit=1&client_id=%s&client_secret=%s"
-                    % (latitude, longitude, forecast_api_id, forecast_api_secret)
-                )
-            else:
-                forecast_current_url = (
-                    "https://api.aerisapi.com/observations/%s,%s?&format=json&filter=allstations&limit=1&client_id=%s&client_secret=%s"
-                    % (latitude, longitude, forecast_api_id, forecast_api_secret)
-                )
-            forecast_24hr_url = (
-                "https://api.aerisapi.com/forecasts/%s,%s?&format=json&filter=day&limit=7&client_id=%s&client_secret=%s"
-                % (latitude, longitude, forecast_api_id, forecast_api_secret)
-            )
-            forecast_3hr_url = (
-                "https://api.aerisapi.com/forecasts/%s,%s?&format=json&filter=3hr&limit=8&client_id=%s&client_secret=%s"
-                % (latitude, longitude, forecast_api_id, forecast_api_secret)
-            )
-            forecast_1hr_url = (
-                "https://api.aerisapi.com/forecasts/%s,%s?&format=json&filter=1hr&limit=16&client_id=%s&client_secret=%s"
-                % (latitude, longitude, forecast_api_id, forecast_api_secret)
-            )
-            aqi_url = (
-                "https://api.aerisapi.com/airquality/closest?p=%s,%s&format=json&radius=50mi&limit=1&client_id=%s&client_secret=%s"
-                % (latitude, longitude, forecast_api_id, forecast_api_secret)
-            )
-            if self.generator.skin_dict["Extras"]["forecast_alert_limit"]:
-                forecast_alert_limit = self.generator.skin_dict["Extras"][
-                    "forecast_alert_limit"
-                ]
-                forecast_alerts_url = "https://api.aerisapi.com/alerts/%s,%s?&format=json&limit=%s&lang=%s&client_id=%s&client_secret=%s" % (
-                    latitude,
-                    longitude,
-                    forecast_alert_limit,
-                    forecast_lang,
-                    forecast_api_id,
-                    forecast_api_secret,
-                )
-            else:
-                # Default to 1 alerts to show if the option is missing. Can go up to 10
-                forecast_alerts_url = "https://api.aerisapi.com/alerts/%s,%s?&format=json&limit=1&lang=%s&client_id=%s&client_secret=%s" % (
-                    latitude,
-                    longitude,
-                    forecast_lang,
-                    forecast_api_id,
-                    forecast_api_secret,
-                )
-
-            # Determine if the file exists and get it's modified time, enhanced
-            # for 1 hr forecast to load close to the hour
-            if os.path.isfile(forecast_file):
-                if (int(time.time()) - int(os.path.getmtime(forecast_file))) > int(
-                    forecast_stale_timer
-                ):
-                    forecast_is_stale = True
-                else:
-                    # catches repeated calls every archive interval (300secs)
-                    if (
-                        time.strftime("%M") < "05"
-                        and int(time.time()) - int(os.path.getmtime(forecast_file))
-                    ) > int(300):
-                        forecast_is_stale = True
-            else:
-                # File doesn't exist, download a new copy
-                forecast_is_stale = True
-
-            # File is stale, download a new copy
-            if forecast_is_stale:
-                try:
-                    if sys.version_info[0] >= 3:
-                        from urllib.request import Request, urlopen
-                    else:
-                        # Python 2
-                        from urllib2 import Request, urlopen
-
-                    user_agent = "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_4; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.472.63 Safari/534.3"
-                    headers = {"User-Agent": user_agent}
-                    if "forecast_dev_file" in self.generator.skin_dict["Extras"]:
-                        # Hidden option to use a pre-downloaded forecast file
-                        # rather than using API calls for no reason
-                        dev_forecast_file = self.generator.skin_dict["Extras"][
-                            "forecast_dev_file"
-                        ]
-                        req = Request(dev_forecast_file, None, headers)
-                        response = urlopen(req)
-                        forecast_file_result = response.read()
-                        response.close()
-                    else:
-                        # Current conditions
-                        req = Request(forecast_current_url, None, headers)
-                        response = urlopen(req)
-                        current_page = response.read()
-                        response.close()
-                        # 24hr forecast (was Forecast)
-                        req = Request(forecast_24hr_url, None, headers)
-                        response = urlopen(req)
-                        forecast_24hr_page = response.read()
-                        response.close()
-                        # 3hr forecast
-                        req = Request(forecast_3hr_url, None, headers)
-                        response = urlopen(req)
-                        forecast_3hr_page = response.read()
-                        response.close()
-                        # 1hr forecast
-                        req = Request(forecast_1hr_url, None, headers)
-                        response = urlopen(req)
-                        forecast_1hr_page = response.read()
-                        response.close()
-                        # AQI
-                        req = Request(aqi_url, None, headers)
-                        response = urlopen(req)
-                        aqi_page = response.read()
-                        response.close()
-                        if (
-                            self.generator.skin_dict["Extras"]["forecast_alert_enabled"]
-                            == "1"
-                        ):
-                            # Alerts
-                            req = Request(forecast_alerts_url, None, headers)
-                            response = urlopen(req)
-                            alerts_page = response.read()
-                            response.close()
-
-                        # Combine all into 1 file
-                        if (
-                            self.generator.skin_dict["Extras"]["forecast_alert_enabled"]
-                            == "1"
-                        ):
-                            try:
-                                forecast_file_result = json.dumps(
-                                    {
-                                        "timestamp": int(time.time()),
-                                        "current": [json.loads(current_page)],
-                                        "forecast_24hr": [
-                                            json.loads(forecast_24hr_page)
-                                        ],
-                                        "forecast_3hr": [json.loads(forecast_3hr_page)],
-                                        "forecast_1hr": [json.loads(forecast_1hr_page)],
-                                        "alerts": [json.loads(alerts_page)],
-                                        "aqi": [json.loads(aqi_page)],
-                                    }
-                                )
-                            except:
-                                forecast_file_result = json.dumps(
-                                    {
-                                        "timestamp": int(time.time()),
-                                        "current": [
-                                            json.loads(current_page.decode("utf-8"))
-                                        ],
-                                        "forecast_24hr": [
-                                            json.loads(
-                                                forecast_24hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "forecast_3hr": [
-                                            json.loads(
-                                                forecast_3hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "forecast_1hr": [
-                                            json.loads(
-                                                forecast_1hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "alerts": [
-                                            json.loads(alerts_page.decode("utf-8"))
-                                        ],
-                                        "aqi": [json.loads(aqi_page.decode("utf-8"))],
-                                    }
-                                )
-                        else:
-                            try:
-                                forecast_file_result = json.dumps(
-                                    {
-                                        "timestamp": int(time.time()),
-                                        "current": [json.loads(current_page)],
-                                        "forecast_24hr": [
-                                            json.loads(forecast_24hr_page)
-                                        ],
-                                        "forecast_3hr": [json.loads(forecast_3hr_page)],
-                                        "forecast_1hr": [json.loads(forecast_1hr_page)],
-                                        "aqi": [json.loads(aqi_page)],
-                                    }
-                                )
-                            except:
-                                forecast_file_result = json.dumps(
-                                    {
-                                        "timestamp": int(time.time()),
-                                        "current": [
-                                            json.loads(current_page.decode("utf-8"))
-                                        ],
-                                        "forecast_24hr": [
-                                            json.loads(
-                                                forecast_24hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "forecast_3hr": [
-                                            json.loads(
-                                                forecast_3hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "forecast_1hr": [
-                                            json.loads(
-                                                forecast_1hr_page.decode("utf-8")
-                                            )
-                                        ],
-                                        "aqi": [json.loads(aqi_page.decode("utf-8"))],
-                                    }
-                                )
-                except Exception as error:
-                    raise Warning(
-                        "Error downloading forecast data. "
-                        "Check the URL in your configuration and try again. "
-                        "You are trying to use URL: %s, and the error is: %s"
-                        % (forecast_24hr_url, error)
-                    )
-
-                # Save forecast data to file. w+ creates the file if it doesn't
-                # exist, and truncates the file and re-writes it everytime
-                try:
-                    with open(forecast_file, "wb+") as file:
-                        try:
-                            # Python 2/3
-                            file.write(forecast_file_result.encode("utf-8"))
-                        except:
-                            # Catch errors caused by ASCII characters in Python2
-                            file.write(forecast_file_result)
-                        loginf("New forecast file downloaded to %s" % forecast_file)
-                except IOError as e:
-                    raise Warning(
-                        "Error writing forecast info to %s. Reason: %s"
-                        % (forecast_file, e)
-                    )
-
-            # Process the forecast file
-            with open(forecast_file, "r") as read_file:
-                data = json.load(read_file)
-
-            try:
-                cloud_cover = "{}%".format(data["current"][0]["response"]["ob"]["sky"])
-            except Exception:
-                loginf("No cloud cover data from Aeris weather")
-                cloud_cover = ""
-
-            try:
-                if (
-                    len(data["aqi"][0]["response"]) > 0
-                ):
-                    aqi = data["aqi"][0]["response"][0]["periods"][0]["aqi"]
-                    aqi_category = data["aqi"][0]["response"][0]["periods"][0]["category"]
-                    aqi_time = data["aqi"][0]["response"][0]["periods"][0]["timestamp"]
-                    aqi_location = data["aqi"][0]["response"][0]["place"]["name"].title()
-                elif (
-                    data["aqi"][0]["error"]["code"] == "warn_no_data"
-                ):
-                    aqi = "No Data"
-                    aqi_category = ""
-                    aqi_time = 0
-                    aqi_location = ""
-            except Exception as error:
-                logerr(
-                    "Error getting AQI from Aeris weather. The error was: %s" % (error)
-                )
-                aqi = ""
-                aqi_category = ""
-                aqi_time = 0
-                aqi_location = ""
-                pass
-
-            # https://www.aerisweather.com/support/docs/api/reference/endpoints/airquality/
-            if aqi_category == "good":
-                aqi_category = label_dict["aqi_good"]
-            elif aqi_category == "moderate":
-                aqi_category = label_dict["aqi_moderate"]
-            elif aqi_category == "usg":
-                aqi_category = label_dict["aqi_usg"]
-            elif aqi_category == "unhealthy":
-                aqi_category = label_dict["aqi_unhealthy"]
-            elif aqi_category == "very unhealthy":
-                aqi_category = label_dict["aqi_very_unhealthy"]
-            elif aqi_category == "hazardous":
-                aqi_category = label_dict["aqi_hazardous"]
-            else:
-                aqi_category = label_dict["aqi_unknown"]
-
+        try:
             if (
-                len(data["current"][0]["response"]) > 0
-                and self.generator.skin_dict["Extras"]["forecast_aeris_use_metar"]
-                == "0"
+                extras_dict["forecast_enabled"] == "1"
+                and extras_dict["forecast_api_id"] != ""
+                or "forecast_dev_file" in extras_dict
             ):
-                # Non-metar responses do not contain these values. Set them to empty.
-                current_obs_summary = ""
-                current_obs_icon = ""
-                visibility = "N/A"
-                visibility_unit = ""
-            elif (
-                len(data["current"][0]["response"]) > 0
-                and self.generator.skin_dict["Extras"]["forecast_aeris_use_metar"]
-                == "1"
-            ):
-                current_obs_summary = aeris_coded_weather(
-                    data["current"][0]["response"]["ob"]["weatherPrimaryCoded"]
-                )
-                current_obs_icon = (
-                    aeris_icon(data["current"][0]["response"]["ob"]["icon"]) + ".png"
+
+                # Setup variables common to both forecast sources
+                forecast_file = f"{html_root}/json/forecast.json"
+                current_conditions_file = f"{html_root}/json/current_conditions.json"
+
+                forecast_api_id = extras_dict["forecast_api_id"]
+                forecast_api_secret = extras_dict["forecast_api_secret"]
+                forecast_units = extras_dict["forecast_units"].lower()
+                forecast_lang = extras_dict["forecast_lang"].lower()
+
+                latitude = config_dict["Station"]["latitude"]
+                longitude = config_dict["Station"]["longitude"]
+
+                forecast_place = extras_dict["forecast_place"]
+                if forecast_place:
+                    if belchertown_debug > 0:
+                        log.info(
+                            f"Forecast data using {forecast_place}, instead of [Station] longitude/latitude"
+                        )
+                else:
+                    forecast_place = f"{latitude},{longitude}"
+                if belchertown_debug > 0:
+                    log.info(f"forecast_place set to {forecast_place}")
+
+                forecast_stale_timer = int(extras_dict["forecast_stale"])
+                current_conditions_stale_timer = int(
+                    extras_dict["current_conditions_stale"]
                 )
 
-                if forecast_units in ("si", "ca"):
-                    if data["current"][0]["response"]["ob"]["visibilityKM"] is not None:
-                        visibility = locale.format_string(
-                            "%g", data["current"][0]["response"]["ob"]["visibilityKM"]
+                if os.path.isfile(forecast_file):
+                    # belchertown.py is called 12 times per archive, so the last condition ensures forecast on the hour is only downloaded once
+                    current_time = int(time.time())
+                    file_modtime = int(os.path.getmtime(forecast_file))
+                    archive_interval = int(
+                        config_dict["StdArchive"]["archive_interval"]
+                    )
+                    forecast_is_stale = (
+                        (current_time - file_modtime) > forecast_stale_timer
+                        or os.stat(forecast_file).st_size == 0
+                        or (
+                            int(time.strftime("%M")) < archive_interval / 60
+                            and (current_time - file_modtime) > archive_interval
                         )
-                        visibility_unit = "km"
+                    )
+                else:
+                    forecast_is_stale = True
+                current_conditions_is_stale = True
+                if os.path.isfile(current_conditions_file):
+                    current_conditions_is_stale = (
+                        int(time.time())
+                        - int(os.path.getmtime(current_conditions_file))
+                    ) > current_conditions_stale_timer or os.stat(
+                        current_conditions_file
+                    ).st_size == 0
+
+                if forecast_provider == "pirateweather":
+                    # Fetch → normalize → write forecast
+                    if forecast_is_stale:
+                        try:
+                            url = f"https://api.pirateweather.net/forecast/{forecast_api_id}/{latitude},{longitude}?units={forecast_units}&lang={forecast_lang}&exclude=minutely"
+                            pw_raw = _http_get_json(url)
+                            normalized = _pw_transform_to_belch(pw_raw)
+                            os.makedirs(os.path.dirname(forecast_file), exist_ok=True)
+                            with open(forecast_file, "w", encoding="utf-8") as fh:
+                                json.dump(
+                                    normalized,
+                                    fh,
+                                    ensure_ascii=False,
+                                    separators=(",", ":"),
+                                )
+                            log.debug(
+                                f"New Pirate Weather forecast cached to {forecast_file}"
+                            ),
+                        except urllib.error.HTTPError as e:
+                            log.error(
+                                f"Pirate Weather HTTP error {e.code}: {e.reason}",
+                            )
+                        except ValueError as e:
+                            log.error(f"Pirate Weather missing config: {e}")
+                        except Exception as e:
+                            log.error(f"Pirate Weather update failed: {e}")
                     else:
+                        log.info("Forecast is current, no update needed.")
+
+                    # current_conditions.json (tiny file just with 'current')
+                    if current_conditions_is_stale:
+                        try:
+                            with open(forecast_file, "r", encoding="utf-8") as rf:
+                                data_cc = json.load(rf)
+                            cc_out = {
+                                "timestamp": int(time.time()),
+                                "current": [data_cc.get("current", {})],
+                            }
+                            with open(
+                                current_conditions_file, "w", encoding="utf-8"
+                            ) as wf:
+                                json.dump(
+                                    cc_out,
+                                    wf,
+                                    ensure_ascii=False,
+                                    separators=(",", ":"),
+                                )
+                            log.info(
+                                f"New Pirate Weather current conditions cached to {current_conditions_file}",
+                            )
+                        except Exception as e:
+                            log.error(
+                                f"Pirate Weather current-conditions write failed: {e}",
+                            )
+                    else:
+                        log.info("Current conditions are current, no update needed.")
+
+                    # Read current_conditions.json and populate the variables used below
+                    with open(current_conditions_file, "r") as read_file:
+                        data = json.load(read_file)
+                    try:
+                        current_conditions_data = data["current"][0]
+                        vis_val = current_conditions_data.get("visibility")
+                        if forecast_units in ("si", "ca"):
+                            visibility = (
+                                locale.format_string("%g", float(vis_val))
+                                if vis_val is not None
+                                else "N/A"
+                            )
+                            visibility_unit = "km"
+                        else:
+                            visibility = (
+                                locale.format_string("%g", float(vis_val))
+                                if vis_val is not None
+                                else "N/A"
+                            )
+                            visibility_unit = "miles"
+                        current_obs_icon = current_conditions_data.get("icon", "") or ""
+                        current_obs_summary = (
+                            current_conditions_data.get("summary", "") or ""
+                        )
+                        cloud_cover = f"{current_conditions_data.get('cloudCover', '')}"
+                    except Exception as e:
+                        current_obs_icon = ""
+                        current_obs_summary = ""
                         visibility = "N/A"
                         visibility_unit = ""
+                        cloud_cover = ""
+                        log.error(f"Pirate Weather parse error: {e}")
                 else:
-                    # us, uk2 and default to miles per hour
-                    if data["current"][0]["response"]["ob"]["visibilityMI"] is not None:
-                        visibility = locale.format_string(
-                            "%g",
-                            float(data["current"][0]["response"]["ob"]["visibilityMI"]),
+
+                    def xweather_coded_weather(data):
+                        """Convert Aeris/Xweather codes to human readable strings."""
+                        # https://www.xweather.com/docs/weather-api/reference/weather-codes
+                        output = ""
+                        coverage_code = data.split(":")[0]
+                        intensity_code = data.split(":")[1]
+                        weather_code = data.split(":")[2]
+
+                        cloud_dict = {
+                            "CL": label_dict["forecast_cloud_code_CL"],
+                            "FW": label_dict["forecast_cloud_code_FW"],
+                            "SC": label_dict["forecast_cloud_code_SC"],
+                            "BK": label_dict["forecast_cloud_code_BK"],
+                            "OV": label_dict["forecast_cloud_code_OV"],
+                        }
+
+                        coverage_dict = {
+                            "AR": label_dict["forecast_coverage_code_AR"],
+                            "BR": label_dict["forecast_coverage_code_BR"],
+                            "C": label_dict["forecast_coverage_code_C"],
+                            "D": label_dict["forecast_coverage_code_D"],
+                            "FQ": label_dict["forecast_coverage_code_FQ"],
+                            "IN": label_dict["forecast_coverage_code_IN"],
+                            "IS": label_dict["forecast_coverage_code_IS"],
+                            "L": label_dict["forecast_coverage_code_L"],
+                            "NM": label_dict["forecast_coverage_code_NM"],
+                            "O": label_dict["forecast_coverage_code_O"],
+                            "PA": label_dict["forecast_coverage_code_PA"],
+                            "PD": label_dict["forecast_coverage_code_PD"],
+                            "S": label_dict["forecast_coverage_code_S"],
+                            "SC": label_dict["forecast_coverage_code_SC"],
+                            "VC": label_dict["forecast_coverage_code_VC"],
+                            "WD": label_dict["forecast_coverage_code_WD"],
+                        }
+
+                        intensity_dict = {
+                            "VL": label_dict["forecast_intensity_code_VL"],
+                            "L": label_dict["forecast_intensity_code_L"],
+                            "H": label_dict["forecast_intensity_code_H"],
+                            "VH": label_dict["forecast_intensity_code_VH"],
+                        }
+
+                        weather_dict = {
+                            "A": label_dict["forecast_weather_code_A"],
+                            "BD": label_dict["forecast_weather_code_BD"],
+                            "BN": label_dict["forecast_weather_code_BN"],
+                            "BR": label_dict["forecast_weather_code_BR"],
+                            "BS": label_dict["forecast_weather_code_BS"],
+                            "BY": label_dict["forecast_weather_code_BY"],
+                            "F": label_dict["forecast_weather_code_F"],
+                            "FR": label_dict["forecast_weather_code_FR"],
+                            "H": label_dict["forecast_weather_code_H"],
+                            "IC": label_dict["forecast_weather_code_IC"],
+                            "IF": label_dict["forecast_weather_code_IF"],
+                            "IP": label_dict["forecast_weather_code_IP"],
+                            "K": label_dict["forecast_weather_code_K"],
+                            "L": label_dict["forecast_weather_code_L"],
+                            "R": label_dict["forecast_weather_code_R"],
+                            "RW": label_dict["forecast_weather_code_RW"],
+                            "RS": label_dict["forecast_weather_code_RS"],
+                            "SI": label_dict["forecast_weather_code_SI"],
+                            "WM": label_dict["forecast_weather_code_WM"],
+                            "S": label_dict["forecast_weather_code_S"],
+                            "SW": label_dict["forecast_weather_code_SW"],
+                            "T": label_dict["forecast_weather_code_T"],
+                            "UP": label_dict["forecast_weather_code_UP"],
+                            "VA": label_dict["forecast_weather_code_VA"],
+                            "WP": label_dict["forecast_weather_code_WP"],
+                            "ZF": label_dict["forecast_weather_code_ZF"],
+                            "ZL": label_dict["forecast_weather_code_ZL"],
+                            "ZR": label_dict["forecast_weather_code_ZR"],
+                            "ZY": label_dict["forecast_weather_code_ZY"],
+                        }
+
+                        # Check if the weather_code is in the cloud_dict and use that
+                        # if it's there. If not then it's a combined weather code.
+                        if weather_code in cloud_dict:
+                            return cloud_dict[weather_code]
+
+                        # Add the coverage if it's present, and full observation
+                        # forecast is requested
+                        if coverage_code:
+                            output += coverage_dict[coverage_code] + " "
+                        # Add the intensity if it's present
+                        if intensity_code:
+                            output += intensity_dict[intensity_code] + " "
+                        # Weather output
+                        output += weather_dict[weather_code]
+                        return output
+
+                    def xweather_icon(data):
+                        """Get the Aeris/Xweather icon description from the icon list."""
+                        # https://www.xweather.com/docs/weather-api/reference/icon-list
+                        iconlist_file_path = os.path.join(
+                            config_dict["WEEWX_ROOT"],
+                            skin_dict["SKIN_ROOT"],
+                            skin_dict.get("skin", ""),
+                            "images/aeris-icon-list.json",
                         )
-                        visibility_unit = "miles"
+                        if os.path.exists(iconlist_file_path):
+                            icon_name = data.split(".")[0]  # Remove .png
+                            with open(iconlist_file_path, "r") as dict:
+                                icon_dict = json.load(dict)
+                            return icon_dict[icon_name]
+                        else:
+                            log.error(
+                                f"aeris-icon-list.json is missing in {iconlist_file_path}"
+                            )
+                            return "unknown"
+
+                    current_conditions = extras_dict["current_conditions"]
+                    if current_conditions == "obs":
+                        if belchertown_debug > 0:
+                            log.info(
+                                "Current conditions based on /observations endpoint"
+                            )
+                    elif current_conditions == "conds":
+                        if belchertown_debug > 0:
+                            log.info("Current conditions based on /conditions endpoint")
+                    elif current_conditions == "obs-on-fail-conds":
+                        if belchertown_debug > 0:
+                            log.info(
+                                "Current conditions based on /observations, if no data, use /conditions endpoint"
+                            )
+                    else:  # W0t?
+                        log.info(
+                            f"Setting current_conditions to obs due to unknown value: {current_conditions}"
+                        )
+                        current_conditions = "obs"
+
+                    if (
+                        extras_dict["forecast_aeris_use_metar"] == "1"
+                    ):  # filter on METAR
+                        current_obs_url = f"https://data.api.xweather.com/observations/{forecast_place}?format=json&filter=metar&limit=1&client_id={forecast_api_id}&client_secret={forecast_api_secret}"
+                    else:  # filter on All stations
+                        current_obs_url = f"https://data.api.xweather.com/observations/{forecast_place}?format=json&filter=allstations&limit=1&client_id={forecast_api_id}&client_secret={forecast_api_secret}"
+
+                    current_conds_url = f"https://data.api.xweather.com/conditions/{forecast_place}?format=json&plimit=1&filter=1min&client_id={forecast_api_id}&client_secret={forecast_api_secret}"
+                    forecast_24hr_url = f"https://data.api.xweather.com/forecasts/{forecast_place}?format=json&filter=day&limit=7&client_id={forecast_api_id}&client_secret={forecast_api_secret}"
+                    forecast_3hr_url = f"https://data.api.xweather.com/forecasts/{forecast_place}?format=json&filter=3hr&limit=8&client_id={forecast_api_id}&client_secret={forecast_api_secret}"
+                    forecast_1hr_url = f"https://data.api.xweather.com/forecasts/{forecast_place}?format=json&filter=1hr&limit=16&client_id={forecast_api_id}&client_secret={forecast_api_secret}"
+                    aqi_url = f"https://data.api.xweather.com/airquality/{forecast_place}?format=json&client_id={forecast_api_id}&client_secret={forecast_api_secret}"
+
+                    if extras_dict["forecast_alert_limit"]:
+                        forecast_alert_limit = extras_dict["forecast_alert_limit"]
+                    else:  # Default to 1 alerts to show if the option is missing. Can go up to 10
+                        forecast_alert_limit = 1
+
+                    forecast_alerts_url = f"https://data.api.xweather.com/alerts/{forecast_place}?format=json&limit={forecast_alert_limit}&lang={forecast_lang}&client_id={forecast_api_id}&client_secret={forecast_api_secret}"
+
+                    # File is stale, download a new copy
+                    if forecast_is_stale:
+                        try:
+                            if "forecast_dev_file" in extras_dict:
+                                # Hidden option to use a pre-downloaded forecast file
+                                # rather than using API calls for no reason
+                                dev_forecast_file = extras_dict["forecast_dev_file"]
+                                req = Request(dev_forecast_file, None, headers)
+                                with urlopen(
+                                    req, timeout=DEFAULT_HTTP_TIMEOUT
+                                ) as response:
+                                    forecast_file_result = response.read()
+                            else:
+                                # 24hr forecast (was Forecast)
+                                req = Request(
+                                    forecast_24hr_url,
+                                    None,
+                                    HTTP_HEADERS["AERIS_WEATHER"],
+                                )
+                                with urlopen(
+                                    req, timeout=DEFAULT_HTTP_TIMEOUT
+                                ) as response:
+                                    forecast_24hr_page = response.read()
+                                if belchertown_debug > 1:
+                                    log.info(f"Forecast 24hr URL: {forecast_24hr_url}")
+                                # 3hr forecast
+                                req = Request(
+                                    forecast_3hr_url,
+                                    None,
+                                    HTTP_HEADERS["AERIS_WEATHER"],
+                                )
+                                with urlopen(
+                                    req, timeout=DEFAULT_HTTP_TIMEOUT
+                                ) as response:
+                                    forecast_3hr_page = response.read()
+                                if belchertown_debug > 1:
+                                    log.info(f"Forecast 3hr URL: {forecast_3hr_url}")
+                                # 1hr forecast
+                                req = Request(
+                                    forecast_1hr_url,
+                                    None,
+                                    HTTP_HEADERS["AERIS_WEATHER"],
+                                )
+                                with urlopen(
+                                    req, timeout=DEFAULT_HTTP_TIMEOUT
+                                ) as response:
+                                    forecast_1hr_page = response.read()
+                                if belchertown_debug > 1:
+                                    log.info(f"Forecast 1hr URL: {forecast_1hr_url}")
+                                # AQI
+                                req = Request(
+                                    aqi_url, None, HTTP_HEADERS["AERIS_WEATHER"]
+                                )
+                                with urlopen(
+                                    req, timeout=DEFAULT_HTTP_TIMEOUT
+                                ) as response:
+                                    aqi_page = response.read()
+                                if belchertown_debug > 1:
+                                    log.info(f"AQI URL: {aqi_url}")
+                                if extras_dict["forecast_alert_enabled"] == "1":
+                                    # Alerts
+                                    req = Request(
+                                        forecast_alerts_url,
+                                        None,
+                                        HTTP_HEADERS["AERIS_WEATHER"],
+                                    )
+                                    with urlopen(
+                                        req, timeout=DEFAULT_HTTP_TIMEOUT
+                                    ) as response:
+                                        alerts_page = response.read()
+                                    if belchertown_debug > 1:
+                                        log.info(f"Alerts URL: {forecast_alerts_url}")
+
+                                # Combine all into 1 file - simplified parsing helper
+
+                                data = {
+                                    "timestamp": int(time.time()),
+                                    "forecast_24hr": [
+                                        _parse_aeris_json(forecast_24hr_page)
+                                    ],
+                                    "forecast_3hr": [
+                                        _parse_aeris_json(forecast_3hr_page)
+                                    ],
+                                    "forecast_1hr": [
+                                        _parse_aeris_json(forecast_1hr_page)
+                                    ],
+                                    "aqi": [_parse_aeris_json(aqi_page)],
+                                }
+                                if extras_dict.get("forecast_alert_enabled") == "1":
+                                    data["alerts"] = [_parse_aeris_json(alerts_page)]
+                                forecast_file_result = json.dumps(data)
+                        except Exception as e:
+                            log.error(f"Error downloading forecast data: {e}")
+
+                        # Save forecast data to file. w+ creates the file if it doesn't
+                        # exist, and truncates the file and re-writes it everytime
+                        try:
+                            with open(forecast_file, "wb+") as file:
+                                file.write(forecast_file_result.encode("utf-8"))
+                                log.info(
+                                    f"New forecast file downloaded to {forecast_file}"
+                                )
+                        except FileNotFoundError as e:
+                            log.info(
+                                "Belchertown JSON folder does not exist. Usually this "
+                                "is an error that only occurs on the first run. If it "
+                                "is appearing repeatedly, check file permissions."
+                            )
+                        except IOError as e:
+                            log.error(
+                                f"Error writing forecast info to {forecast_file}. Reason: {e}"
+                            )
+
+                    # File is stale, download a new copy
+                    if current_conditions_is_stale:
+                        try:
+                            if "current_conditions_dev_file" in extras_dict:
+                                # Hidden option to use a pre-downloaded forecast file
+                                # rather than using API calls for no reason
+                                dev_forecast_file = extras_dict[
+                                    "current_conditions_dev_file"
+                                ]
+                                req = Request(
+                                    dev_forecast_file,
+                                    None,
+                                    HTTP_HEADERS["AERIS_WEATHER"],
+                                )
+                                with urlopen(
+                                    req, timeout=DEFAULT_HTTP_TIMEOUT
+                                ) as response:
+                                    forecast_file_result = response.read()
+                            else:
+                                # Current conditions
+                                if current_conditions == "obs":
+                                    req = Request(
+                                        current_obs_url,
+                                        None,
+                                        HTTP_HEADERS["AERIS_WEATHER"],
+                                    )
+                                    with urlopen(
+                                        req, timeout=DEFAULT_HTTP_TIMEOUT
+                                    ) as response:
+                                        current_page = response.read()
+                                    if belchertown_debug > 1:
+                                        log.info(f"Obs URL: {current_obs_url}")
+                                elif current_conditions == "conds":
+                                    req = Request(
+                                        current_conds_url,
+                                        None,
+                                        HTTP_HEADERS["AERIS_WEATHER"],
+                                    )
+                                    with urlopen(
+                                        req, timeout=DEFAULT_HTTP_TIMEOUT
+                                    ) as response:
+                                        current_page = response.read()
+                                    if belchertown_debug > 1:
+                                        log.info(f"Conditions URL: {current_conds_url}")
+                                else:  # current_conditions == "obs-on-fail-conds":
+                                    req = Request(
+                                        current_obs_url,
+                                        None,
+                                        HTTP_HEADERS["AERIS_WEATHER"],
+                                    )
+                                    with urlopen(
+                                        req, timeout=DEFAULT_HTTP_TIMEOUT
+                                    ) as response:
+                                        current_page = response.read()
+                                    try:  # Obs okay?
+                                        current_conditions_data = data["current"][0][
+                                            "response"
+                                        ]["ob"]
+                                    except Exception:  # Nope, try Conds
+                                        if belchertown_debug > 0:
+                                            log.info("No good Obs data, using Conds")
+                                        req = Request(
+                                            current_conds_url,
+                                            None,
+                                            HTTP_HEADERS["AERIS_WEATHER"],
+                                        )
+                                        with urlopen(
+                                            req, timeout=DEFAULT_HTTP_TIMEOUT
+                                        ) as response:
+                                            current_page = response.read()
+                                # Stash in a file
+                                data = {
+                                    "timestamp": int(time.time()),
+                                    "current": [_parse_aeris_json(current_page)],
+                                }
+                                forecast_file_result = json.dumps(data)
+                        except Exception as e:
+                            if current_conditions == "obs":
+                                log.error(
+                                    "Error downloading forecast Current Conditions data. "
+                                    "Check the URL in your configuration and try again. "
+                                    f"You are trying to use URL: {current_obs_url}, "
+                                    f"and the error is: {e}"
+                                )
+                            elif current_conditions == "conds":
+                                log.error(
+                                    "Error downloading forecast Current Conditions data. "
+                                    "Check the URL in your configuration and try again. "
+                                    f"You are trying to use URL: {current_conds_url}, "
+                                    f"and the error is: {e}"
+                                )
+                            elif current_conditions == "obs-on-fail-conds":
+                                log.error(
+                                    "Error downloading forecast Current Conditions data. "
+                                    "Check the URL in your configuration and try again. "
+                                    f"You are trying to use URL: {current_conds_url}, "
+                                    f"and the error is: {e}"
+                                )
+
+                        # Save forecast Current Conditions data to file. w+ creates the file if it doesn't
+                        # exist, and truncates the file and re-writes it everytime
+                        try:
+                            with open(current_conditions_file, "wb+") as file:
+                                file.write(forecast_file_result.encode("utf-8"))
+                                log.info(
+                                    f"New forecast Current Conditions file downloaded to {current_conditions_file}"
+                                )
+                        except FileNotFoundError as e:
+                            log.info(
+                                "Belchertown JSON folder does not exist. Usually this "
+                                "is an error that only occurs on the first run. If it "
+                                "is appearing repeatedly, check file permissions."
+                            )
+                        except IOError as e:
+                            log.error(
+                                "Error writing forecast Current Conditions info to "
+                                f"{current_conditions_file}. Reason: {e}"
+                            )
+                        except Exception as e:
+                            log.error(f"Current Conditions error: {e}")
+
+                    # Read the forecast Current Conditions file
+                    with open(current_conditions_file, "r") as read_file:
+                        data = json.load(read_file)
+
+                    # We prefer using an observation (actual) over conditions (an interpolation)
+                    try:
+                        if current_conditions == "obs":
+                            current_conditions_data_len = len(
+                                data["current"][0]["response"]
+                            )
+                            current_conditions_data = data["current"][0]["response"][
+                                "ob"
+                            ]
+                        elif current_conditions == "conds":
+                            current_conditions_data_len = len(
+                                data["current"][0]["response"]
+                            )
+                            current_conditions_data = data["current"][0]["response"][0][
+                                "periods"
+                            ][0]
+                        else:  # current_conditions == "obs-on-fail-conds"
+                            try:  # Obs
+                                current_conditions_data_len = len(
+                                    data["current"][0]["response"]
+                                )
+                                current_conditions_data = data["current"][0][
+                                    "response"
+                                ]["ob"]
+                            except Exception:  # Conds
+                                if belchertown_debug > 0:
+                                    log.info("No good Obs data, using Conds")
+                                current_conditions_data_len = len(
+                                    data["current"][0]["response"]
+                                )
+                                current_conditions_data = data["current"][0][
+                                    "response"
+                                ][0]["periods"][0]
+                        cloud_cover = f"""{current_conditions_data["sky"]}"""
+                    except Exception:
+                        log.info("No cloud cover data from Xweather weather")
+                        cloud_cover = ""
+                        current_conditions_data_len = (
+                            0  # Not really but good enough for our Use Case below
+                        )
+
+                    # Process the forecast file and the Current Conditions data
+                    with open(forecast_file, "r") as read_file:
+                        data = json.load(read_file)
+
+                    try:
+                        if data["aqi"][0]["response"]:
+                            if data["aqi"][0]["error"]:
+                                log.error(
+                                    f"""Error getting AQI from Xweather weather. The error was: {data["aqi"]}"""
+                                )
+                            else:
+                                aqi = data["aqi"][0]["response"][0]["periods"][0]["aqi"]
+                                aqi_category = data["aqi"][0]["response"][0]["periods"][
+                                    0
+                                ]["category"]
+                                aqi_location = data["aqi"][0]["response"][0]["place"][
+                                    "name"
+                                ].title()
+                                aqi_time = data["aqi"][0]["response"][0]["periods"][0][
+                                    "timestamp"
+                                ]
+                    except Exception as e:
+                        log.error(
+                            f"Error getting AQI from Xweather weather. The error was: {e}. Data: {data['aqi']}"
+                        )
+                        pass
+
+                    # https://www.xweather.com/docs/weather-api/endpoints/airquality
+                    if aqi_category == "good":
+                        aqi_category = label_dict["aqi_good"]
+                    elif aqi_category == "moderate":
+                        aqi_category = label_dict["aqi_moderate"]
+                    elif aqi_category == "usg":
+                        aqi_category = label_dict["aqi_usg"]
+                    elif aqi_category == "unhealthy":
+                        aqi_category = label_dict["aqi_unhealthy"]
+                    elif aqi_category == "very unhealthy":
+                        aqi_category = label_dict["aqi_very_unhealthy"]
+                    elif aqi_category == "hazardous":
+                        aqi_category = label_dict["aqi_hazardous"]
                     else:
+                        aqi_category = label_dict["aqi_unknown"]
+
+                    # For forecasts/ endpoint and METAR != 0, no visibilty seems to be available
+                    # (used Los Angeles as test case)
+                    if current_conditions_data_len > 0:
+                        current_obs_summary = xweather_coded_weather(
+                            current_conditions_data["weatherPrimaryCoded"]
+                        )
+                        current_obs_icon = (
+                            xweather_icon(current_conditions_data["icon"]) + ".png"
+                        )
+
+                        if forecast_units in ("si", "ca"):
+                            if current_conditions_data["visibilityKM"] is not None:
+                                visibility = locale.format_string(
+                                    "%g",
+                                    current_conditions_data["visibilityKM"],
+                                )
+                                visibility_unit = "km"
+                            else:
+                                visibility = "N/A"
+                                visibility_unit = ""
+                        else:
+                            # us, uk2 and default to miles per hour
+                            if current_conditions_data["visibilityMI"] is not None:
+                                visibility = locale.format_string(
+                                    "%g",
+                                    float(current_conditions_data["visibilityMI"]),
+                                )
+                                visibility_unit = "miles"
+                            else:
+                                visibility = "N/A"
+                                visibility_unit = ""
+                    else:
+                        # If there's no data in the ob array then it's probably because of an error.
+                        # Example:
+                        # "code": "warn_no_data",
+                        # "description": "Valid request. No results available based on
+                        # your query parameters."
+                        current_obs_summary = ""
+                        current_obs_icon = ""
                         visibility = "N/A"
                         visibility_unit = ""
             else:
-                # If the user selected to not use METAR, then these
-                # observations are null.  If there's no data in the ob array
-                # then it's probably because of an error.
-                # Example:
-                # "code": "warn_no_data",
-                # "description": "Valid request. No results available based on
-                # your query parameters."
-                current_obs_summary = ""
                 current_obs_icon = ""
+                current_obs_summary = ""
                 visibility = "N/A"
                 visibility_unit = ""
-        else:
+                cloud_cover = ""
+        except Exception as e:
             current_obs_icon = ""
             current_obs_summary = ""
             visibility = "N/A"
             visibility_unit = ""
             cloud_cover = ""
+            (
+                log.error(f"Pirate Weather error: {e}")
+                if forecast_provider == "pirateweather"
+                else log.error(f"Aeris/Xweather error: {e}")
+            )
 
         # ==============================================================================
         # Earthquake Data
         # ==============================================================================
 
         # Only process if Earthquake data is enabled
-        if self.generator.skin_dict["Extras"]["earthquake_enabled"] == "1":
+        if extras_dict["earthquake_enabled"] == "1":
             earthquake_file = html_root + "/json/earthquake.json"
-            earthquake_stale_timer = self.generator.skin_dict["Extras"][
-                "earthquake_stale"
-            ]
-            latitude = self.generator.config_dict["Station"]["latitude"]
-            longitude = self.generator.config_dict["Station"]["longitude"]
+            earthquake_stale_timer = extras_dict["earthquake_stale"]
+            latitude = config_dict["Station"]["latitude"]
+            longitude = config_dict["Station"]["longitude"]
             distance_unit = self.generator.converter.group_unit_dict["group_distance"]
-            eq_distance_label = self.generator.skin_dict["Units"]["Labels"].get(
-                distance_unit, ""
-            )
-            eq_distance_round = self.generator.skin_dict["Units"]["StringFormats"].get(
+            eq_distance_label = skin_dict["Units"]["Labels"].get(distance_unit, "")
+            eq_distance_round = skin_dict["Units"]["StringFormats"].get(
                 distance_unit, "%.1f"
             )
-            earthquake_maxradiuskm = self.generator.skin_dict["Extras"][
-                "earthquake_maxradiuskm"
-            ]
+            earthquake_maxradiuskm = extras_dict["earthquake_maxradiuskm"]
             # Sample URL from Belchertown Weather:
             # http://earthquake.usgs.gov/fdsnws/event/1/query?limit=1&lat=42.223&lon=-72.374&maxradiuskm=1000&format=geojson&nodata=204&minmag=2
-            if self.generator.skin_dict["Extras"]["earthquake_server"] == "USGS":
-                earthquake_url = (
-                    "http://earthquake.usgs.gov/fdsnws/event/1/query?limit=1&lat=%s&lon=%s&maxradiuskm=%s&format=geojson&nodata=204&minmag=2"
-                    % (latitude, longitude, earthquake_maxradiuskm)
-                )
-            elif self.generator.skin_dict["Extras"]["earthquake_server"] == "GeoNet":
-                earthquake_url = (
-                    "https://api.geonet.org.nz/quake?MMI=%s"
-                    % self.generator.skin_dict["Extras"]["geonet_mmi"]
-                )
-            elif self.generator.skin_dict["Extras"]["earthquake_server"] == "ReNaSS":
+            if extras_dict["earthquake_server"] == "USGS":
+                earthquake_url = f"http://earthquake.usgs.gov/fdsnws/event/1/query?limit=1&lat={latitude}&lon={longitude}&maxradiuskm={earthquake_maxradiuskm}&format=geojson&nodata=204&minmag=2"
+            elif extras_dict["earthquake_server"] == "GeoNet":
+                earthquake_url = f"""https://api.geonet.org.nz/quake?MMI={extras_dict["geonet_mmi"]}"""
+            elif extras_dict["earthquake_server"] == "ReNaSS":
                 # Calculate min/max latitude and min/max longitude from radius and station location. https://stackoverflow.com/a/23118314
                 lat = float(latitude)
                 long = float(longitude)
                 radiusInKm = int(earthquake_maxradiuskm)
 
-                kmInLongitudeDegree = 111.320 * cos( lat / 180.0 * pi)
+                kmInLongitudeDegree = 111.320 * cos(lat / 180.0 * pi)
 
                 deltaLat = radiusInKm / 111.1
                 deltaLong = radiusInKm / kmInLongitudeDegree
@@ -1576,53 +1731,44 @@ class getData(SearchList):
                 minLong = long - deltaLong
                 maxLong = long + deltaLong
 
-                earthquake_url = (
-                    "https://api.franceseisme.fr/fdsnws/event/1/query?eventtype=earthquake&minmagnitude=2&minlatitude=%.2f&minlongitude=%.2f&maxlatitude=%.2f&maxlongitude=%.2f&format=json&limit=1&orderby=time"
-                    % (minLat, minLong, maxLat, maxLong) 
-                )
+                earthquake_url = f"https://api.franceseisme.fr/fdsnws/event/1/query?eventtype=earthquake&minmagnitude=2&minlatitude={minLat:.2f}&minlongitude={minLong:.2f}&maxlatitude={maxLat:.2f}&maxlongitude={maxLong:.2f}&format=json&limit=1&orderby=time"
+
             earthquake_is_stale = False
 
-            # Determine if the file exists and get it's modified time
-            if os.path.isfile(earthquake_file):
+            # Determine if the file exists and get its modified time
+            if os.path.isfile(earthquake_file) and os.stat(earthquake_file).st_size > 0:
                 if (int(time.time()) - int(os.path.getmtime(earthquake_file))) > int(
                     earthquake_stale_timer
                 ):
                     earthquake_is_stale = True
             else:
-                # File doesn't exist, download a new copy
+                # File doesn't exist or is blank, download a new copy
                 earthquake_is_stale = True
 
             # File is stale, download a new copy
             if earthquake_is_stale:
                 # Download new earthquake data
                 try:
-                    if sys.version_info[0] >= 3:
-                        from urllib.request import Request, urlopen
-                    else:
-                        # Python 2
-                        from urllib2 import Request, urlopen
-
                     user_agent = "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_4; en-US) AppleWebKit/534.3 (KHTML, like Gecko) Chrome/6.0.472.63 Safari/534.3"
                     headers = {"User-Agent": user_agent}
                     req = Request(earthquake_url, None, headers)
-                    response = urlopen(req)
-                    page = response.read()
-                    response.close()
+                    with urlopen(req, timeout=DEFAULT_HTTP_TIMEOUT) as response:
+                        page = response.read()
                     if weewx.debug:
-                        logdbg(
+                        log.debug(
                             "Downloading earthquake data using urllib2 was successful"
                         )
                 except Exception as forecast_error:
                     if weewx.debug:
-                        logdbg(
-                            "Error downloading earthquake data with urllib2, reverting to curl and subprocess. "
-                            "Full error: %s" % forecast_error
+                        log.debug(
+                            f"Error downloading earthquake data with urllib2, reverting to curl and subprocess. "
+                            f"Full error: {forecast_error}"
                         )
                     # Nested try - only execute if the urllib2 method fails
                     try:
                         import subprocess
 
-                        command = 'curl -L --silent "%s"' % earthquake_url
+                        command = f'curl -L --silent "{earthquake_url}"'
                         p = subprocess.Popen(
                             command,
                             shell=True,
@@ -1631,15 +1777,14 @@ class getData(SearchList):
                         )
                         page = p.communicate()[0]
                         if weewx.debug:
-                            logdbg(
+                            log.debug(
                                 "Downloading earthquake data with curl was successful."
                             )
-                    except Exception as error:
-                        raise Warning(
-                            "Error downloading earthquake data using urllib2 and subprocess curl. "
-                            "Your software may need to be updated, or the URL is incorrect. "
-                            "You are trying to use URL: %s, and the error is: %s"
-                            % (earthquake_url, error)
+                    except Exception as e:
+                        log.error(
+                            f"Error downloading earthquake data using urllib2 and subprocess curl. "
+                            f"Your software may need to be updated, or the URL is incorrect. "
+                            f"You are trying to use URL: {earthquake_url}, and the error is: {e}"
                         )
 
                 # Save earthquake data to file. w+ creates the file if it
@@ -1648,17 +1793,15 @@ class getData(SearchList):
                 try:
                     with open(earthquake_file, "wb+") as file:
                         try:
-                            # Python 2/3
                             file.write(page.encode("utf-8"))
                         except:
-                            # Catch errors caused by ASCII characters in Python2
+                            # Catch errors caused by ASCII characters
                             file.write(page)
                         if weewx.debug:
-                            logdbg("Earthquake data saved to %s" % earthquake_file)
+                            log.debug(f"Earthquake data saved to {earthquake_file}")
                 except IOError as e:
-                    raise Warning(
-                        "Error writing earthquake data to %s. Reason: %s"
-                        % (earthquake_file, e)
+                    log.error(
+                        f"Error writing earthquake data to {earthquake_file}. Reason: {e}"
                     )
 
             # Process the earthquake file
@@ -1669,7 +1812,7 @@ class getData(SearchList):
                     eqdata = ""
 
             try:
-                if self.generator.skin_dict["Extras"]["earthquake_server"] == "USGS":
+                if extras_dict["earthquake_server"] == "USGS":
                     eqtime = eqdata["features"][0]["properties"]["time"] / 1000
                     equrl = eqdata["features"][0]["properties"]["url"]
                     if distance_unit == "km":
@@ -1677,7 +1820,7 @@ class getData(SearchList):
                     else:  # assume miles
                         try:
                             eqmatched = match(
-                                r"(?P<distance>[0-9]*\.?[0-9]+) km(?P<rest>.*)$",
+                                "(?P<distance>[0-9]*\\.?[0-9]+) km(?P<rest>.*)$",
                                 eqdata["features"][0]["properties"]["place"],
                             )
                             eqdist_km = eqmatched.group("distance")
@@ -1690,9 +1833,7 @@ class getData(SearchList):
                     eqmag = locale.format_string(
                         "%g", float(eqdata["features"][0]["properties"]["mag"])
                     )
-                elif (
-                    self.generator.skin_dict["Extras"]["earthquake_server"] == "ReNaSS"
-                ):
+                elif extras_dict["earthquake_server"] == "ReNaSS":
                     eqtime = eqdata["features"][0]["properties"]["time"]
                     # convert time to UNIX format
                     eqtime = datetime.datetime.strptime(eqtime, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -1701,16 +1842,16 @@ class getData(SearchList):
                     )
                     if match("fr_.*", system_locale):
                         equrl = eqdata["features"][0]["properties"]["url"]["fr"]
-                        eqplace = eqdata["features"][0]["properties"]["description"]["fr"]
+                        eqplace = eqdata["features"][0]["properties"]["description"][
+                            "fr"
+                        ]
                     else:
                         equrl = eqdata["features"][0]["properties"]["url"]["en"]
-                        eqplace = eqdata["features"][0]["properties"]["description"]["en"]
-                    eqmag = format(
-                         eqdata["features"][0]["properties"]["mag"], ".1f"
-                    )
-                elif (
-                    self.generator.skin_dict["Extras"]["earthquake_server"] == "GeoNet"
-                ):
+                        eqplace = eqdata["features"][0]["properties"]["description"][
+                            "en"
+                        ]
+                    eqmag = format(eqdata["features"][0]["properties"]["mag"], ".1f")
+                elif extras_dict["earthquake_server"] == "GeoNet":
                     eqtime = eqdata["features"][0]["properties"]["time"]
                     # convert time to UNIX format
                     eqtime = datetime.datetime.strptime(eqtime, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -1775,9 +1916,7 @@ class getData(SearchList):
         station_obs_binding = None
         station_obs_json = OrderedDict()
         station_obs_html = ""
-        station_observations = self.generator.skin_dict["Extras"][
-            "station_observations"
-        ]
+        station_observations = extras_dict["station_observations"]
         # Check if this is a list. If not then we have 1 item, so force it into a list
         if isinstance(station_observations, list) is False:
             station_observations = station_observations.split()
@@ -1790,7 +1929,7 @@ class getData(SearchList):
             self.generator.formatter,
             self.generator.converter,
             None,
-            current_record
+            current_record,
         )
         for obs in station_observations:
             if "data_binding" in obs:
@@ -1801,9 +1940,7 @@ class getData(SearchList):
                 ]  # Thanks https://stackoverflow.com/a/40811994/1177153
                 obs = obs.split("(")[0]
             if station_obs_binding is not None:
-                obs_binding_manager = self.generator.db_binder.get_manager(
-                    station_obs_binding
-                )
+                obs_binding_manager = db_binder.get_manager(station_obs_binding)
                 current_stamp = obs_binding_manager.lastGoodStamp()
                 current_record = obs_binding_manager.getRecord(current_stamp)
                 current = weewx.tags.CurrentObj(
@@ -1813,14 +1950,14 @@ class getData(SearchList):
                     self.generator.formatter,
                     self.generator.converter,
                     None,
-                    current_record
+                    current_record,
                 )
 
             if obs == "visibility":
                 try:
-                    obs_output = str(visibility) + " " + str(visibility_unit)
+                    obs_output = f"{float(visibility):.2f} {visibility_unit}"
                 except:
-                    raise Warning(
+                    log.error(
                         "Error adding visiblity to station observations table. "
                         "Check that you have forecast data, or remove visibility from your station_observations Extras option."
                     )
@@ -1838,14 +1975,11 @@ class getData(SearchList):
                 dayRain_sum = getattr(obs_binder, "sum")
                 # Need to use dayRain for class name since that is weewx-mqtt
                 # payload's name
-                obs_rain_output = "<span class='dayRain'>%s</span><!-- AJAX -->" % str(
-                    dayRain_sum
+                obs_rain_output = (
+                    f"<span class='dayRain'>{dayRain_sum}</span><!-- AJAX -->"
                 )
                 obs_rain_output += "&nbsp;<span class='border-left'>&nbsp;</span>"
-                obs_rain_output += (
-                    "<span class='rainRate'>%s</span><!-- AJAX -->"
-                    % str(getattr(current, "rainRate"))
-                )
+                obs_rain_output += f"<span class='rainRate'>{getattr(current, 'rainRate')}</span><!-- AJAX -->"
 
                 # Empty field for the JSON "current" output
                 obs_output = ""
@@ -1854,6 +1988,7 @@ class getData(SearchList):
             elif obs == "aqi":
                 obs_output = aqi
             else:
+                # Only call getattr for observations not handled above
                 obs_output = getattr(current, obs)
                 if "?" in str(obs_output):
                     # Try to catch those invalid observations, like 'uv' needs
@@ -1867,16 +2002,15 @@ class getData(SearchList):
             # Build the HTML for the front page
             station_obs_html += "<tr>"
             station_obs_html += (
-                "<td class='station-observations-label'>%s</td>" % label_dict[obs]
+                f"<td class='station-observations-label'>{label_dict[obs]}</td>"
             )
             station_obs_html += "<td>"
             if obs == "rainWithRainRate":
                 # Add special rain + rainRate one liner
                 station_obs_html += obs_rain_output
             else:
-                station_obs_html += "<span class=%s>%s</span><!-- AJAX -->" % (
-                    obs,
-                    obs_output,
+                station_obs_html += (
+                    f"<span class={obs}>{obs_output}</span><!-- AJAX -->"
                 )
             if obs in ("barometer", "pressure", "altimeter"):
                 # Append the trend arrow to the pressure observation. Need this
@@ -1923,13 +2057,9 @@ class getData(SearchList):
                 continue
             try:
                 # Find the number of decimals to round to based on group name
-                obs_round = self.generator.skin_dict["Units"]["StringFormats"].get(
-                    obs_unit, "0"
-                )[2]
+                obs_round = skin_dict["Units"]["StringFormats"].get(obs_unit, "0")[2]
             except:
-                obs_round = self.generator.skin_dict["Units"]["StringFormats"].get(
-                    obs_unit, "0"
-                )
+                obs_round = skin_dict["Units"]["StringFormats"].get(obs_unit, "0")
             # Add to the rounding array
             if obs not in all_obs_rounding_json:
                 all_obs_rounding_json[obs] = str(obs_round)
@@ -1953,9 +2083,9 @@ class getData(SearchList):
         # Social Share
         # ==============================================================================
 
-        facebook_enabled = self.generator.skin_dict["Extras"]["facebook_enabled"]
-        twitter_enabled = self.generator.skin_dict["Extras"]["twitter_enabled"]
-        social_share_html = self.generator.skin_dict["Extras"]["social_share_html"]
+        facebook_enabled = extras_dict["facebook_enabled"]
+        twitter_enabled = extras_dict["twitter_enabled"]
+        social_share_html = extras_dict["social_share_html"]
         twitter_text = label_dict["twitter_text"]
         twitter_owner = label_dict["twitter_owner"]
         twitter_hashtags = label_dict["twitter_hashtags"]
@@ -1965,11 +2095,11 @@ class getData(SearchList):
                 """
                 <div id="fb-root"></div>
                 <script>(function(d, s, id) {
-                  var js, fjs = d.getElementsByTagName(s)[0];
-                  if (d.getElementById(id)) return;
-                  js = d.createElement(s); js.id = id;
-                  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5";
-                  fjs.parentNode.insertBefore(js, fjs);
+                var js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) return;
+                js = d.createElement(s); js.id = id;
+                js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5";
+                fjs.parentNode.insertBefore(js, fjs);
                 }(document, 'script', 'facebook-jssdk'));</script>
                 <div class="fb-like" data-href="%s" data-width="500px" data-layout="button_count" data-action="like" data-show-faces="false" data-share="true"></div>
             """
@@ -1979,17 +2109,12 @@ class getData(SearchList):
             facebook_html = ""
 
         if twitter_enabled == "1":
-            twitter_html = """
+            twitter_html = f"""
                 <script>
-                    !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+                    !function(d,s,id){{var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){{js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}}}(document, 'script', 'twitter-wjs');
                 </script>
-                <a href="https://twitter.com/share" class="twitter-share-button" data-url="%s" data-text="%s" data-via="%s" data-hashtags="%s">Tweet</a>
-            """ % (
-                social_share_html,
-                twitter_text,
-                twitter_owner,
-                twitter_hashtags,
-            )
+                <a href="https://twitter.com/share" class="twitter-share-button" data-url="{social_share_html}" data-text="{twitter_text}" data-via="{twitter_owner}" data-hashtags="{twitter_hashtags}">Tweet</a>
+            """
         else:
             twitter_html = ""
 
@@ -2008,25 +2133,23 @@ class getData(SearchList):
                 social_html += twitter_html
             social_html += "</div>"
 
-        #==============================================================================
+        # ==============================================================================
         # MQTT settings for Kiosk page
         # ==============================================================================
 
-        if self.generator.skin_dict["Extras"]["mqtt_websockets_host_kiosk"] != "":
-            if self.generator.skin_dict["Extras"]["mqtt_websockets_port_kiosk"] != "":
-                mqtt_websockets_port_kiosk = self.generator.skin_dict["Extras"]["mqtt_websockets_port_kiosk"]
+        if extras_dict["mqtt_websockets_host_kiosk"] != "":
+            if extras_dict["mqtt_websockets_port_kiosk"] != "":
+                mqtt_websockets_port_kiosk = extras_dict["mqtt_websockets_port_kiosk"]
             else:
-                mqtt_websockets_port_kiosk = self.generator.skin_dict["Extras"]["mqtt_websockets_port"]
-            if self.generator.skin_dict["Extras"]["mqtt_websockets_ssl_kiosk"] != "":
-                mqtt_websockets_ssl_kiosk = self.generator.skin_dict["Extras"]["mqtt_websockets_ssl_kiosk"]
+                mqtt_websockets_port_kiosk = extras_dict["mqtt_websockets_port"]
+            if extras_dict["mqtt_websockets_ssl_kiosk"] != "":
+                mqtt_websockets_ssl_kiosk = extras_dict["mqtt_websockets_ssl_kiosk"]
             else:
-                mqtt_websockets_ssl_kiosk = self.generator.skin_dict["Extras"]["mqtt_websockets_ssl"]
+                mqtt_websockets_ssl_kiosk = extras_dict["mqtt_websockets_ssl"]
         else:
-            mqtt_websockets_port_kiosk = self.generator.skin_dict["Extras"]["mqtt_websockets_host"]
-            mqtt_websockets_port_kiosk = self.generator.skin_dict["Extras"]["mqtt_websockets_port"]
-            mqtt_websockets_ssl_kiosk = self.generator.skin_dict["Extras"]["mqtt_websockets_ssl"]
-
-
+            mqtt_websockets_port_kiosk = extras_dict["mqtt_websockets_host"]
+            mqtt_websockets_port_kiosk = extras_dict["mqtt_websockets_port"]
+            mqtt_websockets_ssl_kiosk = extras_dict["mqtt_websockets_ssl"]
 
         # Include custom.css if it exists in the HTML_ROOT folder
         custom_css_file = html_root + "/custom.css"
@@ -2096,6 +2219,7 @@ class getData(SearchList):
             "aqi": aqi,
             "aqi_category": aqi_category,
             "aqi_location": aqi_location,
+            "aqi_time": aqi_time,
             "beaufort0": label_dict["beaufort0"],
             "beaufort1": label_dict["beaufort1"],
             "beaufort2": label_dict["beaufort2"],
@@ -2127,7 +2251,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
 
     Useful attributes (some inherited from ReportGenerator):
 
-        config_dict:      The weewx configuration dictionary
+        config_dict:      The WeeWX configuration dictionary
         skin_dict:        The dictionary for this skin
         gen_ts:           The generation time
         first_run:        Is this the first time the generator has been run?
@@ -2136,8 +2260,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
         formatter:        An instance of weewx.units.Formatter
         converter:        An instance of weewx.units.Converter
         search_list_objs: A list holding search list extensions
-        db_binder:        An instance of weewx.manager.DBBinder from which the
-                          data should be extracted
+        db_binder:        An instance of weewx.manager.DBBinder from which the data should be extracted
     """
 
     def run(self):
@@ -2178,9 +2301,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
         # Loop through each [section]. This is the first bracket group of
         # options including global options.
         for chart_group in self.chart_dict.sections:
-            output[
-                chart_group
-            ] = (
+            output[chart_group] = (
                 OrderedDict()
             )  # This retains the order in which to load the charts on the page.
             chart_options = accumulateLeaves(self.chart_dict[chart_group])
@@ -2229,7 +2350,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
             # Check if there are any user override on generation periods.
             # Takes the crontab approach. If the words hourly, daily, monthly,
             # yearly are present use them, otherwise use an integer interval if
-            # available.  Since weewx could be restarted, we'll lose our
+            # available.  Since WeeWX could be restarted, we'll lose our
             # end-timestamp to trigger off of for chart staleness.  So we have
             # to use the timestamp of the file to generate this. If the file
             # does not exist, we need to create it first.  Once created we use
@@ -2326,7 +2447,9 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                     "gapsize", 300
                 )  # Default to 5 minutes in millis
                 if gapsize:
-                    output[chart_group][plotname]["options"]["gapsize"] = int(gapsize) * 1000
+                    output[chart_group][plotname]["options"]["gapsize"] = (
+                        int(gapsize) * 1000
+                    )
 
                 connectNulls = plot_options.get("connectNulls", "false")
                 output[chart_group][plotname]["options"]["connectNulls"] = connectNulls
@@ -2348,12 +2471,12 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                 ] = plot_tooltip_date_format
 
                 # Width and height specific CSS overrides
-                output[chart_group][plotname]["options"][
-                    "css_width"
-                ] = plot_options.get("width", "")
-                output[chart_group][plotname]["options"][
-                    "css_height"
-                ] = plot_options.get("height", "")
+                output[chart_group][plotname]["options"]["css_width"] = (
+                    plot_options.get("width", "")
+                )
+                output[chart_group][plotname]["options"]["css_height"] = (
+                    plot_options.get("height", "")
+                )
 
                 # Setup legend option
                 legend = plot_options.get("legend", None)
@@ -2461,7 +2584,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                         minstamp, maxstamp = archiveMonthSpan(monthstamp)
                     elif time_length == "year_specific":
                         # Get a date in the middle of the year to get the full
-                        # year epoch so weewx can find the year timespan.
+                        # year epoch so WeeWX can find the year timespan.
                         year_dt = datetime.datetime.strptime(
                             str(year_specific) + "-8-1", "%Y-%m-%d"
                         )
@@ -2540,7 +2663,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                         minstamp = line_options.get("timespan_start", None)
                         maxstamp = line_options.get("timespan_stop", None)
                         if minstamp is None or maxstamp is None:
-                            raise Warning(
+                            log.error(
                                 "Error trying to create timespan_specific graph. "
                                 "You are missing either timespan_start or timespan_stop options."
                             )
@@ -2565,7 +2688,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
 
                     if start_at_whole_hour:
                         minstamp -= minstamp % 3600
-                    
+
                     if start_at_beginning_of_month:
                         start_ts, stop_ts = archiveMonthSpan(minstamp)
                         minstamp = start_ts
@@ -2605,29 +2728,24 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                         try:
                             # Aggregation specified. Get the interval.
                             aggregate_interval = weeutil.weeutil.nominal_spans(
-                                line_options.get(
-                                "aggregate_interval"
-                            ))
-                        except KeyError:
-                            syslog.syslog(
-                                syslog.LOG_ERR,
-                                "HighchartsJsonGenerator: aggregate interval required for aggregate type %s"
-                                % aggregate_type,
+                                line_options.get("aggregate_interval")
                             )
-                            syslog.syslog(
-                                syslog.LOG_ERR,
-                                "HighchartsJsonGenerator: line type %s skipped"
-                                % observation_type,
+                        except KeyError:
+                            log.error(
+                                f"HighchartsJsonGenerator: aggregate interval required for aggregate type {aggregate_type}",
+                            )
+                            log.error(
+                                f"HighchartsJsonGenerator: line type {observation_type} skipped",
                             )
                             continue
-                            
+
                     # use different target unit
-                    special_target_unit = line_options.get("unit",None)
+                    special_target_unit = line_options.get("unit", None)
 
                     # Get the unit label
                     if observation_type == "rainDurTotal":
                         obs_label = "rainDur"
-                    if observation_type == "hailDurTotal":
+                    elif observation_type == "hailDurTotal":
                         obs_label = "hailDur"
                     elif observation_type == "sunshineDurTotal":
                         obs_label = "sunshineDur"
@@ -2643,7 +2761,11 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                     unit_label = line_options.get(
                         "yAxis_label_unit",
                         self.formatter.get_label_string(
-                            special_target_unit if special_target_unit else self.converter.getTargetUnit(obs_label,aggregate_type)[0]
+                            special_target_unit
+                            if special_target_unit
+                            else self.converter.getTargetUnit(
+                                obs_label, aggregate_type
+                            )[0]
                         ),
                     )
 
@@ -2722,47 +2844,91 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                             "yAxis_max"
                         ] = yAxis_max
 
-                    # Add rounding from weewx.conf/skin.conf so Highcharts can use it
-                    if observation_type == "rainDurTotal":
-                        rounding_obs_lookup = "rainDur"
-                    elif observation_type == "hailDurTotal":
-                        rounding_obs_lookup = "hailDur"
-                    elif observation_type == "sunshineDurTotal":
-                        rounding_obs_lookup = "sunshineDur"
-                    elif observation_type == "rainTotal":
-                        rounding_obs_lookup = "rain"
-                    elif observation_type == "weatherRange":
-                        rounding_obs_lookup = weatherRange_obs_lookup
-                    elif observation_type == "haysChart":
-                        rounding_obs_lookup = "windSpeed"
-                    else:
-                        rounding_obs_lookup = observation_type
-                    try:
-                        obs_group = weewx.units.obs_group_dict[rounding_obs_lookup]
-                        obs_unit = self.converter.group_unit_dict[obs_group]
-                        obs_round = self.skin_dict["Units"]["StringFormats"].get(
-                            obs_unit, "0"
-                        )[2]
-                        output[chart_group][plotname]["series"][line_name][
-                            "rounding"
-                        ] = obs_round
-                    except:
-                        # Not a valid weewx schema name - maybe this is
-                        # windRose or something?
-                        output[chart_group][plotname]["series"][line_name][
-                            "rounding"
-                        ] = "-1"
+                    # data rounding
+                    obs_round = None
+                    if (
+                        obs_round is None
+                        and self.chart_dict[chart_group][plotname][line_name]
+                        .get("numberFormat", dict())
+                        .get("decimals")
+                        is not None
+                    ):
+                        # The user specified decimals. Use them for rounding,
+                        # too.
+                        try:
+                            obs_round = float(
+                                self.chart_dict[chart_group][plotname][line_name][
+                                    "numberFormat"
+                                ]["decimals"]
+                            )
+                        except (ValueError, TypeError):
+                            log.error(
+                                f"""cannot use numberFormat decimals {self.chart_dict[chart_group][plotname][line_name]["numberFormat"]["decimals"]} for rounding"""
+                            )
+                    if obs_round is None:
+                        # Add rounding from weewx.conf/skin.conf so Highcharts can use it
+                        if observation_type == "rainDurTotal":
+                            rounding_obs_lookup = "rainDur"
+                        elif observation_type == "hailDurTotal":
+                            rounding_obs_lookup = "hailDur"
+                        elif observation_type == "sunshineDurTotal":
+                            rounding_obs_lookup = "sunshineDur"
+                        elif observation_type == "rainTotal":
+                            rounding_obs_lookup = "rain"
+                        elif observation_type == "weatherRange":
+                            rounding_obs_lookup = weatherRange_obs_lookup
+                        elif observation_type == "haysChart":
+                            rounding_obs_lookup = "windSpeed"
+                        else:
+                            rounding_obs_lookup = observation_type
+                        try:
+                            obs_group = weewx.units.obs_group_dict[rounding_obs_lookup]
+                            obs_unit = self.converter.group_unit_dict[obs_group]
+                            obs_round = self.skin_dict["Units"]["StringFormats"].get(
+                                obs_unit, "0"
+                            )[2]
+                        except:
+                            # Not a valid WeeWX schema name - maybe this is
+                            # windRose or something?
+                            obs_round = -1
+                    output[chart_group][plotname]["series"][line_name][
+                        "rounding"
+                    ] = obs_round
+
+                    def get_rainbow_color(value, min, max):
+
+                        # If value is off-scale high/low, assign max/min color
+                        if value < min:
+                            value = min
+                        elif value > max:
+                            value = max
+
+                        # Using sine waves to generate rainbow colors (see
+                        # below). Set the value to range from 8π/7 (blue)
+                        # to 3π (purple).
+                        i = (value - min) / (max - min) * 5.83 + 3.59
+
+                        # https://krazydad.com/tutorials/makecolors.php
+                        # Creating sine waves for red, green, and blue,
+                        # and then offsetting by 2π/3 and 4π/3, creates
+                        # a loop of rainbow colors. The sine waves are
+                        # centered at 255/2 and have an amplitude of
+                        # 255/2, so they vary from 0 to 255.
+                        n = sin(i) * 127.5 + 127.5
+                        red = format(int(n), "x")  # convert to hex
+                        n = sin(i + 2.09) * 127.5 + 127.5
+                        green = format(int(n), "x")  # convert to hex
+                        n = sin(i + 4.19) * 127.5 + 127.5
+                        blue = format(int(n), "x")  # convert to hex
+                        return "#" + red + green + blue
 
                     # Set default colors, unless the user has specified
                     # otherwise in graphs.conf
                     wind_rose_color = {}
-                    wind_rose_color[0] = line_options.get("beauford0", "#7cb5ec")
-                    wind_rose_color[1] = line_options.get("beauford1", "#b2df8a")
-                    wind_rose_color[2] = line_options.get("beauford2", "#f7a35c")
-                    wind_rose_color[3] = line_options.get("beauford3", "#8c6bb1")
-                    wind_rose_color[4] = line_options.get("beauford4", "#dd3497")
-                    wind_rose_color[5] = line_options.get("beauford5", "#e4d354")
-                    wind_rose_color[6] = line_options.get("beauford6", "#268bd2")
+                    for x in range(7):
+                        wind_rose_color[x] = line_options.get(
+                            f"beauford{x}", get_rainbow_color(x, 0, 6)
+                        )
 
                     # Build series data
                     series_data = self.get_observation_data(
@@ -2780,7 +2946,8 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                         mirrored_value,
                         weatherRange_obs_lookup,
                         wind_rose_color,
-                        special_target_unit
+                        special_target_unit,
+                        obs_round,
                     )
 
                     # Build the final series data JSON
@@ -2805,24 +2972,24 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
 
                         # No matter what, reset data back to just the series
                         # data and not a dict of values
-                        output[chart_group][plotname]["series"][line_name][
-                            "data"
-                        ] = list(series_data["obsdata"])
+                        output[chart_group][plotname]["series"][line_name]["data"] = (
+                            list(series_data["obsdata"])
+                        )
                     else:
                         # No custom series data overrides, so just add
                         # series_data to the chart series data
-                        output[chart_group][plotname]["series"][line_name][
-                            "data"
-                        ] = list(series_data)
+                        output[chart_group][plotname]["series"][line_name]["data"] = (
+                            list(series_data)
+                        )
 
                     # Final pass through
                     # self.highcharts_series_options_to_float() to convert the
                     # remaining options with numeric values to float such that
                     # Highcharts can make use of them.
-                    output[chart_group][plotname]["series"][
-                        line_name
-                    ] = self.highcharts_series_options_to_float(
-                        output[chart_group][plotname]["series"][line_name]
+                    output[chart_group][plotname]["series"][line_name] = (
+                        self.highcharts_series_options_to_float(
+                            output[chart_group][plotname]["series"][line_name]
+                        )
                     )
 
             # Write the output to the JSON file
@@ -2850,12 +3017,18 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
         mirrored_value,
         weatherRange_obs_lookup,
         wind_rose_color,
-        special_target_unit
+        special_target_unit,
+        obs_round,
     ):
         """
         Get the SQL vectors for the observation, the aggregate type and the
         interval of time
         """
+
+        # Cache frequently accessed attributes
+        skin_dict = self.skin_dict
+        converter = self.converter
+        config_dict = self.config_dict
 
         if observation == "windRose":
             # Special Belchertown wind rose with Highcharts aggregator Wind
@@ -2870,36 +3043,35 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
             if aggregate_interval:
                 aggregate_interval = None
 
-            # Get windDir observations.
-            obs_lookup = "windDir"
+            # Get windDir and windSpeed observations
+            timespan = TimeSpan(start_ts, end_ts)
+
             (time_start_vt, time_stop_vt, windDir_vt) = weewx.xtypes.get_series(
-                obs_lookup,
-                TimeSpan(start_ts, end_ts),
+                "windDir",
+                timespan,
                 archive,
                 aggregate_type,
                 aggregate_interval,
             )
-            # windDir_vt = self.converter.convert(windDir_vt)
-            # usage_round = int(self.skin_dict['Units']['StringFormats'].get(windDir_vt[2], "0f")[-2])
-            usage_round = 0  # Force round to 0 decimal
-            windDir_round_vt = [self.round_none(x, usage_round) for x in windDir_vt[0]]
-            # windDir_round_vt = [0.0 if v is None else v for v in windDir_round_vt]
+            # Round to 0 decimal places for wind direction
+            windDir_round_vt = [
+                round(x) if x is not None else None for x in windDir_vt[0]
+            ]
 
-            # Get windSpeed observations.
-            obs_lookup = "windSpeed"
             (time_start_vt, time_stop_vt, windSpeed_vt) = weewx.xtypes.get_series(
-                obs_lookup,
-                TimeSpan(start_ts, end_ts),
+                "windSpeed",
+                timespan,
                 archive,
                 aggregate_type,
                 aggregate_interval,
             )
             windSpeed_vt = self.converter.convert(windSpeed_vt)
             usage_round = int(
-                self.skin_dict["Units"]["StringFormats"].get(windSpeed_vt[2], "2f")[-2]
+                skin_dict["Units"]["StringFormats"].get(windSpeed_vt[2], "2f")[-2]
             )
             windSpeed_round_vt = [
-                self.round_none(x, usage_round) for x in windSpeed_vt[0]
+                round(x, usage_round) if x is not None else None
+                for x in windSpeed_vt[0]
             ]
 
             # Exit if the vectors are None
@@ -2909,335 +3081,142 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
 
             # Get the unit label from the skin dict for speed.
             windSpeed_unit = windSpeed_vt[1]
-            windSpeed_unit_label = self.skin_dict["Units"]["Labels"][windSpeed_unit]
+            windSpeed_unit_label = skin_dict["Units"]["Labels"][windSpeed_unit]
 
-            # Merge the two outputs so we have a consistent data set to filter on
-            merged = zip(windDir_round_vt, windSpeed_round_vt)
+            # Initialize wind speed groups more efficiently
+            wind_groups = [{"dir": [], "speed": []} for _ in range(7)]
 
-            # Sort by beaufort wind speeds
-            (
-                group_0_windDir,
-                group_0_windSpeed,
-                group_1_windDir,
-                group_1_windSpeed,
-                group_2_windDir,
-                group_2_windSpeed,
-                group_3_windDir,
-                group_3_windSpeed,
-                group_4_windDir,
-                group_4_windSpeed,
-                group_5_windDir,
-                group_5_windSpeed,
-                group_6_windDir,
-                group_6_windSpeed,
-            ) = ([] for i in range(14))
-            for windData in merged:
-                if windData[0] is not None and windData[1] is not None:
-                    if windSpeed_unit in ("mile_per_hour", "mile_per_hour2"):
-                        if windData[1] < 1:
-                            group_0_windDir.append(windData[0])
-                            group_0_windSpeed.append(windData[1])
-                        elif 1 <= windData[1] <= 3:
-                            group_1_windDir.append(windData[0])
-                            group_1_windSpeed.append(windData[1])
-                        elif 4 <= windData[1] <= 7:
-                            group_2_windDir.append(windData[0])
-                            group_2_windSpeed.append(windData[1])
-                        elif 8 <= windData[1] <= 12:
-                            group_3_windDir.append(windData[0])
-                            group_3_windSpeed.append(windData[1])
-                        elif 13 <= windData[1] <= 18:
-                            group_4_windDir.append(windData[0])
-                            group_4_windSpeed.append(windData[1])
-                        elif 19 <= windData[1] <= 24:
-                            group_5_windDir.append(windData[0])
-                            group_5_windSpeed.append(windData[1])
-                        elif windData[1] >= 25:
-                            group_6_windDir.append(windData[0])
-                            group_6_windSpeed.append(windData[1])
-                    elif windSpeed_unit in ("km_per_hour", "km_per_hour2"):
-                        if windData[1] < 2:
-                            group_0_windDir.append(windData[0])
-                            group_0_windSpeed.append(windData[1])
-                        elif 2 <= windData[1] <= 5:
-                            group_1_windDir.append(windData[0])
-                            group_1_windSpeed.append(windData[1])
-                        elif 6 <= windData[1] <= 11:
-                            group_2_windDir.append(windData[0])
-                            group_2_windSpeed.append(windData[1])
-                        elif 12 <= windData[1] <= 19:
-                            group_3_windDir.append(windData[0])
-                            group_3_windSpeed.append(windData[1])
-                        elif 20 <= windData[1] <= 28:
-                            group_4_windDir.append(windData[0])
-                            group_4_windSpeed.append(windData[1])
-                        elif 29 <= windData[1] <= 38:
-                            group_5_windDir.append(windData[0])
-                            group_5_windSpeed.append(windData[1])
-                        elif windData[1] >= 39:
-                            group_6_windDir.append(windData[0])
-                            group_6_windSpeed.append(windData[1])
-                    elif windSpeed_unit in ("meter_per_second", "meter_per_second2"):
-                        if windData[1] < 0.5:
-                            group_0_windDir.append(windData[0])
-                            group_0_windSpeed.append(windData[1])
-                        elif 0.5 <= windData[1] <= 1.5:
-                            group_1_windDir.append(windData[0])
-                            group_1_windSpeed.append(windData[1])
-                        elif 1.6 <= windData[1] <= 3.3:
-                            group_2_windDir.append(windData[0])
-                            group_2_windSpeed.append(windData[1])
-                        elif 3.4 <= windData[1] <= 5.5:
-                            group_3_windDir.append(windData[0])
-                            group_3_windSpeed.append(windData[1])
-                        elif 5.6 <= windData[1] <= 7.9:
-                            group_4_windDir.append(windData[0])
-                            group_4_windSpeed.append(windData[1])
-                        elif 8 <= windData[1] <= 10.7:
-                            group_5_windDir.append(windData[0])
-                            group_5_windSpeed.append(windData[1])
-                        elif windData[1] >= 10.8:
-                            group_6_windDir.append(windData[0])
-                            group_6_windSpeed.append(windData[1])
-                    elif windSpeed_unit in ("knot", "knot2"):
-                        if windData[1] < 1:
-                            group_0_windDir.append(windData[0])
-                            group_0_windSpeed.append(windData[1])
-                        elif 1 <= windData[1] <= 3:
-                            group_1_windDir.append(windData[0])
-                            group_1_windSpeed.append(windData[1])
-                        elif 4 <= windData[1] <= 6:
-                            group_2_windDir.append(windData[0])
-                            group_2_windSpeed.append(windData[1])
-                        elif 7 <= windData[1] <= 10:
-                            group_3_windDir.append(windData[0])
-                            group_3_windSpeed.append(windData[1])
-                        elif 11 <= windData[1] <= 16:
-                            group_4_windDir.append(windData[0])
-                            group_4_windSpeed.append(windData[1])
-                        elif 17 <= windData[1] <= 21:
-                            group_5_windDir.append(windData[0])
-                            group_5_windSpeed.append(windData[1])
-                        elif windData[1] >= 22:
-                            group_6_windDir.append(windData[0])
-                            group_6_windSpeed.append(windData[1])
-                    elif windSpeed_unit == "beaufort":
-                        if windData[1] <= 1:
-                            group_0_windDir.append(windData[0])
-                            group_0_windSpeed.append(windData[1])
-                        elif windData[1] == 2:
-                            group_1_windDir.append(windData[0])
-                            group_1_windSpeed.append(windData[1])
-                        elif windData[1] == 3:
-                            group_2_windDir.append(windData[0])
-                            group_2_windSpeed.append(windData[1])
-                        elif windData[1] == 4:
-                            group_3_windDir.append(windData[0])
-                            group_3_windSpeed.append(windData[1])
-                        elif windData[1] == 5:
-                            group_4_windDir.append(windData[0])
-                            group_4_windSpeed.append(windData[1])
-                        elif windData[1] == 6:
-                            group_5_windDir.append(windData[0])
-                            group_5_windSpeed.append(windData[1])
-                        elif windData[1] >= 7:
-                            group_6_windDir.append(windData[0])
-                            group_6_windSpeed.append(windData[1])
+            # Define beaufort scale thresholds for different units (more efficient than nested ifs)
+            beaufort_thresholds = {
+                ("mile_per_hour", "mile_per_hour2"): [1, 4, 8, 13, 19, 25],
+                ("km_per_hour", "km_per_hour2"): [2, 6, 12, 20, 29, 39],
+                ("meter_per_second", "meter_per_second2"): [
+                    0.5,
+                    1.6,
+                    3.4,
+                    5.6,
+                    8,
+                    10.8,
+                ],
+                ("knot", "knot2"): [1, 4, 7, 11, 17, 22],
+                "beaufort": [2, 3, 4, 5, 6, 7],
+            }
 
-            # Get the windRose data
-            group_0_series_data = self.create_windrose_data(
-                group_0_windDir, group_0_windSpeed
-            )
-            group_1_series_data = self.create_windrose_data(
-                group_1_windDir, group_1_windSpeed
-            )
-            group_2_series_data = self.create_windrose_data(
-                group_2_windDir, group_2_windSpeed
-            )
-            group_3_series_data = self.create_windrose_data(
-                group_3_windDir, group_3_windSpeed
-            )
-            group_4_series_data = self.create_windrose_data(
-                group_4_windDir, group_4_windSpeed
-            )
-            group_5_series_data = self.create_windrose_data(
-                group_5_windDir, group_5_windSpeed
-            )
-            group_6_series_data = self.create_windrose_data(
-                group_6_windDir, group_6_windSpeed
-            )
+            # Find matching threshold set
+            thresholds = None
+            for units, thresh in beaufort_thresholds.items():
+                if isinstance(units, tuple) and windSpeed_unit in units:
+                    thresholds = thresh
+                    break
+                elif windSpeed_unit == units:
+                    thresholds = thresh
+                    break
 
-            # Group all together to get wind frequency percentages
-            wind_sum = sum(
-                group_0_series_data
-                + group_1_series_data
-                + group_2_series_data
-                + group_3_series_data
-                + group_4_series_data
-                + group_5_series_data
-                + group_6_series_data
-            )
+            if thresholds is None:
+                thresholds = [1, 4, 8, 13, 19, 25]  # Default to mph
+
+            # Process wind data efficiently
+            for windDir, windSpeed in zip(windDir_round_vt, windSpeed_round_vt):
+                if windDir is not None and windSpeed is not None:
+                    # Determine group index based on thresholds
+                    group_idx = 6  # Default to highest group
+                    for i, threshold in enumerate(thresholds):
+                        if windSpeed < threshold:
+                            group_idx = i
+                            break
+
+                    wind_groups[group_idx]["dir"].append(windDir)
+                    wind_groups[group_idx]["speed"].append(windSpeed)
+
+            # Get the windRose data for all groups
+            series_data = [
+                self.create_windrose_data(g["dir"], g["speed"]) for g in wind_groups
+            ]
+
+            # Calculate wind frequency percentages
+            wind_sum = sum(sum(data) for data in series_data)
             if wind_sum > 0:
-                y = 0
-                while y < len(group_0_series_data):
-                    group_0_series_data[y] = round(
-                        group_0_series_data[y] / wind_sum * 100
-                    )
-                    y += 1
-                y = 0
-                while y < len(group_1_series_data):
-                    group_1_series_data[y] = round(
-                        group_1_series_data[y] / wind_sum * 100
-                    )
-                    y += 1
-                y = 0
-                while y < len(group_2_series_data):
-                    group_2_series_data[y] = round(
-                        group_2_series_data[y] / wind_sum * 100
-                    )
-                    y += 1
-                y = 0
-                while y < len(group_3_series_data):
-                    group_3_series_data[y] = round(
-                        group_3_series_data[y] / wind_sum * 100
-                    )
-                    y += 1
-                y = 0
-                while y < len(group_4_series_data):
-                    group_4_series_data[y] = round(
-                        group_4_series_data[y] / wind_sum * 100
-                    )
-                    y += 1
-                y = 0
-                while y < len(group_5_series_data):
-                    group_5_series_data[y] = round(
-                        group_5_series_data[y] / wind_sum * 100
-                    )
-                    y += 1
-                y = 0
-                while y < len(group_6_series_data):
-                    group_6_series_data[y] = round(
-                        group_6_series_data[y] / wind_sum * 100
-                    )
-                    y += 1
+                series_data = [
+                    [round(val / wind_sum * 100) for val in data]
+                    for data in series_data
+                ]
 
-            # Setup the labels based on unit
-            if windSpeed_unit in ("mile_per_hour", "mile_per_hour2"):
-                group_0_speedRange = "< 1"
-                group_1_speedRange = "1-3"
-                group_2_speedRange = "4-7"
-                group_3_speedRange = "8-12"
-                group_4_speedRange = "13-18"
-                group_5_speedRange = "19-24"
-                group_6_speedRange = "25+"
-            elif windSpeed_unit in ("km_per_hour", "km_per_hour2"):
-                group_0_speedRange = "< 2"
-                group_1_speedRange = "2-5"
-                group_2_speedRange = "6-11"
-                group_3_speedRange = "12-19"
-                group_4_speedRange = "20-28"
-                group_5_speedRange = "29-38"
-                group_6_speedRange = "39+"
-            elif windSpeed_unit in ("meter_per_second", "meter_per_second2"):
-                group_0_speedRange = "< 0.5"
-                group_1_speedRange = "0.5-1.5"
-                group_2_speedRange = "1.6-3.3"
-                group_3_speedRange = "3.4-5.5"
-                group_4_speedRange = "5.5-7.9"
-                group_5_speedRange = "8-10.7"
-                group_6_speedRange = "10.8+"
-            elif windSpeed_unit in ("knot", "knot2"):
-                group_0_speedRange = "< 1"
-                group_1_speedRange = "1-3"
-                group_2_speedRange = "4-6"
-                group_3_speedRange = "7-10"
-                group_4_speedRange = "11-16"
-                group_5_speedRange = "17-21"
-                group_6_speedRange = "22+"
-            elif windSpeed_unit == "beaufort":
-                group_0_speedRange = "0"
-                group_1_speedRange = "1"
-                group_2_speedRange = "2"
-                group_3_speedRange = "3"
-                group_4_speedRange = "4"
-                group_5_speedRange = "5"
-                group_6_speedRange = "6+"
-
-            group_0_name = "%s %s" % (group_0_speedRange, windSpeed_unit_label)
-            group_1_name = "%s %s" % (group_1_speedRange, windSpeed_unit_label)
-            group_2_name = "%s %s" % (group_2_speedRange, windSpeed_unit_label)
-            group_3_name = "%s %s" % (group_3_speedRange, windSpeed_unit_label)
-            group_4_name = "%s %s" % (group_4_speedRange, windSpeed_unit_label)
-            group_5_name = "%s %s" % (group_5_speedRange, windSpeed_unit_label)
-            group_6_name = "%s %s" % (group_6_speedRange, windSpeed_unit_label)
-
-            group_0 = {
-                "name": group_0_name,
-                "type": "column",
-                "color": wind_rose_color[0],
-                "zIndex": 106,
-                "stacking": "normal",
-                "fillOpacity": 0.75,
-                "data": group_0_series_data,
-            }
-            group_1 = {
-                "name": group_1_name,
-                "type": "column",
-                "color": wind_rose_color[1],
-                "zIndex": 105,
-                "stacking": "normal",
-                "fillOpacity": 0.75,
-                "data": group_1_series_data,
-            }
-            group_2 = {
-                "name": group_2_name,
-                "type": "column",
-                "color": wind_rose_color[2],
-                "zIndex": 104,
-                "stacking": "normal",
-                "fillOpacity": 0.75,
-                "data": group_2_series_data,
-            }
-            group_3 = {
-                "name": group_3_name,
-                "type": "column",
-                "color": wind_rose_color[3],
-                "zIndex": 103,
-                "stacking": "normal",
-                "fillOpacity": 0.75,
-                "data": group_3_series_data,
-            }
-            group_4 = {
-                "name": group_4_name,
-                "type": "column",
-                "color": wind_rose_color[4],
-                "zIndex": 102,
-                "stacking": "normal",
-                "fillOpacity": 0.75,
-                "data": group_4_series_data,
-            }
-            group_5 = {
-                "name": group_5_name,
-                "type": "column",
-                "color": wind_rose_color[5],
-                "zIndex": 101,
-                "stacking": "normal",
-                "fillOpacity": 0.75,
-                "data": group_5_series_data,
-            }
-            group_6 = {
-                "name": group_6_name,
-                "type": "column",
-                "color": wind_rose_color[6],
-                "zIndex": 100,
-                "stacking": "normal",
-                "fillOpacity": 0.75,
-                "data": group_6_series_data,
+            # Setup the labels based on unit (using dictionary for efficiency)
+            speed_range_labels = {
+                ("mile_per_hour", "mile_per_hour2"): [
+                    "< 1",
+                    "1-3",
+                    "4-7",
+                    "8-12",
+                    "13-18",
+                    "19-24",
+                    "25+",
+                ],
+                ("km_per_hour", "km_per_hour2"): [
+                    "< 2",
+                    "2-5",
+                    "6-11",
+                    "12-19",
+                    "20-28",
+                    "29-38",
+                    "39+",
+                ],
+                ("meter_per_second", "meter_per_second2"): [
+                    "< 0.5",
+                    "0.5-1.5",
+                    "1.6-3.3",
+                    "3.4-5.5",
+                    "5.5-7.9",
+                    "8-10.7",
+                    "10.8+",
+                ],
+                ("knot", "knot2"): [
+                    "< 1",
+                    "1-3",
+                    "4-6",
+                    "7-10",
+                    "11-16",
+                    "17-21",
+                    "22+",
+                ],
+                "beaufort": ["0", "1", "2", "3", "4", "5", "6+"],
             }
 
-            # Append everything into a list and return right away, do not
-            # process rest of function
-            series = [group_0, group_1, group_2, group_3, group_4, group_5, group_6]
+            # Find matching labels
+            labels = None
+            for units, lbls in speed_range_labels.items():
+                if isinstance(units, tuple) and windSpeed_unit in units:
+                    labels = lbls
+                    break
+                elif windSpeed_unit == units:
+                    labels = lbls
+                    break
+
+            if labels is None:
+                labels = [
+                    "< 1",
+                    "1-3",
+                    "4-7",
+                    "8-12",
+                    "13-18",
+                    "19-24",
+                    "25+",
+                ]  # Default to mph
+
+            # Build series data efficiently using list comprehension
+            series = [
+                {
+                    "name": f"{labels[i]} {windSpeed_unit_label}",
+                    "type": "column",
+                    "color": wind_rose_color[i],
+                    "zIndex": 106 - i,
+                    "stacking": "normal",
+                    "fillOpacity": 0.75,
+                    "data": series_data[i],
+                }
+                for i in range(7)
+            ]
+
             return series
 
         # Special Belchertown Weather Range (radial)
@@ -3248,7 +3227,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
             if weatherRange_obs_lookup is not None:
                 obs_lookup = weatherRange_obs_lookup
             else:
-                raise Warning(
+                log.error(
                     "Error trying to create the weather range graph. "
                     "You are missing the range_type configuration item."
                 )
@@ -3269,12 +3248,19 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                     aggregate_interval,
                 )
             except Exception as e:
-                raise Warning(
-                    "Error trying to use database binding %s to graph observation %s. "
-                    "Error was: %s." % (binding, obs_lookup, e)
+                log.error(
+                    f"Error trying to use database binding {binding} to graph observation {obs_lookup}. "
+                    f"Error was: {e}."
                 )
 
-            self.insert_null_value_timestamps_to_end_ts(time_start_vt, time_stop_vt, obs_vt, start_ts, end_ts, aggregate_interval)
+            self.insert_null_value_timestamps_to_end_ts(
+                time_start_vt,
+                time_stop_vt,
+                obs_vt,
+                start_ts,
+                end_ts,
+                aggregate_interval,
+            )
 
             min_obs_vt = self.converter.convert(obs_vt)
 
@@ -3289,12 +3275,19 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                     aggregate_interval,
                 )
             except Exception as e:
-                raise Warning(
-                    "Error trying to use database binding %s to graph observation %s. "
-                    "Error was: %s." % (binding, obs_lookup, e)
+                log.error(
+                    f"Error trying to use database binding {binding} to graph observation {obs_lookup}. "
+                    f"Error was: {e}."
                 )
 
-            self.insert_null_value_timestamps_to_end_ts(time_start_vt, time_stop_vt, obs_vt, start_ts, end_ts, aggregate_interval)
+            self.insert_null_value_timestamps_to_end_ts(
+                time_start_vt,
+                time_stop_vt,
+                obs_vt,
+                start_ts,
+                end_ts,
+                aggregate_interval,
+            )
 
             max_obs_vt = self.converter.convert(obs_vt)
 
@@ -3309,17 +3302,24 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                     aggregate_interval,
                 )
             except Exception as e:
-                raise Warning(
-                    "Error trying to use database binding %s to graph observation %s. "
-                    "Error was: %s." % (binding, obs_lookup, e)
+                log.error(
+                    f"Error trying to use database binding {binding} to graph observation {obs_lookup}. "
+                    f"Error was: {e}."
                 )
 
-            self.insert_null_value_timestamps_to_end_ts(time_start_vt, time_stop_vt, obs_vt, start_ts, end_ts, aggregate_interval)
+            self.insert_null_value_timestamps_to_end_ts(
+                time_start_vt,
+                time_stop_vt,
+                obs_vt,
+                start_ts,
+                end_ts,
+                aggregate_interval,
+            )
 
             avg_obs_vt = self.converter.convert(obs_vt)
 
             obs_unit = avg_obs_vt[1]
-            obs_unit_label = self.skin_dict["Units"]["Labels"].get(obs_unit, "")
+            obs_unit_label = skin_dict["Units"]["Labels"].get(obs_unit, "")
 
             # Convert to millis and zip all together
             time_ms = [float(x) * 1000 for x in time_start_vt[0]]
@@ -3335,6 +3335,8 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
             return data
 
         if observation == "aqiChart":
+            global aqi
+            global aqi_category
             data = {"aqiChart": True, "obsdata": [{"y": aqi, "category": aqi_category}]}
             return data
 
@@ -3346,13 +3348,13 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
 
             # Set aggregate interval based on timespan and make sure it is
             # between 5 minutes and 1 day
-            logging.debug("Start time is %s and end time is %s" % (start_ts, end_ts))
+            logging.debug(f"Start time is {start_ts} and end time is {end_ts}")
             aggregate_interval = (end_ts - start_ts) / 360
             if aggregate_interval < 300:
                 aggregate_interval = 300
             elif aggregate_interval > 86400:
                 aggregate_interval = 86400
-            logging.debug("Interval is: %s" % aggregate_interval)
+            logging.debug(f"Interval is: {aggregate_interval}")
 
             aggregate_type = "max"
             # Get min values
@@ -3366,13 +3368,20 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                     aggregate_interval,
                 )
             except Exception as e:
-                raise Warning(
-                    "Error trying to use database binding %s to graph observation %s. "
-                    "Error was: %s." % (binding, obs_lookup, e)
+                log.error(
+                    f"Error trying to use database binding {binding} to graph observation {obs_lookup}. "
+                    f"Error was: {e}."
                 )
 
-            self.insert_null_value_timestamps_to_end_ts(time_start_vt, time_stop_vt, obs_vt, start_ts, end_ts, aggregate_interval)
-            
+            self.insert_null_value_timestamps_to_end_ts(
+                time_start_vt,
+                time_stop_vt,
+                obs_vt,
+                start_ts,
+                end_ts,
+                aggregate_interval,
+            )
+
             min_obs_vt = self.converter.convert(obs_vt)
 
             # Get max values
@@ -3386,17 +3395,24 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                     aggregate_interval,
                 )
             except Exception as e:
-                raise Warning(
-                    "Error trying to use database binding %s to graph observation %s. "
-                    "Error was: %s." % (binding, obs_lookup, e)
+                log.error(
+                    f"Error trying to use database binding {binding} to graph observation {obs_lookup}. "
+                    f"Error was: {e}."
                 )
 
-            self.insert_null_value_timestamps_to_end_ts(time_start_vt, time_stop_vt, obs_vt, start_ts, end_ts, aggregate_interval)
-            
+            self.insert_null_value_timestamps_to_end_ts(
+                time_start_vt,
+                time_stop_vt,
+                obs_vt,
+                start_ts,
+                end_ts,
+                aggregate_interval,
+            )
+
             max_obs_vt = self.converter.convert(obs_vt)
 
             obs_unit = max_obs_vt[1]
-            obs_unit_label = self.skin_dict["Units"]["Labels"].get(obs_unit, "")
+            obs_unit_label = skin_dict["Units"]["Labels"].get(obs_unit, "")
 
             # Convert to millis and zip all together
             time_ms = [float(x) * 1000 for x in time_start_vt[0]]
@@ -3439,18 +3455,22 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                 aggregate_type = "max"
         else:
             obs_lookup = observation
-            
+
         #   Special aggregation_subtype measures to enable average rainfall, max and min temperatures to be calculated
-        
-        if aggregate_type == "avg" and observation == "avgRainfall" and aggregate_interval == 86400:
+
+        if (
+            aggregate_type == "avg"
+            and observation == "avgRainfall"
+            and aggregate_interval == 86400
+        ):
             obs_lookup = "rain"
             obs_label = "Rainfall"
 
         if xAxis_groupby or len(xAxis_categories) >= 1:
-            # Setup the converter - for some reason self.converter doesn't work
+            # Setup the converter - for some reason converter doesn't work
             # for the group_unit_dict in this section Get the target unit
             # nickname (something like 'US' or 'METRIC'):
-            target_unit_nickname = self.config_dict["StdConvert"]["target_unit"]
+            target_unit_nickname = config_dict["StdConvert"]["target_unit"]
             # Get the target unit: weewx.US, weewx.METRIC, weewx.METRICWX
             target_unit = weewx.units.unit_constants[target_unit_nickname.upper()]
             # Bind to the appropriate standard converter units
@@ -3458,10 +3478,10 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
 
             # Find what kind of database we're working with and specify the
             # correctly tailored SQL Query for each type of database
-            data_binding = self.config_dict["StdArchive"]["data_binding"]
-            database = self.config_dict["DataBindings"][data_binding]["database"]
-            database_type = self.config_dict["Databases"][database]["database_type"]
-            driver = self.config_dict["DatabaseTypes"][database_type]["driver"]
+            data_binding = config_dict["StdArchive"]["data_binding"]
+            database = config_dict["DataBindings"][data_binding]["database"]
+            database_type = config_dict["Databases"][database]["database_type"]
+            driver = config_dict["DatabaseTypes"][database_type]["driver"]
             xAxis_labels = []
             obsvalues = []
 
@@ -3484,9 +3504,9 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                 aggregate_type = "sum"
 
             if isinstance(time_length, int):
-                order_sql = ' ORDER BY dateTime ASC'
+                order_sql = " ORDER BY dateTime ASC"
             else:
-                order_sql = ''
+                order_sql = ""
 
             # Special case for time_length = all, force to use complete days only
             if time_length == "all":
@@ -3494,230 +3514,166 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                 end_ts = startOfDay(archive.lastGoodStamp())
 
             # Set up subquery groupby clause
-            if xAxis_groupby == "year": subqry_groupby = '"%Y"'
-            elif xAxis_groupby == "month": subqry_groupby = '"%Y%m"'
-            elif xAxis_groupby == "day": subqry_groupby = '"%Y%m%d"'
-            elif xAxis_groupby == "hour": subqry_groupby = '"%Y%m%d%H"'
-            else: subqry_groupby = ''
-                            
+            if xAxis_groupby == "year":
+                subqry_groupby = '"%Y"'
+            elif xAxis_groupby == "month":
+                subqry_groupby = '"%Y%m"'
+            elif xAxis_groupby == "day":
+                subqry_groupby = '"%Y%m%d"'
+            elif xAxis_groupby == "hour":
+                subqry_groupby = '"%Y%m%d%H"'
+            else:
+                subqry_groupby = ""
+
             if driver == "weedb.sqlite":
                 # Use daily summaries where possible - MUST BE FOR WHOLE DAYS determined by start and stop times otherwise use archive
-                if xAxis_groupby != "hour" and isStartOfDay(start_ts) and isStartOfDay(end_ts) and end_ts - start_ts > 0 :  # 1 or more exact days
+                if (
+                    xAxis_groupby != "hour"
+                    and isStartOfDay(start_ts)
+                    and isStartOfDay(end_ts)
+                    and end_ts - start_ts > 0
+                ):  # 1 or more exact days
                     # Avg is a special case
                     if aggregate_type == "avg":
                         # Avg(sum) requires a subquery with the correct group by clause
                         if average_type is not None and average_type == "sum":
-                            sql_lookup = 'SELECT dt1 AS {0}, ' \
-                                         'AVG(obs1) AS obs ' \
-                                         'FROM (SELECT strftime("{1}", datetime(dateTime, "unixepoch", "localtime")) AS dt1, sum(sum) AS obs1 ' \
-                                                'FROM archive_day_{2} WHERE dateTime >= {3} AND dateTime < {4} '\
-                                                'GROUP BY strftime({5}, datetime(dateTime, "unixepoch", "localtime"))) ' \
-                                         'GROUP BY {0}{6};'.format(
-                                xAxis_groupby,
-                                strformat,
-                                obs_lookup,
-                                start_ts,
-                                end_ts,
-                                subqry_groupby,
-                                order_sql
-                            )
+                            sql_lookup = f"""
+                                SELECT dt1 AS {xAxis_groupby}, 
+                                AVG(obs1) AS obs 
+                                FROM (SELECT strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')) AS dt1, SUM(sum) AS obs1 
+                                FROM archive_day_{obs_lookup} WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                                GROUP BY strftime({subqry_groupby}, datetime(dateTime, "unixepoch", "localtime"))) 
+                                GROUP BY dt1{order_sql};
+                            """
                         # avg cases with an average_type
                         elif average_type is not None:
-                            sql_lookup = 'SELECT strftime("{0}", datetime(dateTime, "unixepoch", "localtime")) AS {1}, ' \
-                                         '{2}({3}) AS obs ' \
-                                         'FROM archive_day_{4}  WHERE dateTime >= {5} AND dateTime < {6} ' \
-                                         'GROUP BY {1}{7};'.format(
-                                strformat,
-                                xAxis_groupby,
-                                aggregate_type,
-                                average_type,
-                                obs_lookup,
-                                start_ts,
-                                end_ts,
-                                order_sql
-                            )
+                            sql_lookup = f"""
+                                SELECT strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')) AS {xAxis_groupby}, 
+                                {aggregate_type}({average_type}) AS obs 
+                                FROM archive_day_{obs_lookup} WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                                GROUP BY strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')){order_sql};
+                            """
                         # remaining avg cases without an average_type use weighted average
                         else:
-                            sql_lookup = 'SELECT strftime("{0}", datetime(dateTime, "unixepoch", "localtime")) AS {1}, ' \
-                                         'SUM(wsum)/SUM(sumtime) AS obs ' \
-                                         'FROM archive_day_{2}  WHERE dateTime >= {3} AND dateTime < {4} ' \
-                                         'GROUP BY {1}{5};'.format(
-                                strformat,
-                                xAxis_groupby,
-                                obs_lookup,
-                                start_ts,
-                                end_ts,
-                                order_sql
-                            )
+                            sql_lookup = f"""
+                                SELECT strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')) AS {xAxis_groupby}, 
+                                SUM(wsum)/SUM(sumtime) AS obs 
+                                FROM archive_day_{obs_lookup} WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                                GROUP BY strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')){order_sql};
+                            """
                     # other aggregate_type cases use direct interrogation of daily summary
                     else:
-                        sql_lookup = 'SELECT strftime("{0}", datetime(dateTime, "unixepoch", "localtime")) AS {1}, ' \
-                                     '{2}({2}) AS obs ' \
-                                     'FROM archive_day_{3}  ' \
-                                     'WHERE dateTime >= {4} AND dateTime < {5} GROUP BY {1}{6};'.format(
-                            strformat,
-                            xAxis_groupby,
-                            aggregate_type,
-                            obs_lookup,
-                            start_ts,
-                            end_ts,
-                            order_sql
-                        )
+                        sql_lookup = f"""
+                            SELECT strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')) AS {xAxis_groupby}, 
+                            {aggregate_type}({aggregate_type}) AS obs 
+                            FROM archive_day_{obs_lookup} 
+                            WHERE dateTime >= {start_ts} AND dateTime < {end_ts} GROUP BY strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')){order_sql};
+                        """
                 else:
                     # archive access with no average_type
                     if average_type is None:
-                        sql_lookup = 'SELECT strftime("{0}", datetime(dateTime, "unixepoch", "localtime")) as {1}, ' \
-                                     'IFNULL({2}({3}),0) AS obs, dateTime FROM archive ' \
-                                     'WHERE dateTime >= {4} AND dateTime < {5} GROUP BY {1}{6};'.format(
-                            strformat,
-                            xAxis_groupby,
-                            aggregate_type,
-                            obs_lookup,
-                            start_ts,
-                            end_ts,
-                            order_sql
-                        )
+                        sql_lookup = f"""
+                            SELECT strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')) AS {xAxis_groupby}, 
+                            IFNULL({aggregate_type}({obs_lookup}),0) AS obs 
+                            FROM archive WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                            GROUP BY strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')){order_sql};
+                        """
 
                     # average_type requiring a subquery
                     else:
-                        sql_lookup = 'SELECT dt1 AS {0}, ' \
-                                     '{1}(obs1) AS obs ' \
-                                     'FROM (SELECT strftime("{2}", datetime(dateTime, "unixepoch", "localtime")) AS dt1, '\
-                                            'IFNULL({3}({4}),0) AS obs1 ' \
-                                            'FROM archive WHERE dateTime >= {5} AND dateTime < {6} '\
-                                            'GROUP BY strftime({7}, datetime(dateTime, "unixepoch", "localtime"))) ' \
-                                     'GROUP BY {0}{8};'.format(
-                            xAxis_groupby,
-                            aggregate_type,
-                            strformat,
-                            average_type,
-                            obs_lookup,
-                            start_ts,
-                            end_ts,
-                            subqry_groupby,
-                            order_sql
-                        )
+                        sql_lookup = f"""
+                            SELECT dt1 AS {xAxis_groupby}, 
+                            {aggregate_type}(obs1) AS obs 
+                            FROM (SELECT strftime('{strformat}', datetime(dateTime, 'unixepoch', 'localtime')) AS dt1, 
+                            IFNULL({average_type}({obs_lookup}),0) AS obs1 
+                            FROM archive WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                            GROUP BY strftime({subqry_groupby}, datetime(dateTime, 'unixepoch', 'localtime'))) 
+                            GROUP BY dt1{order_sql};
+                        """
 
             elif driver == "weedb.mysql":
                 # Use daily summaries where possible - MUST BE FOR WHOLE DAYS determined by start and stop times otherwise use archive
-                if xAxis_groupby != "hour" and isStartOfDay(start_ts) and isStartOfDay(end_ts) and end_ts - start_ts > 0 :  # 1 or more exact days
+                if (
+                    xAxis_groupby != "hour"
+                    and isStartOfDay(start_ts)
+                    and isStartOfDay(end_ts)
+                    and end_ts - start_ts > 0
+                ):  # 1 or more exact days
                     # Avg is a special case
                     if aggregate_type == "avg":
                         # Avg(sum) requires a subquery with the correct group by clause
                         if average_type is not None and average_type == "sum":
-                            sql_lookup = 'SELECT dt1 AS {0}, ' \
-                                         'AVG(obs1) AS obs ' \
-                                         'FROM (SELECT FROM_UNIXTIME( dateTime, "%{1}" ) AS dt1, sum(sum) AS obs1 ' \
-                                                'FROM archive_day_{2} WHERE dateTime >= {3} AND dateTime < {4} '\
-                                                'GROUP BY strftime({5}, datetime(dateTime, "unixepoch", "localtime"))) ' \
-                                         'GROUP BY {0}{6};'.format(
-                                xAxis_groupby,
-                                strformat,
-                                obs_lookup,
-                                start_ts,
-                                end_ts,
-                                subqry_groupby,
-                                order_sql
-                            )
+                            sql_lookup = f"""
+                                SELECT dt1 AS {xAxis_groupby}, 
+                                AVG(obs1) AS obs 
+                                FROM (SELECT FROM_UNIXTIME(dateTime, '%{strformat}') AS dt1, SUM(sum) AS obs1 
+                                FROM archive_day_{obs_lookup} WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                                GROUP BY FROM_UNIXTIME(dateTime, '{subqry_groupby.strip("%")}') ) AS subq 
+                                GROUP BY dt1{order_sql};
+                            """
                         # avg cases with an average_type
                         elif average_type is not None:
-                            sql_lookup = 'SELECT FROM_UNIXTIME( dateTime, "%{0}" ) AS {1}, ' \
-                                         '{2}({3}) AS obs ' \
-                                         'FROM archive_day_{4}  WHERE dateTime >= {5} AND dateTime < {6} ' \
-                                         'GROUP BY {1}{7};'.format(
-                                strformat,
-                                xAxis_groupby,
-                                aggregate_type,
-                                average_type,
-                                obs_lookup,
-                                start_ts,
-                                end_ts,
-                                order_sql
-                            )
+                            sql_lookup = f"""
+                                SELECT FROM_UNIXTIME(dateTime, '%{strformat}') AS {xAxis_groupby}, 
+                                {aggregate_type}({average_type}) AS obs 
+                                FROM archive_day_{obs_lookup} WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                                GROUP BY FROM_UNIXTIME(dateTime, '%{strformat}'){order_sql};
+                            """
                         # remaining avg cases without an average_type use weighted average
                         else:
-                            sql_lookup = 'SELECT FROM_UNIXTIME( dateTime, "%{0}" ) AS {1}, ' \
-                                         'SUM(wsum)/SUM(sumtime) AS obs ' \
-                                         'FROM archive_day_{2}  WHERE dateTime >= {3} AND dateTime < {4} ' \
-                                         'GROUP BY {1}{5};'.format(
-                                strformat,
-                                xAxis_groupby,
-                                obs_lookup,
-                                start_ts,
-                                end_ts,
-                                order_sql
-                            )
+                            sql_lookup = f"""
+                                SELECT FROM_UNIXTIME(dateTime, '%{strformat}') AS {xAxis_groupby}, 
+                                SUM(wsum)/SUM(sumtime) AS obs 
+                                FROM archive_day_{obs_lookup} WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                                GROUP BY FROM_UNIXTIME(dateTime, '%{strformat}'){order_sql};
+                            """
                     # other aggregate_type cases use direct interrogation of daily summary
                     else:
-                        sql_lookup = 'SELECT FROM_UNIXTIME( dateTime, "%{0}" ) AS {1}, ' \
-                                     '{2}({2}) AS obs ' \
-                                     'FROM archive_day_{3}  ' \
-                                     'WHERE dateTime >= {4} AND dateTime < {5} GROUP BY {1}{6};'.format(
-                            strformat,
-                            xAxis_groupby,
-                            aggregate_type,
-                            obs_lookup,
-                            start_ts,
-                            end_ts,
-                            order_sql
-                        )
+                        sql_lookup = f"""
+                            SELECT FROM_UNIXTIME(dateTime, '%{strformat}') AS {xAxis_groupby}, 
+                            {aggregate_type}({aggregate_type}) AS obs 
+                            FROM archive_day_{obs_lookup} 
+                            WHERE dateTime >= {start_ts} AND dateTime < {end_ts} GROUP BY FROM_UNIXTIME(dateTime, '%{strformat}'){order_sql};
+                        """
                 else:
                     # archive access with no average_type
                     if average_type is None:
-                        sql_lookup = 'SELECT FROM_UNIXTIME( dateTime, "%{0}" ) as {1}, ' \
-                                     'IFNULL({2}({3}),0) AS obs, dateTime FROM archive ' \
-                                     'WHERE dateTime >= {4} AND dateTime < {5} GROUP BY {1}{6};'.format(
-                            strformat,
-                            xAxis_groupby,
-                            aggregate_type,
-                            obs_lookup,
-                            start_ts,
-                            end_ts,
-                            order_sql
-                        )
+                        sql_lookup = f"""
+                            SELECT FROM_UNIXTIME(dateTime, '%{strformat}') AS {xAxis_groupby}, 
+                            IFNULL({aggregate_type}({obs_lookup}),0) AS obs 
+                            FROM archive WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                            GROUP BY FROM_UNIXTIME(dateTime, '%{strformat}'){order_sql};
+                        """
 
                     # average_type requiring a subquery
                     else:
-                        sql_lookup = 'SELECT dt1 AS {0}, ' \
-                                     '{1}(obs1) AS obs ' \
-                                     'FROM (SELECT FROM_UNIXTIME( dateTime, "%{2}" ) AS dt1, '\
-                                            'IFNULL({3}({4}),0) AS obs1 ' \
-                                            'FROM archive WHERE dateTime >= {5} AND dateTime < {6} '\
-                                            'GROUP BY strftime({7}, datetime(dateTime, "unixepoch", "localtime"))) ' \
-                                     'GROUP BY {0}{8};'.format(
-                            xAxis_groupby,
-                            aggregate_type,
-                            strformat,
-                            average_type,
-                            obs_lookup,
-                            start_ts,
-                            end_ts,
-                            subqry_groupby,
-                            order_sql
-                        )
+                        sql_lookup = f"""
+                            SELECT dt1 AS {xAxis_groupby}, 
+                            {aggregate_type}(obs1) AS obs 
+                            FROM (SELECT FROM_UNIXTIME(dateTime, '%{strformat}') AS dt1, 
+                            IFNULL({average_type}({obs_lookup}),0) AS obs1 
+                            FROM archive WHERE dateTime >= {start_ts} AND dateTime < {end_ts} 
+                            GROUP BY FROM_UNIXTIME(dateTime, '{subqry_groupby.strip("%")}')) AS subq 
+                            GROUP BY dt1{order_sql};
+                        """
 
             # Setup values for the converter
             try:
                 obs_group = weewx.units.obs_group_dict[obs_lookup]
                 obs_unit_from_target_unit = converter.group_unit_dict[obs_group]
             except:
-                # This observation doesn't exist within weewx schema so nothing
+                # This observation doesn't exist within WeeWX schema so nothing
                 # to convert, so set None type
                 obs_group = None
                 obs_unit_from_target_unit = None
 
-            # introduce test to catch any sql errors; a try / except sequence 
-            
+            # introduce test to catch any sql errors; a try / except sequence
+
             try:
                 query = archive.genSql(sql_lookup)
-            except:
-                raise Warning(
-                    "SQL error in"
-                    "sql_lookup"
-                    "The error is: %s"
-                        % (error)                    
-                )
-                
+            except Exception as e:
+                log.error(f"SQL error in sql_lookup. The error is: {e}")
+
             for row in query:
                 xAxis_labels.append(row[0])
                 row_tuple = (row[1], obs_unit_from_target_unit, obs_group)
@@ -3759,16 +3715,21 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                 aggregate_interval,
             )
         except Exception as e:
-            raise Warning(
-                "Error trying to use database binding %s to graph observation %s. Error was: %s."
-                % (binding, obs_lookup, e)
+            log.error(
+                f"Error trying to use database binding {binding} to graph observation {obs_lookup}. Error was: {e}."
             )
 
-        self.insert_null_value_timestamps_to_end_ts(time_start_vt, time_stop_vt, obs_vt, start_ts, end_ts, aggregate_interval)
-        
+        self.insert_null_value_timestamps_to_end_ts(
+            time_start_vt, time_stop_vt, obs_vt, start_ts, end_ts, aggregate_interval
+        )
+
         if special_target_unit:
-            logdbg("unit_group=%s source_unit=%s special_target_unit=%s" % (obs_vt[2],obs_vt[1],special_target_unit))
-            obs_vt = weewx.units.Converter({obs_vt[2]:special_target_unit}).convert(obs_vt)
+            log.debug(
+                f"unit_group={obs_vt[2]} source_unit={obs_vt[1]} special_target_unit={special_target_unit}"
+            )
+            obs_vt = weewx.units.Converter({obs_vt[2]: special_target_unit}).convert(
+                obs_vt
+            )
         else:
             obs_vt = self.converter.convert(obs_vt)
 
@@ -3804,7 +3765,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
 
         # Special handling for the rain.
         elif observation == "rainTotal":
-            # The weewx "rain" observation is really "bucket tips". This
+            # The WeeWX "rain" observation is really "bucket tips". This
             # special counter increments the bucket tips over timespan to
             # return rain total.
             rain_count = 0
@@ -3814,7 +3775,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                 if rain is None or rain == "":
                     # rain = 0.0
                     # Do not keep adding None or empty results, so that
-                    # full-length charts (like weewx v4 archiveYearSpan) don't
+                    # full-length charts (like WeeWX v4 archiveYearSpan) don't
                     # have a line that continues past the last actual plot
                     obs_round_vt.append(rain)
                     continue
@@ -3825,22 +3786,26 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
             # Barometer for finer detail
             if observation == "barometer":
                 usage_round = int(
-                    self.skin_dict["Units"]["StringFormats"].get(obs_vt[1], "1f")[-2]
+                    skin_dict["Units"]["StringFormats"].get(obs_vt[1], "1f")[-2]
                 )
                 obs_round_vt = [
                     round(x, usage_round) if x is not None else None for x in obs_vt[0]
                 ]
             else:
                 try:
-                   usage_round = int(
-                       self.skin_dict["Units"]["StringFormats"].get(obs_vt[1], "2f")[-2]
-                   )
+                    if obs_round is None:
+                        usage_round = int(
+                            skin_dict["Units"]["StringFormats"].get(obs_vt[1], "2f")[-2]
+                        )
+                    else:
+                        usage_round = int(obs_round) + 1
                 except ValueError:
-                   #loginf (
-                   #   "Observation %s is using unit %s that returns %s for StringFormat, rather than float point decimal format value - using 0 as rounding"
-                   #   % (observation, obs_vt[1], self.skin_dict["Units"]["StringFormats"].get(obs_vt[1]))
-                   #)
-                   usage_round = 0
+                    log.info(
+                        f"Observation {observation} is using unit {obs_vt[1]} "
+                        f"""that returns {skin_dict["Units"]["StringFormats"].get(obs_vt[1])} """
+                        "for StringFormat, rather than float point decimal format value - using 0 as rounding"
+                    )
+                    usage_round = 0
 
                 obs_round_vt = [self.round_none(x, usage_round) for x in obs_vt[0]]
 
@@ -3853,10 +3818,15 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
             if not aggregate_type:
                 point_timestamp = time_stop_vt
             elif aggregate_interval and (
-                      aggregate_interval == 3600 or aggregate_interval==2629800):
+                aggregate_interval == 3600 or aggregate_interval == 2629800
+            ):
                 point_timestamp = time_start_vt
             else:
-                point_timestamp = ([(x+y)/2.0 for x,y in zip(time_start_vt[0],time_stop_vt[0])],time_start_vt[1],time_start_vt[2])
+                point_timestamp = (
+                    [(x + y) / 2.0 for x, y in zip(time_start_vt[0], time_stop_vt[0])],
+                    time_start_vt[1],
+                    time_start_vt[2],
+                )
         except Exception:
             point_timestamp = time_stop_vt
 
@@ -3871,11 +3841,13 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
 
         return data
 
-    def insert_null_value_timestamps_to_end_ts(self, time_start_vt, time_stop_vt, obs_vt, start_ts, end_ts, interval):
+    def insert_null_value_timestamps_to_end_ts(
+        self, time_start_vt, time_stop_vt, obs_vt, start_ts, end_ts, interval
+    ):
         """
-        In weewx 4.5.1 xtypes.py was modified to not return any data points which didn't exist in the archive database.
+        In WeeWX 4.5.1 xtypes.py was modified to not return any data points which didn't exist in the archive database.
         This function adds the 'future' data points from the last timestamp in the list up until end_ts with None entries.
-        This means that graphs still have the option of showing a full day or month or year on the x axis depending on the time_length specfied.       
+        This means that graphs still have the option of showing a full day or month or year on the x axis depending on the time_length specfied.
         """
         count = 0
 
@@ -3892,7 +3864,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                 count = count + 1
 
         for i in range(count):
-           obs_vt[0].append(None)
+            obs_vt[0].append(None)
 
     def round_none(self, value, places):
         """Round value to 'places' places but also permit a value of None"""
@@ -3905,7 +3877,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
 
     def timespan_year_to_now(self, time_ts, grace=1, years_ago=0):
         """
-        In weewx 4 the get_series() for archiveYearSpan returns the full 365
+        In WeeWX 4 the get_series() for archiveYearSpan returns the full 365
         day chart.  if users do not want a full year (with empty data) and
         would rather a Jan 1 to "now", then they can use this custom timespan
 
@@ -3947,42 +3919,6 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
         # spaces and bounded by [ and ]
         # windroseData = '[' + ','.join(str(z) for z in windrose_list) + ']'
         return windrose_list
-
-    def get_cardinal_direction(self, degree):
-        if 0 <= degree <= 11.25:
-            return "N"
-        if 11.26 <= degree <= 33.75:
-            return "NNE"
-        if 33.76 <= degree <= 56.25:
-            return "NE"
-        if 56.26 <= degree <= 78.75:
-            return "ENE"
-        if 78.76 <= degree <= 101.25:
-            return "E"
-        if 101.26 <= degree <= 123.75:
-            return "ESE"
-        if 123.76 <= degree <= 146.25:
-            return "SE"
-        if 146.26 <= degree <= 168.75:
-            return "SSE"
-        if 168.76 <= degree <= 191.25:
-            return "S"
-        if 191.26 <= degree <= 213.75:
-            return "SSW"
-        if 213.76 <= degree <= 236.25:
-            return "SW"
-        if 236.26 <= degree <= 258.75:
-            return "WSW"
-        if 258.76 <= degree <= 281.25:
-            return "W"
-        if 281.26 <= degree <= 303.75:
-            return "WNW"
-        if 303.76 <= degree <= 326.25:
-            return "NW"
-        if 326.26 <= degree <= 348.75:
-            return "NNW"
-        if 348.76 <= degree <= 360:
-            return "N"
 
     def highcharts_series_options_to_float(self, d):
         """
