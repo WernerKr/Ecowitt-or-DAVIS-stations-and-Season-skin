@@ -3,15 +3,17 @@ forked from
 https://github.com/gjr80/weewx-ecowitt_local_http/blob/master
 
 (C) 2024-25 Gary Roderick                     gjroderick<at>gmail.com
+Maintained and modified by Werner Krenn started July 2025
+(C) 2025-2026 Werner Krenn   
 
-### For this driver there is also a database schema "weewx_ecowitt.py" or "weewx_ecowittrssi.py" or "weewx_ecowittrssisoilad.py" or "weewx_ecowitt_all.py" (with current all available sensors)
+### For this driver there is also a database schema "wview_ecowitt.py" or "wview_ecowittrssi.py" or "wview_ecowittrssisoilad.py" or "wview_ecowitt_all.py" (with current all available sensors)
 https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/ecowitt_http/wview_ecowitt.py
 
 under https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin
 
 you can find script files that extend an existing database schema for the values of Ecowitt stations 
 
-### For WS6210 use ecowittws6210_http driver -> uses other Lightning/Thunder time and corrected PM2.5 1..4 from SDCard (Pm2.5)
+### For WS6210  -> in current version the changes for a WS6210 are also included
 
     X  May 2025            v0.1.0a28  Gary Roderick
 	
@@ -140,6 +142,19 @@ you can find script files that extend an existing database schema for the values
         - ch_lds.x.total_height -> thi_chx
         - added soilECad1..16 - data only via ecowitt cloud
         - Preparation for WQT01 sensor
+    06 Apr 2026            v0.3.3
+        - Lightning time (lightning_disturber_count) reverted to old version
+          but WS6210 reports always local time, taking into account summer time correction
+          the other stations reports local time during daylight saving, 
+          otherwise the time without summer time correction 
+          so now the driver uses the reported time, 
+          which is wrong for the other stations after resetting to normal time!
+
+        - The special settings for the WS6210 are now also included in this driver, 
+          therefore the ecowittws6210_http.py driver is no longer necessary! 
+        - Adjustments for the WS6210 (stationtyp, ws_interval ...)
+        - ignores ec values of 4095, because this is fault reception (should be handled by gateway!) 
+        - more WQT01 settings
 		  
 Tested and completed:
 ```
@@ -196,7 +211,6 @@ loop_on_init = 1
 [EcowittHttp]
     # the driver to use
     driver = user.ecowitt_http
-    # driver = user.ecowittws6210_http
   
     # how often to poll the device
     poll_interval = 20
@@ -287,10 +301,10 @@ loop_on_init = 1
         #hail = p_rain if p_rain is not None #if hail is used as default piezo rain
 
         pb = heap if heap is not None else None
+        #  lightning_distance_save = lightning_distance if lightning_distance is not None else None        #old setting
+        #  lightning_distance = lightning_distance if lightning_strike_count > 0 else None                 #old setting
         lightning_distance_save = lightning_dist if lightning_dist is not None else None
         lightning_distance = lightning_dist if lightning_strike_count > 0 else None 
-        #lightning_distance_save = lightning_distance if lightning_distance is not None else None        #old setting
-        #lightning_distance = lightning_distance if lightning_strike_count > 0 else None                 #old setting
         lightning_noise_count = lightning_strike_count if lightning_strike_count > 0 else None
 
         #example to get signals in procent: 
@@ -405,7 +419,8 @@ loop_on_init = 1
         # It is *only* used when the database is created.
         #schema = schemas.wview_ecowitt.schema
         #schema = schemas.wview_ecowittrssi.schema
-        schema = schemas.wview_ecowittrssisoilad.schema
+        #schema = schemas.wview_ecowittrssisoilad.schema
+        schema =  schemas.wview_ecowitt_all.schema
 ##############################################################################
 # Options for extension Ecowittcustom, GW1000, Interceptor or EcowittHttp
 [Accumulator]
@@ -867,9 +882,7 @@ https://github.com/WernerKr/Ecowitt-or-DAVIS-stations-and-Season-skin/blob/main/
 https://www.pc-wetterstation.de/wetter/weewx8/
 
 # Updating the Ecowitt_http driver:
-
-Simply download and unzip the ecowitt_http.zip file, or ecowitt_http.py file and replace the existing file (/etc/weewx/bin/ecowitt_http.py) with it.
-After that restart weewx!
+There is now a extra file for this: weewx-ecowitt_http_updatedriver_0.3.3.zip
 
 # Installation as a WeeWX driver with Skin SeasonsEcowitt
 
