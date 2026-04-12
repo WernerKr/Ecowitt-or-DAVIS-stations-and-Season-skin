@@ -3,7 +3,9 @@ forked from
 https://github.com/gjr80/weewx-ecowitt_local_http/blob/master
 
 (C) 2024-25 Gary Roderick                     gjroderick<at>gmail.com
+
 Maintained and modified by Werner Krenn started July 2025
+
 (C) 2025-2026 Werner Krenn   
 
 ### For this driver there is also a database schema "wview_ecowitt.py" or "wview_ecowittrssi.py" or "wview_ecowittrssisoilad.py" or "wview_ecowitt_all.py" (with current all available sensors)
