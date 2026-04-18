@@ -1,7 +1,7 @@
+#errorCatcher Echo
 ## sensors module for weewx skins
 ## Copyright Tom Keffer, Matthew Wall
 ## See LICENSE.txt for your rights
-#errorCatcher Echo
 #encoding UTF-8
 
 ## this is a conditional display of sensor data, including connectivity,
@@ -17,6 +17,8 @@
 ## 2025-08-29 variable $redcolorrssi for  red colour text at rssi
 ## 2025-11-12 WS6210 Charge, consolebattp, wh40_batt
 ## 2025-11-14 rain_batt, piezorain_batt 
+## 2026-04-07 removed 1x ws85_sig from $conns (was double)
+## 2026-04-14 recent for rssi
 
 ## remember the current time - we will use it more than once.
 #import time
@@ -277,7 +279,7 @@ $gettext('never')
 ##set $conns = $to_list(get('$signal_data', [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala" ]))
 
 
-#set $conns = [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala",
+#set $conns = [ "rxCheckPercent", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala",
 ('wh24_sig'),
 ('wh25_sig'),
 ('wh26_sig'),
@@ -841,12 +843,18 @@ $gettext('never')
     #try
       #if ($getattr($latest, $signal).has_data or ($getattr($recent, $signal).has_data and $userecentsig == 1)) and $useit == 1
         #set $sstate = $getattr($latest, $signal).raw
+        #set $lasttime = "N/A"
         #set $sstatetxt = ''
         #set $sstatevar = -20
         #if ($getattr($latest, $rssi).has_data or ($getattr($recent, $rssi).has_data and $userecentsig == 1)) and $useit == 1
           #set $sstatevar = $getattr($latest, $rssi).raw
           #set $sstatetxt = $getattr($latest, $rssi)
-        #end if
+          #try
+            #set $lasttime = $getattr($recent, $rssi).lasttime.raw
+           #except 
+            #set $lasttime = "N/A"
+           #end try
+         #end if
 
         #if ($sstate <= 1) or ($sstatevar <= int($redcolorrssi) )
           <tr>
@@ -869,9 +877,21 @@ $gettext('never')
             #set $ux = '%'
           #end if
           <td class="data">$sstatetxt  $x$ux</td>
+          #if $lasttime != "N/A"
+           <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+          #else
+           <td class="timestamp">$lasttime</td>
+          #end if
+          </tr>
+        #else
+          #if $lasttime != "N/A"
+           <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+          #else
+           <td class="timestamp">$lasttime</td>
+          #end if
           </tr>
         #end if
- 
+
       #end if
     #except (AttributeError, TypeError)
       ## there is no signal state data for that sensor
