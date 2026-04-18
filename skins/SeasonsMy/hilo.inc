@@ -4,6 +4,8 @@
 #errorCatcher Echo
 #encoding UTF-8
 
+## 2026-03-10 added soilmTemp1..16, soilEC1..16
+
 #set $archive_data = [('day', $day), ('week', $week), ('month', $month), ('year', $year), ('alltime', $alltime)]
 
 #set $ecowitt_hw = [('GW1000'),
@@ -17,6 +19,7 @@
                     ('WN1980'),
                     ('WS39'),
                     ('WS38'),
+                    ('WS62'),
                     ('HP2550'),
                     ('ecowitt-client'),
                     ]
@@ -107,6 +110,23 @@
 ('soilTemp6','#5127db','','1'),
 ('soilTemp7','#42b4b4','','1'),
 ('soilTemp8','#b442b4','','1'),
+('soilmTemp1','#4282b4','','1'),
+('soilmTemp2','#b44242','','1'),
+('soilmTemp3','#42b442','','1'),
+('soilmTemp4','#42b4b4','','1'),
+('soilmTemp5','#f90415','','1'),
+('soilmTemp6','#5127db','','1'),
+('soilmTemp7','#42b4b4','','1'),
+('soilmTemp8','#b442b4','','1'),
+('soilmTemp9','','','1'),
+('soilmTemp10','','','1'),
+('soilmTemp11','','','1'),
+('soilmTemp12','','','1'),
+('soilmTemp13','','','1'),
+('soilmTemp14','','','1'),
+('soilmTemp15','','','1'),
+('soilmTemp16','','','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('soilMoist1','#e85d0d','','1'),
 ('soilMoist2','#1a50bc','','1'),
 ('soilMoist3','#b44242','','1'),
@@ -123,6 +143,22 @@
 ('soilMoist14','','','1'),
 ('soilMoist15','','','1'),
 ('soilMoist16','','','1'),
+('soilEC1','#e85d0d','','1'),
+('soilEC2','#1a50bc','','1'),
+('soilEC3','#b44242','','1'),
+('soilEC4','#42B4B4','','1'),
+('soilEC5','#b442b4','','1'),
+('soilEC6','#0000ff','','1'),
+('soilEC7','#f90415','','1'),
+('soilEC8','#5127db','','1'),
+('soilEC9','','','1'),
+('soilEC10','','','1'),
+('soilEC11','','','1'),
+('soilEC12','','','1'),
+('soilEC13','','','1'),
+('soilEC14','','','1'),
+('soilEC15','','','1'),
+('soilEC16','','','1'),
 ('leafTemp1','#5427db','','1'),
 ('leafTemp2','#e85d0d','','1'),
 ('leafTemp3','#e85d0d','','1'),

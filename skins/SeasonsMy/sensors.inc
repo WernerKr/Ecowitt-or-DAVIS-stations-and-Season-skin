@@ -1,7 +1,7 @@
+#errorCatcher Echo
 ## sensors module for weewx skins
 ## Copyright Tom Keffer, Matthew Wall
 ## See LICENSE.txt for your rights
-#errorCatcher Echo
 #encoding UTF-8
 
 ## this is a conditional display of sensor data, including connectivity,
@@ -15,7 +15,10 @@
 ## 2035-08-21 add WS6210
 ## 2025-08-26 renamed wn31 to wh31
 ## 2025-08-29 variable $redcolorrssi for  red colour text at rssi
-
+## 2025-11-12 WS6210 Charge, consolebattp, wh40_batt
+## 2025-11-14 rain_batt, piezorain_batt 
+## 2026-04-07 removed 1x ws85_sig from $conns (was double)
+## 2026-04-14 recent for rssi
 
 ## remember the current time - we will use it more than once.
 #import time
@@ -112,10 +115,11 @@ $gettext('never')
                           ('leak_Batt3', 'get_multi_battery_status'),
                           ('leak_Batt4', 'get_multi_battery_status'),
                           ('lightning_Batt', 'get_multi_battery_status'),
-                          ('wh40_batt', 'get_multi_battery_status'),
                           ('wh80_batt', 'get_multi_battery_status'),
                           ('wh85_batt', 'get_multi_battery_status'),
                           ('wh90_batt', 'get_multi_battery_status'),
+                          ('rain_batt', 'get_multi_battery_status'),
+                          ('piezorain_batt', 'get_multi_battery_status'),
                           ('ws6210_batt', 'get_multi_battery_status'),
                          ]
 ##
@@ -186,6 +190,7 @@ $gettext('never')
                      ('wh54_ch2_sig'),
                      ('wh54_ch3_sig'),
                      ('wh54_ch4_sig'),
+                     ('wn38_sig'),
                      ('wh57_sig'),
                      ('wh68_sig'),
                      ('wh69_sig'),
@@ -262,6 +267,7 @@ $gettext('never')
                      ('wh54_ch2_'),
                      ('wh54_ch3_'),
                      ('wh54_ch4_'),
+                     ('wn38_'),
                      ('wh57_'),
                      ('wh68_'),
                      ('wh69_'),
@@ -273,7 +279,7 @@ $gettext('never')
 ##set $conns = $to_list(get('$signal_data', [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala" ]))
 
 
-#set $conns = [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala",
+#set $conns = [ "rxCheckPercent", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala",
 ('wh24_sig'),
 ('wh25_sig'),
 ('wh26_sig'),
@@ -340,6 +346,7 @@ $gettext('never')
 ('wh54_ch2_sig'),
 ('wh54_ch3_sig'),
 ('wh54_ch4_sig'),
+('wn38_sig'),
 ('wh57_sig'),
 ('wh68_sig'),
 ('wh69_sig'),
@@ -351,7 +358,7 @@ $gettext('never')
 
 ##
 #set $battery_statuses = [ "outTempBatteryStatus", "inTempBatteryStatus", "windBatteryStatus", "rainBatteryStatus", "hailBatteryStatus", "snowBatteryStatus", "uvBatteryStatus", "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
-#set $battery_statuses_ecowitt = [ "wh24_batt", "wh25_batt", "wh26_batt", "wh65_batt", "wh68_batt", "wh69_batt", "consolebattp" ]
+#set $battery_statuses_ecowitt = [ "wh24_batt", "wh25_batt", "wh26_batt", "wh40_batt", "wh65_batt", "wh68_batt", "wh69_batt"]
 
 ##set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus1", "batteryStatus2", "batteryStatus3", "batteryStatus4", "batteryStatus5", "batteryStatus6", "batteryStatus7", "batteryStatus8" ]
 #set $battery_statuses_check = [ "txBatteryStatus", "txBatteryStatus_2", "batteryStatus2", "batteryStatus7", "batteryStatus8" ]
@@ -420,6 +427,7 @@ $gettext('never')
 ("ldsbatt2",2.4),
 ("ldsbatt3",2.4),
 ("ldsbatt4",2.4),
+("bgtbatt",1.2),
 ("console_batt",2.4),
 ("consoleext_batt",2.4),
 ]
@@ -657,6 +665,7 @@ $gettext('never')
    #end if
  #end for
 
+
  #for $battery in $sensor_batt_data
     #try
       #if (($getattr($recent, $battery[0]).has_data) or ($getattr($current, $battery[0]).has_data))
@@ -696,6 +705,39 @@ $gettext('never')
       #pass
     #end try
  #end for
+
+ #if $ecowitt == 1
+  ##set $xt = ''
+  ##if $current.stationtype.has_data
+   ##if 'WS62'in $current.stationtype.raw
+    ##set $xt = 'WS62'
+   ##end if
+  ##end if
+  ##if $current.model.has_data
+    ##if 'WS62'in $current.model.raw
+     ##set $xt = 'WS62'
+    ##end if
+  ##end if
+
+  ##if $xt == 'WS62'
+   #set $x = 'charge_stat'
+   #if (($getattr($recent, $x).has_data and $userecentbat == 1) or $getattr($current, $x).has_data) 
+     <tr>
+      <td class="label">$obs.label[$x]</td>
+      #set $xv = $getattr($current, $x) 
+      <td class="data">$xv</td>
+     </tr>
+   #end if
+   #set $x = 'consolebattp'
+   #if (($getattr($recent, $x).has_data and $userecentbat == 1) or $getattr($current, $x).has_data) 
+     <tr>
+      <td class="label">$obs.label[$x]</td>
+      #set $xv = $getattr($current, $x) 
+      <td class="data">$xv</td>
+     </tr>
+   #end if
+  ##end if
+ #end if
 
 #end if
 
@@ -801,12 +843,18 @@ $gettext('never')
     #try
       #if ($getattr($latest, $signal).has_data or ($getattr($recent, $signal).has_data and $userecentsig == 1)) and $useit == 1
         #set $sstate = $getattr($latest, $signal).raw
+        #set $lasttime = "N/A"
         #set $sstatetxt = ''
         #set $sstatevar = -20
         #if ($getattr($latest, $rssi).has_data or ($getattr($recent, $rssi).has_data and $userecentsig == 1)) and $useit == 1
           #set $sstatevar = $getattr($latest, $rssi).raw
           #set $sstatetxt = $getattr($latest, $rssi)
-        #end if
+          #try
+            #set $lasttime = $getattr($recent, $rssi).lasttime.raw
+           #except 
+            #set $lasttime = "N/A"
+           #end try
+         #end if
 
         #if ($sstate <= 1) or ($sstatevar <= int($redcolorrssi) )
           <tr>
@@ -829,9 +877,21 @@ $gettext('never')
             #set $ux = '%'
           #end if
           <td class="data">$sstatetxt  $x$ux</td>
+          #if $lasttime != "N/A"
+           <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+          #else
+           <td class="timestamp">$lasttime</td>
+          #end if
+          </tr>
+        #else
+          #if $lasttime != "N/A"
+           <td class="timestamp">$get_time_delta($lasttime, $now)</td>
+          #else
+           <td class="timestamp">$lasttime</td>
+          #end if
           </tr>
         #end if
- 
+
       #end if
     #except (AttributeError, TypeError)
       ## there is no signal state data for that sensor

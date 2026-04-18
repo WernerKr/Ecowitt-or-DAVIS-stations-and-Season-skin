@@ -1,28 +1,44 @@
 ## about module for weewx skins
 ## Copyright Tom Keffer, Matthew Wall
 ## See LICENSE.txt for your rights
-## Werner Krenn 2025/06/14
+## Werner Krenn 2026/04/14
 
 #errorCatcher Echo
 #encoding UTF-8
 
-#set $xt = ''
+
+#set $xt5 = ""
+#set $xt4 = ""
+#set $xt = ""
 #if $current.stationtype.has_data
  #if not 'EasyWeather' in $current.stationtype.raw
   #if $current.stationtype.raw not in $station.hardware  
    #set $xt = $current.stationtype.raw
+   #set $xt4 = $current.stationtype.raw[7:] 
   #end if
  #elif $current.model.has_data
   #set $xt = $current.model.raw 
+  #set $xt5 = $xt
  #end if
 #end if
 
-#set $xt1 = ''
+
+#set $xt1 = ""
 #if $current.stationtype.has_data
  #if 'EasyWeather' in $current.stationtype.raw
   #set $xt1 = $current.stationtype.raw
  #end if
 #end if
+
+#set $xt3 = ""
+#set $xt2 = ""
+#try
+ #if '_' in $station.hardware
+    #set $xt2 = $station.hardware[7:]
+ #end if
+#except
+ #pass
+#end try
 
 
 <div id='about_widget' class="widget">
@@ -35,9 +51,20 @@
   <table>
     <tr>
       <td class="label">$gettext("Hardware")</td>
+     #try
+       #if $current.apName.has_data
+        #set $xt3 = $current.apName
+       #end if
+     #except
+      #pass
+     #end try
+     #if $xt3 != "" and $xt2 != "" and $xt4 == ""
+       <td class="data">$xt3$xt2</td>
+     #else
        <td class="data">$station.hardware</td>
+     #end if
     </tr>
-    #if $xt !=''
+    #if ( $xt !='' and $xt4 != "" and $xt3 == "") or $xt5 != ""
     <tr>
       <td class="label">      </td>
        <td class="data">$xt</td>
@@ -51,15 +78,42 @@
     </tr>
     #end if
 
+    ##<tr> 
+    ##  <td class="label">$gettext("Station-Hardware")</td>
+    ##  <td class="data">$station.hardware</td>
+    ##</tr>
+    ##<tr> 
+    ##  <td class="label">$gettext("Station-type")</td>
+    ##  <td class="data">$current.stationtype.raw</td>
+    ##</tr>
+
    #try
-     #if $current.apName.has_data
+     #if $current.apName.has_data and ($xt2 == "" or $station.hardware != $current.stationtype.raw) 
      <tr> 
       <td class="label">$gettext("apName")</td>
-      <td class="data">$current.apName</td>
+      <td class="data">$current.apName$xt4</td>
      </tr>
      #end if
    #except
      #pass
+   #end try
+
+   #try
+    #if $current.ws_interval.has_data
+    <tr>
+      #set $xx = "" 
+      #try
+       #set $x = $current.ws_interval.long_form(format_string="%(minute)d%(minute_label)s, %(second)d%(second_label)s")
+      #except
+       #set $x = $getattr($current, 'ws_interval').format("%.0f")
+       #set $xx = $gettext("Seconds")
+      #end try
+      <td class="label">$gettext("WS Interval")</td>
+      <td class="data">$x $xx</td>
+    </tr>
+    #end if
+   #except
+    #pass
    #end try
 
    #try

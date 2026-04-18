@@ -6,6 +6,6 @@
 
 <div id="bootstrap_widget" class="widget">
   <div class="widget_title">
-    <a href="bootstrap/index.html" target="_blank" rel="noopener noreferrer">Skin Bootstrap</a>
+    <a href="bootstrap/index.html" target="_blank" rel="noopener noreferrer">Skin Bootstrap44</a>
   </div>
 </div>

@@ -6,6 +6,11 @@
 
 ## 2025-07-11 settings for lightning changed (lightning_num = new)
 ## 2025-09-02 new AQI values from EcowittHttp
+## 2025-11-09 leak1..4 with names
+## 2025-11-30 correction for lightning_distance
+## 2026-02-16 windir10 and windspeed10
+## 2026-02-26 new last_rain - need time_since.py
+##            and setting in skin.conf: search_list_extensions = user.historygenerator3.MyXSearch, user.time_since.TimeSince     
 
 #set $ecowitt_hw = [('GW1000'),
                     ('GW1100'),
@@ -46,7 +51,7 @@
 #set $observ = [('outTemp','#e85d0d','trend','1'),
 ('outTemp','#e85d0d','day','1'),
 ('outTemp','#e85d0d','yesterday','1'),
-('outTemp','#e85d0d','wx_binding, WS80mH','1'),
+('outTemp','#e85d0d','wx_binding, WS90mH','1'),
 ('outTemp','','wx_binding3','0'),
 ('heatindex','#b44242','current','1'),
 ('heatdeg','','current','1'),
@@ -67,7 +72,7 @@
 ('barometer','#25ea2f','trend','1'),
 ('pressure','','trend','1'),
 ('cloudbase','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+('- - - - - - - - - - - - - - - W S 9 0 m H','','','3'),
 ('windSpeed','#0000ff','current','1'),
 ('windSpeed','#0000ff','day','1'),
 ('windGust','#4282b4','current','1'),
@@ -103,6 +108,7 @@
  ('yearRain','','current','1'),
  ('totalRain','','current','1'),
  ('raintotal','#72b2c4','current','1'),
+('rainDur','#006eff','deltatime','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('hail','#72b2c4','current','1'),
 ('hailRate','#72b2c4','current','1'),
@@ -113,8 +119,8 @@
 ('wrain_piezo','','current','1'),
 ('mrain_piezo','','current','1'),
 ('yrain_piezo','','current','1'),
-('rainDur','#006eff','deltatime','1'),
 ('hailDur','#006eff','deltatime','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('snow','','current','1'),
 ('snowRate','','current','1'),
 ('snowMoisture','','current','1'),
@@ -177,14 +183,22 @@
 ('soilTemp6','#5127db','current','1'),
 ('soilTemp7','#42b4b4','current','1'),
 ('soilTemp8','#b442b4','current','1'),
-('soilTemp9','','current','1'),
-('soilTemp10','','current','1'),
-('soilTemp11','','current','1'),
-('soilTemp12','','current','1'),
-('soilTemp13','','current','1'),
-('soilTemp14','','current','1'),
-('soilTemp15','','current','1'),
-('soilTemp16','','current','1'),
+('soilmTemp1','#e85d0d','current','1'),
+('soilmTemp2','#1a50bc','current','1'),
+('soilmTemp3','#b44242','current','1'),
+('soilmTemp4','#42B4B4','current','1'),
+('soilmTemp5','#b442b4','current','1'),
+('soilmTemp6','#0000ff','current','1'),
+('soilmTemp7','#f90415','current','1'),
+('soilmTemp8','#5127db','current','1'),
+('soilmTemp9','#067267','current','1'),
+('soilmTemp10','#516020','current','1'),
+('soilmTemp11','','current','1'),
+('soilmTemp12','','current','1'),
+('soilmTemp13','','current','1'),
+('soilmTemp14','','current','1'),
+('soilmTemp15','','current','1'),
+('soilmTemp16','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('soilMoist1','#e85d0d','current','1'),
 ('soilMoist2','#1a50bc','current','1'),
@@ -202,6 +216,23 @@
 ('soilMoist14','','current','1'),
 ('soilMoist15','','current','1'),
 ('soilMoist16','','current','1'),
+('soilEC1','#e85d0d','current','1'),
+('soilEC2','#1a50bc','current','1'),
+('soilEC3','#b44242','current','1'),
+('soilEC4','#42B4B4','current','1'),
+('soilEC5','#b442b4','current','1'),
+('soilEC6','#0000ff','current','1'),
+('soilEC7','#f90415','current','1'),
+('soilEC8','#5127db','current','1'),
+('soilEC9','#067267','current','1'),
+('soilEC10','#516020','current','1'),
+('soilEC11','','current','1'),
+('soilEC12','','current','1'),
+('soilEC13','','current','1'),
+('soilEC14','','current','1'),
+('soilEC15','','current','1'),
+('soilEC16','','current','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('soilad1','#e85d0d','current','1'),
 ('soilad2','#1a50bc','current','1'),
 ('soilad3','#b44242','current','1'),
@@ -218,6 +249,22 @@
 ('soilad14','','current','1'),
 ('soilad15','','current','1'),
 ('soilad16','','current','1'),
+('soilECad1','#e85d0d','current','1'),
+('soilECad2','#1a50bc','current','1'),
+('soilECad3','#b44242','current','1'),
+('soilECad4','#42B4B4','current','1'),
+('soilECad5','#b442b4','current','1'),
+('soilECad6','#0000ff','current','1'),
+('soilECad7','#f90415','current','1'),
+('soilECad8','#5127db','current','1'),
+('soilECad9','#067267','current','1'),
+('soilECad10','#516020','current','1'),
+('soilECad11','','current','1'),
+('soilECad12','','current','1'),
+('soilECad13','','current','1'),
+('soilECad14','','current','1'),
+('soilECad15','','current','1'),
+('soilECad16','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('leafTemp1','#5427db','current','1'),
 ('leafTemp2','#e85d0d','current','1'),
@@ -244,6 +291,7 @@
 ('so2','','day','1'),
 ('noise','','current','1'),
 ('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+ ('air_ch1','','current','1'),
  ('thi_ch1','','current','1'),
  ('depth_ch1','','current','1'),
  ('ldsheat_ch1','','current','1'),
@@ -349,17 +397,17 @@
  ('rain24_2','','current','1'),
  ('monthRain_2','','current','1'),
  ('yearRain_2','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','3'),
-($gettext('Data FOSHKplugin'),'','','3'),
+('- - - - - - - - - - - - - - - - - - - - -','','','0'),
+($gettext('Data FOSHKplugin'),'','','0'),
 ('fdewptf','','current','1'),
 ('fwindchillf','','current','1'),
 ('ffeelslikef','','current','1'),
 ('fheatindexf','','current','1'),
 ('fsunhours','','current','1'),
 ('fsunshine','','current','1'),
-('fwindspdmph_avg10m','','current','1'),
-('fwinddir_avg10m','','current','1'),
-('fwindgustmph_max10m','','current','1'),
+('fwindspdmph_avg10m','','current','0'),
+('fwinddir_avg10m','','current','0'),
+('fwindgustmph_max10m','','current','0'),
 ('fwindrun','','current','1'),
 ('fpm25_AQI_ch1','','current','1'),
 ('fpm25_AQI_avg_24h_ch1','','current','1'),
@@ -621,6 +669,64 @@
         #end if
         <td class="data">$xt1</td>
       </tr>
+
+    #elif $x[0] == 'rainDur' and $x[2] == 'deltatime'
+      <tr>
+        <td class="label"><font color=$color>$obs.label[$x[0]]$ztx</font></td>
+         #try
+          #set $xt = $getattr($day, $x[0])
+           #set $ztx = $gettext("hrs.")
+           #set $xt1 = $xt.sum.long_form(format_string="%(hour)d:%(minute)02d:%(second)02d")
+          #except
+           #set $xt1 = '??:??:??'
+          #end try
+          <td class="data">$xt1 $ztx</td>
+       </tr>
+      #try
+       #set $test = $time_at('rain>0')
+       #if $test != "$time_at('rain>0')"
+       <tr>
+        <td class="label">$obs.label.last_rain am</td>
+        <td class="data">$time_at('rain>0')</td>
+       </tr> 
+       <tr>
+        <td class="label">vor</td>
+        <td class="data"><font size="2">$time_since('rain>0').long_form(format_string="%(day)d%(day_label)s, %(hour)d:%(minute)02d:%(second)02d")</font></td>
+        ##<td class="data"><font size="2">$time_since('rain>0').long_form</font></td>
+       </tr>
+       #end if 
+     #except
+      #pass
+     #end try
+    #elif $x[0] == 'hailDur' and $x[2] == 'deltatime'
+      <tr>
+        <td class="label"><font color=$color>$obs.label[$x[0]]$ztx</font></td>
+         #try
+          #set $xt = $getattr($day, $x[0])
+           #set $ztx = $gettext("hrs.")
+           #set $xt1 = $xt.sum.long_form(format_string="%(hour)d:%(minute)02d:%(second)02d")
+          #except
+           #set $xt1 = '??:??:??'
+          #end try
+          <td class="data">$xt1 $ztx</td>
+       </tr>
+      #try
+       #set $test = $time_at('hail>0')
+       #if $test != "$time_at('hail>0')"
+       <tr>
+        <td class="label">$obs.label.last_rain am</td>
+        <td class="data">$time_at('hail>0')</td>
+       </tr> 
+       <tr>
+        <td class="label">vor</td>
+        <td class="data"><font size="2">$time_since('hail>0').long_form(format_string="%(day)d%(day_label)s, %(hour)d:%(minute)02d:%(second)02d")</font></td>
+        ##<td class="data"><font size="2">$time_since('hail>0').long_form</font></td>
+       </tr>
+       #end if 
+     #except
+      #pass
+     #end try
+
     #elif $x[0] == 'hail'
       <tr>
         <td class="label"><font color=$color>$obs.label[$x[0]]$ztx</font></td>
@@ -639,7 +745,17 @@
     #elif 'leak_' in $x[0] 
       <tr>
         <td class="label"><span><font color=$color>$obs.label[$x[0]]$ztx</font></span></td>
-          <td class="data">$xt.format("%.2f")</td>
+          #if $xt.raw == 0
+             #set $ztxt = $gettext("Dry")
+          #elif $xt.raw == 1
+             #set $ztxt = $gettext("Leaking")
+          #elif $xt.raw == 2
+             #set $ztxt = $gettext("Offline")
+          #else
+             #set $ztxt = $gettext("UNKNOWN")
+          #end if
+          ##<td class="data">$xt.format("%.2f")</td>
+          <td class="data">$ztxt</td>
       </tr>
     #elif $x[0] == 'radcompensation'
       <tr>
@@ -676,7 +792,7 @@
       </tr>
       <tr>
         <td class="label">$obs.label.lightning_distance$ztx</td>
-        <td class="data">$xt2 km</td>
+        <td class="data">$xt2 $unit.label.lightning_distance</td>
       </tr>
       <tr>
         <td class="label">$obs.label.lightning_disturber_count$ztx</td>

@@ -6,6 +6,6 @@
 
 <div id="belchertown_widget" class="widget">
   <div class="widget_title">
-    <a href="belchertown/index.html" target="_blank" rel="noopener noreferrer">Skin Belchertown</a>
+    <a href="belchertown/index.html" target="_blank" rel="noopener noreferrer">Skin Belchertown17b</a>
   </div>
 </div>
