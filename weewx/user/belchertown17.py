@@ -12,7 +12,6 @@ import json
 import locale
 import logging
 import os
-import syslog
 import time
 from urllib.request import Request, urlopen
 import urllib.error
@@ -51,7 +50,7 @@ if weewx.__version__ < "5":
 log = logging.getLogger(__name__)
 
 # Print version in syslog for easier troubleshooting
-VERSION = "1.7beta2-new-belchertown"
+VERSION = "1.7kw_beta2-new-belchertown"
 log.info(f"version {VERSION}")
 
 # Default timeout for all HTTP requests (seconds)
@@ -214,7 +213,7 @@ class getData(SearchList):
             return names[0]
 
     def _get_radar_html(self, extras_dict, lat, lon, zoom, width, height,
-                        rain, wind, temp, marker):
+                        rain, wind, temp, marker, overlay):
         """Generate radar HTML based on provider configuration."""
         custom = extras_dict.get("radar_html", "")
         if custom:
@@ -225,10 +224,10 @@ class getData(SearchList):
                 extras_dict, width, height, lat, lon, zoom, dark=False
             )
         return self._build_windy_radar(
-            width, height, lat, lon, zoom, rain, wind, temp, marker == "true"
+            width, height, lat, lon, zoom, rain, wind, temp, marker == "true", overlay
         )
 
-    def _get_radar_html_dark(self, extras_dict, lat, lon, zoom, width, height):
+    def _get_radar_html_dark(self, extras_dict, lat, lon, zoom, overlay, width, height):
         """Generate dark mode radar HTML based on provider configuration."""
         custom = extras_dict.get("radar_html_dark", "")
         if custom:
@@ -264,13 +263,15 @@ class getData(SearchList):
             f'referrerpolicy="no-referrer"></img>'
         )
 
-    def _build_windy_radar(self, width, height, lat, lon, zoom, rain, wind, temp, marker):
+    def _build_windy_radar(self, width, height, lat, lon, zoom, rain, wind, temp, marker, overlay):
         """Build Windy.com embedded radar HTML."""
         marker_str = "true" if marker else "false"
         return (
             f'<iframe width="{width}px" height="{height}px" '
             f'src="https://embed.windy.com/embed2.html?lat={lat}&lon={lon}'
-            f'&zoom={zoom}&level=surface&overlay=radar&menu=&message=true'
+            f'&zoom={zoom}&level=surface'
+            f'&overlay={overlay}'
+            f'&menu=&message=true'
             f'&marker={marker_str}&calendar=&pressure=&type=map'
             f'&location=coordinates&detail=&detailLat={lat}&detailLon={lon}'
             f'&metricRain={rain}&metricWind={wind}&metricTemp={temp}'
@@ -381,7 +382,7 @@ class getData(SearchList):
             system_locale_js = system_locale.replace(
                 "_", "-"
             )  # Python's locale is underscore. JS uses dashes.
-        except:
+        except Exception:
             system_locale_js = "en-US"  # Error finding locale, set to en-US
 
         # Cache locale conversion for highcharts settings
@@ -479,13 +480,16 @@ class getData(SearchList):
         marker = "true" if (
             "radar_marker" in extras_dict and extras_dict["radar_marker"] == "1"
         ) else ""
+        radar_overlay = "radar"
+        if ("radar_overlay" in extras_dict and extras_dict["radar_overlay"] != ""):
+          radar_overlay = extras_dict["radar_overlay"]
 
         radar_html = self._get_radar_html(
             extras_dict, lat, lon, zoom, radar_width, radar_height,
-            radar_rain, radar_wind, radar_temp, marker
+            radar_rain, radar_wind, radar_temp, marker, radar_overlay
         )
         radar_html_dark = self._get_radar_html_dark(
-            extras_dict, lat, lon, zoom, radar_width, radar_height
+            extras_dict, lat, lon, zoom, radar_width, radar_height, radar_overlay
         )
         radar_html_kiosk = (
             self._get_radar_html_kiosk(extras_dict, skin_dict)
@@ -984,7 +988,7 @@ class getData(SearchList):
                 default_noaa_file = f"NOAA-{current_year}-{current_month}.txt"
             else:
                 default_noaa_file = f"NOAA-{current_year}.txt"
-        except:
+        except Exception:
             # There's an error - I've seen this on first run and the NOAA
             # folder is not created yet. Skip this section.
             pass
@@ -1097,8 +1101,8 @@ class getData(SearchList):
                             log.error(f"Pirate Weather missing config: {e}")
                         except Exception as e:
                             log.error(f"Pirate Weather update failed: {e}")
-                    else:
-                        log.info("Forecast is current, no update needed.")
+                    #else:
+                    #   log.info("Forecast is current, no update needed.")
 
                     # current_conditions.json (tiny file just with 'current')
                     if current_conditions_is_stale:
@@ -1125,8 +1129,8 @@ class getData(SearchList):
                             log.error(
                                 f"Pirate Weather current-conditions write failed: {e}",
                             )
-                    else:
-                        log.info("Current conditions are current, no update needed.")
+                    #else:
+                    #   log.info("Current conditions are current, no update needed.")
 
                     # Read current_conditions.json and populate the variables used below
                     with open(current_conditions_file, "r") as read_file:
@@ -1414,7 +1418,7 @@ class getData(SearchList):
                                 log.info(
                                     f"New forecast file downloaded to {forecast_file}"
                                 )
-                        except FileNotFoundError as e:
+                        except FileNotFoundError:
                             log.info(
                                 "Belchertown JSON folder does not exist. Usually this "
                                 "is an error that only occurs on the first run. If it "
@@ -1532,7 +1536,7 @@ class getData(SearchList):
                                 log.info(
                                     f"New forecast Current Conditions file downloaded to {current_conditions_file}"
                                 )
-                        except FileNotFoundError as e:
+                        except FileNotFoundError:
                             log.info(
                                 "Belchertown JSON folder does not exist. Usually this "
                                 "is an error that only occurs on the first run. If it "
@@ -1794,7 +1798,7 @@ class getData(SearchList):
                     with open(earthquake_file, "wb+") as file:
                         try:
                             file.write(page.encode("utf-8"))
-                        except:
+                        except Exception:
                             # Catch errors caused by ASCII characters
                             file.write(page)
                         if weewx.debug:
@@ -1808,7 +1812,7 @@ class getData(SearchList):
             with open(earthquake_file, "r") as read_file:
                 try:
                     eqdata = json.load(read_file)
-                except:
+                except Exception:
                     eqdata = ""
 
             try:
@@ -1828,7 +1832,7 @@ class getData(SearchList):
                             eqplace = (
                                 str(eqdist_miles) + " miles" + eqmatched.group("rest")
                             )
-                        except:
+                        except Exception:
                             eqplace = eqdata["features"][0]["properties"]["place"]
                     eqmag = locale.format_string(
                         "%g", float(eqdata["features"][0]["properties"]["mag"])
@@ -1885,7 +1889,7 @@ class getData(SearchList):
                 )
                 eqbearing = eqdistance_bearing[1]
                 eqbearing_raw = eqdistance_bearing[2]
-            except:
+            except Exception:
                 # No earthquake data
                 eqtime = label_dict["earthquake_no_data"]
                 equrl = ""
@@ -1956,7 +1960,7 @@ class getData(SearchList):
             if obs == "visibility":
                 try:
                     obs_output = f"{float(visibility):.2f} {visibility_unit}"
-                except:
+                except Exception:
                     log.error(
                         "Error adding visiblity to station observations table. "
                         "Check that you have forecast data, or remove visibility from your station_observations Extras option."
@@ -2051,14 +2055,14 @@ class getData(SearchList):
                 # Find the unit from group (like group_temperature = degree_F)
                 obs_group = weewx.units.obs_group_dict[obs]
                 obs_unit = self.generator.converter.group_unit_dict[obs_group]
-            except:
+            except Exception:
                 # Something's wrong. Continue this loop to ignore this group
                 # (like group_dust or something non-standard)
                 continue
             try:
                 # Find the number of decimals to round to based on group name
                 obs_round = skin_dict["Units"]["StringFormats"].get(obs_unit, "0")[2]
-            except:
+            except Exception:
                 obs_round = skin_dict["Units"]["StringFormats"].get(obs_unit, "0")
             # Add to the rounding array
             if obs not in all_obs_rounding_json:
@@ -2638,7 +2642,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                             )
                         else:
                             minstamp, maxstamp = archiveSpanSpan(
-                                timespan.stop, day_delta=time_ago * 30
+                                timespan.stop, day_delta=time_ago * 31
                             )
                     elif time_length == "year_ago_to_now":
                         if start_at_midnight:
@@ -2887,7 +2891,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                             obs_round = self.skin_dict["Units"]["StringFormats"].get(
                                 obs_unit, "0"
                             )[2]
-                        except:
+                        except Exception:
                             # Not a valid WeeWX schema name - maybe this is
                             # windRose or something?
                             obs_round = -1
@@ -3661,7 +3665,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
             try:
                 obs_group = weewx.units.obs_group_dict[obs_lookup]
                 obs_unit_from_target_unit = converter.group_unit_dict[obs_group]
-            except:
+            except Exception:
                 # This observation doesn't exist within WeeWX schema so nothing
                 # to convert, so set None type
                 obs_group = None
@@ -3854,7 +3858,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
         if interval is not None:
             try:
                 ts = time_start_vt[0][-1] + interval
-            except:
+            except Exception:
                 ts = start_ts
 
             while ts < end_ts:
@@ -3871,7 +3875,7 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
         if value is not None:
             try:
                 value = round(value, places)
-            except:
+            except Exception:
                 value = None
         return value
 
@@ -3936,9 +3940,9 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                     try:
                         v = to_float(v)
                         d.update({k: v})
-                    except:
+                    except Exception:
                         pass
             return d
-        except:
+        except Exception:
             # This item isn't a dict, so return it back
             return d
