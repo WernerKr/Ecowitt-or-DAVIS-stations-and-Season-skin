@@ -50,7 +50,7 @@ if weewx.__version__ < "5":
 log = logging.getLogger(__name__)
 
 # Print version in syslog for easier troubleshooting
-VERSION = "1.7kw_beta2-new-belchertown"
+VERSION = "1.7kw_beta3-new-belchertown"
 log.info(f"version {VERSION}")
 
 # Default timeout for all HTTP requests (seconds)
@@ -2109,12 +2109,15 @@ class getData(SearchList):
 
             if obs == "visibility":
                 try:
-                    obs_output = f"{float(visibility):.2f} {visibility_unit}"
-                except Exception:
+                    obs_output = f"{visibility} {visibility_unit}"
+                except Exception as e:
+                    #log.error(
+                    #    "Error adding visiblity to station observations table. "
+                    #    "Check that you have forecast data, or remove visibility from your station_observations Extras option.")
                     log.error(
-                        "Error adding visiblity to station observations table. "
-                        "Check that you have forecast data, or remove visibility from your station_observations Extras option."
-                    )
+                            f"Error adding visiblity to station observations table. "
+                            f"Check that you have forecast data, the error is: {e} ")
+                    
             elif obs == "rainWithRainRate":
                 # rainWithRainRate Rain shows rain daily sum and rain rate
                 obs_binder = weewx.tags.ObservationBinder(
@@ -2198,7 +2201,7 @@ class getData(SearchList):
                     humabs_output = humabs_output.gram_per_meter_cubed
                     station_obs_html += "&nbsp;<span class='border-left'>&nbsp;</span>"
                     station_obs_html += f"<span class='outHumAbs'>%s</span><!-- AJAX -->" % humabs_output
-            if obs=='radiation2':
+            if obs=='radiation':
                 maxSolarRad_output = getattr(current,'maxSolarRad',None)
                 if maxSolarRad_output is not None:
                     maxSolarRad_output = maxSolarRad_output.watt_per_meter_squared
@@ -2341,6 +2344,7 @@ class getData(SearchList):
             "radar_html_kiosk": radar_html_kiosk,
             "archive_interval_ms": archive_interval_ms,
             "ordinate_names": ordinate_names,
+            "windrose_categories": json.dumps(ordinate_names[:16]),
             "charts": json.dumps(charts),
             "graphpage_titles": json.dumps(graphpage_titles),
             "graphpage_titles_dict": graphpage_titles,
