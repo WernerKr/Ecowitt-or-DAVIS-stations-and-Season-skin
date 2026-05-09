@@ -685,7 +685,7 @@ class getData(SearchList):
         skin_sunshineDur_unit = self.generator.converter.group_unit_dict["group_deltatime"]
 
         # Find the number of decimals to round the result based on the skin.conf
-        sunshineDur_round = skin_dict["Units"]["StringFormats"].get(skin_sunshineDur_unit, "%.1f")
+        sunshineDur_round = skin_dict["Units"]["StringFormats"].get(skin_sunshineDur_unit, "%.2f")
 ## edit MaKi Ende
 
         rainiest_day_sql = """
@@ -2108,16 +2108,8 @@ class getData(SearchList):
                 )
 
             if obs == "visibility":
-                try:
-                    obs_output = f"{visibility} {visibility_unit}"
-                except Exception as e:
-                    #log.error(
-                    #    "Error adding visiblity to station observations table. "
-                    #    "Check that you have forecast data, or remove visibility from your station_observations Extras option.")
-                    log.error(
-                            f"Error adding visiblity to station observations table. "
-                            f"Check that you have forecast data, the error is: {e} ")
-                    
+                # Using .strip() automatically returns "N/A" for invalid observations
+                obs_output = f"{visibility} {visibility_unit}".strip()
             elif obs == "rainWithRainRate":
                 # rainWithRainRate Rain shows rain daily sum and rain rate
                 obs_binder = weewx.tags.ObservationBinder(
@@ -3627,13 +3619,15 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                 aggregate_type = "sum"
         elif observation == "sunshineDurTotal":
             obs_lookup = "sunshineDur"
-## edit MaKi Beginn
-        elif observation == "ETTotal":
-            obs_lookup = "ET"
-## edit MaKi Ende
             # Force sum on this observation
             if aggregate_interval:
                 aggregate_type = "sum"
+## edit MaKi Beginn
+        elif observation == "ETTotal":
+            obs_lookup = "ET"
+            if aggregate_interval:
+                aggregate_type = "sum"
+## edit MaKi Ende
         elif observation == "rainTotal":
             obs_lookup = "rain"
             # Force sum on this observation
