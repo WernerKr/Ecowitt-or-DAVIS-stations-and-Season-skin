@@ -1115,6 +1115,22 @@ p.entry-meta {
   font-size: 15px;
 }
 
+.forecast-day.pirateweather-forecast .forecast-conditions {
+  line-height: 1;
+}
+
+.forecast-day.pirateweather-forecast .forecast-conditions .forecast-condition-text {
+  font-size: 14px;
+  display: block;
+  white-space: normal;
+  line-height: 1;
+  margin-top: 10px;
+  margin-bottom: 0;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0;
+}
+
 .snow-precip,
 .rain-precip {
   color: #42b5e7;
@@ -2474,13 +2490,26 @@ input:checked+.slider:before {
     display: block;
   }
 
+  .onehr_forecasts,
+  .threehr_forecasts,
+  .day_forecasts {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+
   .forecast-day {
-    font-size: 28px;
+    font-size: 18px;
     /* min-height: 170px !important;  DarkSky */
     min-height: 175px !important;
     /* border-bottom:1px solid #D7D7D7; */
     padding-bottom: 15px;
     margin-bottom: 15px;
+    flex: 0 0 auto;
+    width: 130px;
+    min-width: 130px;
   }
 
   .forecast-day::after {
@@ -2511,6 +2540,22 @@ input:checked+.slider:before {
 
   .forecast-condition-text {
     display: block;
+  }
+
+  .forecast-day.pirateweather-forecast .forecast-conditions {
+    line-height: 1;
+  }
+
+  .forecast-day.pirateweather-forecast .forecast-conditions .forecast-condition-text {
+    font-size: 11px;
+    display: block;
+    white-space: normal;
+    line-height: 1;
+    margin-top: 5px;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
   }
 
   .forecast-precip,
