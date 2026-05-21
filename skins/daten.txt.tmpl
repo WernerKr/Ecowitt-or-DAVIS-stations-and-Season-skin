@@ -811,7 +811,11 @@ $color $obs.label[$x[0]]$ztx$xt1: $xt2 $ztxx
             #except
               #pass
             #end try
+            #if $x[0] == 'barometer' or $x[0] == 'pressure'    
+$color $obs.label[$x[0]]$ztx$xt1: $xt.format("%.1f") (∆ $ztxx)
+         #else
 $color $obs.label[$x[0]]$ztx$xt1: $xt (∆ $ztxx)
+        #end if
         #elif $x[2] == 'day' or $atx == 'day'
           #if $atx == 'day'
            #set $xt = $getattr($day(data_binding=$txt), $x[0]) 
@@ -823,7 +827,7 @@ $color $obs.label[$x[0]]$ztx$xt1: $xt.avg.format("%.2f")
           #end if  
 $color $obs.label[$x[0]]$ztx$xt1: $xt.avg.format("%.2f")
         #else
-$color $obs.label[$x[0]]$ztx$xt1: $xt
+$color $obs.label[$x[0]]$ztx$xt1: $xt.format("%.2f") 
         #end if
     #end if
   #end if
