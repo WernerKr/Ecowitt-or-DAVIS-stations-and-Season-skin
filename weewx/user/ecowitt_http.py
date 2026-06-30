@@ -6,8 +6,8 @@ A WeeWX driver for devices using Ecowitt local HTTP API.
 
 Copyright (C) 2024-25 Gary Roderick                     gjroderick<at>gmail.com
 
-Modified Werner Krenn started July 2025
-
+Maintained and modified by Werner Krenn started July 2025
+Copyright (C) 2026 Werner Krenn   
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -21,9 +21,11 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.2.5                                  Date: 13 Oct 2025
+Version: 0.3.4                                  Date: 30 Jun 2026
 
 Revision History
+    X  May 2025            v0.1.0a28  Gary Roderick   		
+
     3 July 2025            v0.1.0x
         - WH45/WH46 = co2 missed - added
         - changed some keys that are the same as my ecowittcustom driver
@@ -58,7 +60,7 @@ Revision History
                 to the supported fields, because compatible with Ecowitt Custom Driver and the GW1000 Driver
 
 
-    10 July 2025            v0.1.0
+    10 July 2025        v0.1.0
         - initial release
     11 July 2025		v0.1.1
         -lightning 
@@ -67,13 +69,13 @@ Revision History
     13 July 2025		v0.1.3
         - calc vpd if data from Ecowitt.net - because this value is not provided.
         - changed lighting_distance to lighting_dist 
-    14 July 2025		v0.1.4         
+    14 July 2025		v0.1.4
         - 'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4' from Ecowitt.net added
         - wh68_batt, wh69_batt
-    15 July 2025		v0.1.5     
-        - p_rain is back      
+    15 July 2025		v0.1.5
+        - p_rain is back 
 
-    25 July 2025		v0.1.6     
+    25 July 2025		v0.1.6
         - new rssi, rain voltage, winddir_avg10m, last24hrainin, last24hrain_piezo, LDS total_heat, wn20 (Mini rain)      
           ws85cap_volt, ws90cap_volt 
 
@@ -110,8 +112,52 @@ Revision History
         - 24h rain (piezo) from Ecowitt cloud
         - workaround if no SDCard inserted (thanks to rosensama )  
 
-This driver is based on the Ecowitt local HTTP API. At the time of release the
-following sensors are supported:
+    22 Oct 2025            v0.2.6
+        - Checks if a soil moisture sensor is present and if not, no further attempts are made 
+          to query the soilad values
+
+    27 Oct 2025            v0.2.7
+        - Stored Lightning time (lightning_disturber_count) didn't use local time
+
+    10 Nov 2025            v0.2.8
+        - Correction for WS6210 and SDCard data (but from SDCard PM2.5 1..4 are missing!
+        - for WS6210 use ecowittws6210_http driver -> use other Thunder time and correct PM2.5 1..4
+    30 Nov 2025            v0.2.9
+        - added rain_batt and piezorain_bat (0..5)
+        - lightning_distance/lightning_dist group_count changed to group_distance  
+
+    30 Dec 2025            v0.3.0
+        - livedata 0xA1, 0xA2 -> WN38 Sensor
+
+    17 Feb 2026            v0.3.1
+        - WH52 Sensor -> like WH51 soilmoisture sensor additional Temp and EC
+        - add bgt data (WN38 Sensor) from ecowitt cloud
+
+    22 Mar 2026            v0.3.2
+        - ch_lds.x.air -> air_chx (former  thi_chx )
+        - ch_lds.x.total_height -> thi_chx
+        - added soilECad1..16 - data only via ecowitt cloud
+        - Preparation for WQT01 sensor
+
+    06 Apr 2026            v0.3.3
+        - Lightning time (lightning_disturber_count) reverted to old version
+          but WS6210 reports always local time, taking into account summer time correction
+          the other stations reports local time during daylight saving, 
+          otherwise the time without summer time correction 
+          so now the driver uses the reported time, 
+          which is wrong for the other stations after resetting to normal time!
+
+        - The special settings for the WS6210 are now also included in this driver, 
+          therefore the ecowittws6210_http.py driver is no longer necessary! 
+        - Adjustments for the WS6210 (stationtyp, ws_interval ...)
+        - ignores ec values of 4095, because this is fault reception (should be handled by gateway!) 
+        - more WQT01 settings
+
+     30 Jun 2026		v0.3.4 
+        hourrain, hpiezo_rain   
+       
+This driver is based on the Ecowitt local HTTP API.
+The following sensors are supported:
 
 WN20        Mini Rain Sensor
 WN31        temperature, humidity, signal level, battery state. channels 1-8
@@ -129,8 +175,9 @@ WH41/43:    PM2.5, 24-hour average PM2.5, signal level, battery state.
 WH45        CO2, PM2.5, PM10, signal level, battery state. single device only
 WH46        CO2, PM2.5, PM10, PM1, PM4, signal level, battery state. single device only	
 WH51        SoilMoisture Sensors 1..16
-WH54        LDS Sensor 1..4	
-WH55        Leak Sensor 1..4	
+WH52        SoilMoisture 1..16, SoilECTemp 1..16, SoilEC 1..16
+WH54        LDS Sensor 1..4
+WH55        Leak Sensor 1..4
 WH57        Lightning, signal level, battery state. single device only
 WH68        signal level, battery state
 WH69        signal level, battery state
@@ -142,24 +189,8 @@ WS90        temperature, humidity, piezo rain, wind speed, wind direction,
             illuminance, UV index, signal level, battery state. single device
             only
 
-The Ecowitt local HTTP API is poorly documented with the documentation largely
-consisting of a dated (circa April 2022) example get_livedata_info API command
-response. Other API commands have been published informally on wxforum.net but
-no documentation for the use of the commands or the interpretation of the
-device responses exists.
 
 The following deviations have been made from the known 'documentation':
-
--   common list field 3. The example 'get_livedata_info' includes a common_list
-    field with id '3' that is a temperature, but give no explanation as to what
-    this field is. When using the WS View+ app this field appears to populate
-    the 'Feels Like' display. Therefore the Ecowitt HTTP driver assumes
-    common_list field '3' is the feels like temperature.
-
--   HTTP API command get_ws_services response does not populate the 'mqtt_name'
-    field. In WS View+ the MQTT 'Client Name' and 'Username' fields mirror each
-    other (ie populating one populates the other with the same data); however,
-    the get_ws_services response 'mqtt_name' field is always an empty string.
 
 -   Ecowitt continues to chop and change sensor model numbers; eg WH31 is
     referred to as both WH31 and WN31 on shop.ecowitt.com and the sensor manual
@@ -189,6 +220,7 @@ import calendar
 import collections
 import csv
 import datetime
+import time
 import io
 import json
 import logging
@@ -200,8 +232,6 @@ import struct
 import sys
 import textwrap
 import threading
-import datetime
-import time
 import math
 import urllib.error
 import urllib.parse
@@ -228,7 +258,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.2.5'
+DRIVER_VERSION = '0.3.4'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
@@ -245,7 +275,8 @@ KNOWN_DEVICES = SUPPORTED_DEVICES + UNSUPPORTED_DEVICES
 KNOWN_SENSORS = ('wn20', 'wh25', 'wh26', 'wn31', 'wn34', 'wn35', 'wn38',
                  'wh40', 'wh41', 'wh45',
                  'wh51', 'wh54', 'wh55', 'wh57',
-                 'wh65', 'wh68', 'ws69', 'ws80', 'ws85', 'ws90')
+                 'wh65', 'wh68', 'ws69', 'ws80', 'ws85', 'ws90',
+                 'wqt01',)
 # default max number of attempts to obtain data from the device
 DEFAULT_MAX_TRIES = 3
 # default wait time between retries when attempting to obtain data from the
@@ -296,6 +327,13 @@ weewx.units.default_unit_label_dict["dBm"] = " dBm"
 
 weewx.units.default_unit_format_dict["hPa"] = "%.2f"
 
+#weewx.units.obs_group_dict['micro_siemens_per_centimeter'] = 'group_usiecm'
+#weewx.units.USUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+#weewx.units.MetricUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+#weewx.units.MetricWXUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+#weewx.units.default_unit_label_dict['micro_siemens_per_centimeter'] = ' µS/cm' #umho/cm - µS/cm
+#weewx.units.default_unit_format_dict["micro_siemens_per_centimeter"] = '%.0f'
+
 weewx.units.obs_group_dict['leafWet1'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet2'] = 'group_percent'
 weewx.units.obs_group_dict['leafWet3'] = 'group_percent'
@@ -337,6 +375,58 @@ weewx.units.obs_group_dict['soilad14'] = 'group_count'
 weewx.units.obs_group_dict['soilad15'] = 'group_count'
 weewx.units.obs_group_dict['soilad16'] = 'group_count'
 
+weewx.units.obs_group_dict['soilECad1'] = 'group_count'
+weewx.units.obs_group_dict['soilECad1'] = 'group_count'
+weewx.units.obs_group_dict['soilECad2'] = 'group_count'
+weewx.units.obs_group_dict['soilECad3'] = 'group_count'
+weewx.units.obs_group_dict['soilECad4'] = 'group_count'
+weewx.units.obs_group_dict['soilECad5'] = 'group_count'
+weewx.units.obs_group_dict['soilECad6'] = 'group_count'
+weewx.units.obs_group_dict['soilECad7'] = 'group_count'
+weewx.units.obs_group_dict['soilECad8'] = 'group_count'
+weewx.units.obs_group_dict['soilECad9'] = 'group_count'
+weewx.units.obs_group_dict['soilECad10'] = 'group_count'
+weewx.units.obs_group_dict['soilECad11'] = 'group_count'
+weewx.units.obs_group_dict['soilECad12'] = 'group_count'
+weewx.units.obs_group_dict['soilECad13'] = 'group_count'
+weewx.units.obs_group_dict['soilECad14'] = 'group_count'
+weewx.units.obs_group_dict['soilECad15'] = 'group_count'
+weewx.units.obs_group_dict['soilECad16'] = 'group_count'
+
+weewx.units.obs_group_dict['soilmTemp1'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp2'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp3'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp4'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp5'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp6'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp7'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp8'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp9'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp10'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp11'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp12'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp13'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp14'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp15'] = 'group_temperature'
+weewx.units.obs_group_dict['soilmTemp16'] = 'group_temperature'
+
+weewx.units.obs_group_dict['soilEC1'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC2'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC3'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC4'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC5'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC6'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC7'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC8'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC9'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC10'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC11'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC12'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC13'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC14'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC15'] = 'group_usiecm'
+weewx.units.obs_group_dict['soilEC16'] = 'group_usiecm'
+
 weewx.units.obs_group_dict['pm1_24h_co2'] = 'group_concentration'
 weewx.units.obs_group_dict['pm4_24h_co2'] = 'group_concentration'
 weewx.units.obs_group_dict['pm25_24h_co2'] = 'group_concentration'
@@ -348,10 +438,10 @@ weewx.units.obs_group_dict['pm25_avg_24h_ch4'] = 'group_concentration'
 
 weewx.units.obs_group_dict['rainrate'] = 'group_rainrate'
 weewx.units.obs_group_dict['eventRain'] = 'group_rain'
-weewx.units.obs_group_dict['rain60'] = 'group_rain'
+weewx.units.obs_group_dict['hourRain'] = 'group_rain'
 weewx.units.obs_group_dict['rain24'] = 'group_rain'
 weewx.units.obs_group_dict['weekRain'] = 'group_rain'
-weewx.units.obs_group_dict['raintotal'] = 'group_rain'
+weewx.units.obs_group_dict['totalRain'] = 'group_rain'
 
 weewx.units.obs_group_dict['rrain_piezo'] = 'group_rainrate'
 weewx.units.obs_group_dict['erain_piezo'] = 'group_rain'
@@ -361,8 +451,8 @@ weewx.units.obs_group_dict['wrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['mrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['yrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain_piezo'] = 'group_rain'
-weewx.units.obs_group_dict['rain60_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain24_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['train_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['t_rain'] = 'group_rain'
 weewx.units.obs_group_dict['p_rain'] = 'group_rain'
 weewx.units.obs_group_dict['p_rainrate'] = 'group_rainrate'
@@ -405,8 +495,11 @@ weewx.units.obs_group_dict['rain_week_reset'] = 'group_count'
 weewx.units.obs_group_dict['rain_source'] = 'group_count'
 weewx.units.obs_group_dict['piezo'] = 'group_count'
 
-weewx.units.obs_group_dict['lightning_dist'] = 'group_count'
-weewx.units.obs_group_dict['lightning_distance'] = 'group_count'
+weewx.units.obs_group_dict['rain_batt'] = 'group_count'
+weewx.units.obs_group_dict['piezorain_batt'] = 'group_count'
+
+weewx.units.obs_group_dict['lightning_dist'] = 'group_distance'
+weewx.units.obs_group_dict['lightning_distance'] = 'group_distance'
 weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
 weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
 weewx.units.obs_group_dict['lightning_noise_count'] = 'group_count'
@@ -444,6 +537,13 @@ weewx.units.default_unit_label_dict['string'] = ''
 weewx.units.default_unit_format_dict['string'] = '%s'
 weewx.units.obs_group_dict['apName'] = 'group_string'
 weewx.units.obs_group_dict['stationtype'] = 'group_string'
+
+#weewx.units.obs_group_dict['wqt01ec'] = 'group_usiecm'
+#weewx.units.obs_group_dict['wqt01toc'] = 'group_organicpollution'
+#weewx.units.obs_group_dict['wqt01mlss'] = 'group_ntu'
+#weewx.units.obs_group_dict['wqt01cod'] = 'group_organicpollution'
+#weewx.units.obs_group_dict['wqt01tds'] = 'group_organicpollution'
+#weewx.units.obs_group_dict['wqt01co2'] = 'group_fraction'
 
 
 # define the WeeWX unit group used by each device field
@@ -500,6 +600,10 @@ DEFAULT_GROUPS = {
     'common_list.0x19.val': 'group_speed',
     'common_list.0x19.battery': 'group_count',
     'common_list.0x19.voltage': 'group_volt',
+    'common_list.0xA1.val': 'group_temperature',
+    'common_list.0xA1.voltage': 'group_volt',
+    'common_list.0xA1.battery': 'group_count',
+    'common_list.0xA2.val': 'group_temperature',
     'console.battery': 'group_count',
     'console.console_batt_volt': 'group_volt',
     'console.console_ext_volt': 'group_volt',
@@ -510,6 +614,7 @@ DEFAULT_GROUPS = {
     'rain.0x0E.battery': 'group_count',
     'rain.0x0E.voltage': 'group_volt',
     'rain.0x0F.val': 'group_rain',
+    'rain.0x7D.val': 'group_rain',
     'rain.0x10.val': 'group_rain',
     'rain.0x10.battery': 'group_count',
     'rain.0x10.voltage': 'group_volt',
@@ -521,9 +626,9 @@ DEFAULT_GROUPS = {
     'rain.0x12.voltage': 'group_volt',
     'rain.0x13.val': 'group_rain',
     'rain.0x13.voltage': 'group_volt',
+    'rain.0x13.battery': 'group_count',
     't_rain': 'group_rain',
     't_rainyear': 'group_rain',
-    #    'rain.0x13.battery': 'group_count',
     'rain.0x13.voltage': 'group_volt',
     'piezoRain.srain_piezo.val': 'group_boolean',
     'piezoRain.0x0D.val': 'group_rain',
@@ -533,6 +638,7 @@ DEFAULT_GROUPS = {
     'piezoRain.0x0E.battery': 'group_count',
     'piezoRain.0x0E.voltage': 'group_volt',
     'piezoRain.0x0F.val': 'group_rain',
+    'piezoRain.0x7D.val': 'group_rain',
     'piezoRain.0x10.val': 'group_rain',
     'piezoRain.0x10.battery': 'group_count',
     'piezoRain.0x10.voltage': 'group_volt',
@@ -543,6 +649,7 @@ DEFAULT_GROUPS = {
     'piezoRain.0x12.battery': 'group_count',
     'piezoRain.0x12.voltage': 'group_volt',
     'piezoRain.0x13.val': 'group_rain',
+    'piezoRain.0x13.battery': 'group_count',
     'piezoRain.0x13.voltage': 'group_volt',
     'piezoRain.srain_piezo': 'group_boolean',
     'piezoRain.0x13.ws85cap_volt': 'group_volt',
@@ -600,6 +707,10 @@ DEFAULT_GROUPS = {
     'ch_pm25.4.PM25_24H': 'group_concentration',
     'ch_pm25.4.PM25_RealAQI': 'group_count',
     'ch_pm25.4.PM25_24HAQI': 'group_count',
+    'ch_pm25.1.PM25x': 'group_concentration',
+    'ch_pm25.2.PM25x': 'group_concentration',
+    'ch_pm25.3.PM25x': 'group_concentration',
+    'ch_pm25.4.PM25x': 'group_concentration',
     'ch_leak.1.status': 'group_count',
     'ch_leak.2.status': 'group_count',
     'ch_leak.3.status': 'group_count',
@@ -668,6 +779,38 @@ DEFAULT_GROUPS = {
     'ch_soil14nowAd': 'group_count',
     'ch_soil15nowAd': 'group_count',
     'ch_soil16nowAd': 'group_count',
+    'ch_ec.1.temp': 'group_temperature',
+    'ch_ec.2.temp': 'group_temperature',
+    'ch_ec.3.temp': 'group_temperature',
+    'ch_ec.4.temp': 'group_temperature',
+    'ch_ec.5.temp': 'group_temperature',
+    'ch_ec.6.temp': 'group_temperature',
+    'ch_ec.7.temp': 'group_temperature',
+    'ch_ec.8.temp': 'group_temperature',
+    'ch_ec.9.temp': 'group_temperature',
+    'ch_ec.10.temp': 'group_temperature',
+    'ch_ec.11.temp': 'group_temperature',
+    'ch_ec.12.temp': 'group_temperature',
+    'ch_ec.13.temp': 'group_temperature',
+    'ch_ec.14.temp': 'group_temperature',
+    'ch_ec.15.temp': 'group_temperature',
+    'ch_ec.16.temp': 'group_temperature',
+    'ch_ec.1.ec': 'group_usiecm',
+    'ch_ec.2.ec': 'group_usiecm',
+    'ch_ec.3.ec': 'group_usiecm',
+    'ch_ec.4.ec': 'group_usiecm',
+    'ch_ec.5.ec': 'group_usiecm',
+    'ch_ec.6.ec': 'group_usiecm',
+    'ch_ec.7.ec': 'group_usiecm',
+    'ch_ec.8.ec': 'group_usiecm',
+    'ch_ec.9.ec': 'group_usiecm',
+    'ch_ec.10.ec': 'group_usiecm',
+    'ch_ec.11.ec': 'group_usiecm',
+    'ch_ec.12.ec': 'group_usiecm',
+    'ch_ec.13.ec': 'group_usiecm',
+    'ch_ec.14.ec': 'group_usiecm',
+    'ch_ec.15.ec': 'group_usiecm',
+    'ch_ec.16.ec': 'group_usiecm',
     'ch_temp.1.temp': 'group_temperature',
     'ch_temp.1.voltage': 'group_volt',
     'ch_temp.2.temp': 'group_temperature',
@@ -951,10 +1094,19 @@ DEFAULT_GROUPS = {
     'ws80.rssi': 'group_dbm',
     'ws85.rssi': 'group_dbm',
     'ws90.rssi': 'group_dbm',
-    'wn38.bgt': 'group_temperature',
-    'wn38.wbgt': 'group_temperature',
     'apName': 'group_string',
     'stationtype': 'group_string',
+    'wqt01.ec': 'group_usiecm',
+    'wqt01.toc': 'group_organicpollution',
+    'wqt01.turb': 'group_ntu',
+    'wqt01.cod': 'group_organicpollution',
+    'wqt01.tds': 'group_organicpollution',
+    'wqt01.CO2': 'group_fraction',
+    'wqt01.CO2_24H': 'group_fraction',
+    'wqt01.voltage': 'group_volt',
+    'wqt01.battery': 'group_count',
+    'wqt01.signal': 'group_count',
+    'wqt01.rssi': 'group_dbm',
 }
 
 ## for WeeWx 4.x user
@@ -1471,6 +1623,8 @@ class HttpMapper(FieldMapper):
         'radiation': 'common_list.0x15.val',
         'uvradiation': 'common_list.0x16.val',
         'UV': 'common_list.0x17.val',
+        'bgt': 'common_list.0xA1.val',
+        'wbgt': 'common_list.0xA2.val',
         'lightning_dist': 'lightning.distance',
         'lightning_disturber_count': 'lightning.timestamp',
         'lightning_num': 'lightning.num',
@@ -1554,6 +1708,54 @@ class HttpMapper(FieldMapper):
         'soilMoist14': 'ch_soil.14.humidity',
         'soilMoist15': 'ch_soil.15.humidity',
         'soilMoist16': 'ch_soil.16.humidity',
+        'soilMoist1e': 'ch_ec.1.humidity',
+        'soilMoist2e': 'ch_ec.2.humidity',
+        'soilMoist3e': 'ch_ec.3.humidity',
+        'soilMoist4e': 'ch_ec.4.humidity',
+        'soilMoist5e': 'ch_ec.5.humidity',
+        'soilMoist6e': 'ch_ec.6.humidity',
+        'soilMoist7e': 'ch_ec.7.humidity',
+        'soilMoist8e': 'ch_ec.8.humidity',
+        'soilMoist9e': 'ch_ec.9.humidity',
+        'soilMoist10e': 'ch_ec.10.humidity',
+        'soilMoist11e': 'ch_ec.11.humidity',
+        'soilMoist12e': 'ch_ec.12.humidity',
+        'soilMoist13e': 'ch_ec.13.humidity',
+        'soilMoist14e': 'ch_ec.14.humidity',
+        'soilMoist15e': 'ch_ec.15.humidity',
+        'soilMoist16e': 'ch_ec.16.humidity',
+        'soilmTemp1': 'ch_ec.1.temp',
+        'soilmTemp2': 'ch_ec.2.temp',
+        'soilmTemp3': 'ch_ec.3.temp',
+        'soilmTemp4': 'ch_ec.4.temp',
+        'soilmTemp5': 'ch_ec.5.temp',
+        'soilmTemp6': 'ch_ec.6.temp',
+        'soilmTemp7': 'ch_ec.7.temp',
+        'soilmTemp8': 'ch_ec.8.temp',
+        'soilmTemp9': 'ch_ec.9.temp',
+        'soilmTemp10': 'ch_ec.10.temp',
+        'soilmTemp11': 'ch_ec.11.temp',
+        'soilmTemp12': 'ch_ec.12.temp',
+        'soilmTemp13': 'ch_ec.13.temp',
+        'soilmTemp14': 'ch_ec.14.temp',
+        'soilmTemp15': 'ch_ec.15.temp',
+        'soilmTemp16': 'ch_ec.16.temp',
+        'soilEC1': 'ch_ec.1.ec',
+        'soilEC2': 'ch_ec.2.ec',
+        'soilEC3': 'ch_ec.3.ec',
+        'soilEC4': 'ch_ec.4.ec',
+        'soilEC5': 'ch_ec.5.ec',
+        'soilEC6': 'ch_ec.6.ec',
+        'soilEC7': 'ch_ec.7.ec',
+        'soilEC8': 'ch_ec.8.ec',
+        'soilEC9': 'ch_ec.9.ec',
+        'soilEC10': 'ch_ec.10.ec',
+        'soilEC11': 'ch_ec.11.ec',
+        'soilEC12': 'ch_ec.12.ec',
+        'soilEC13': 'ch_ec.13.ec',
+        'soilEC14': 'ch_ec.14.ec',
+        'soilEC15': 'ch_ec.15.ec',
+        'soilEC16': 'ch_ec.16.ec',
         'leafWet1': 'ch_leaf.1.humidity',
         'leafWet2': 'ch_leaf.2.humidity',
         'leafWet3': 'ch_leaf.3.humidity',
@@ -1566,10 +1768,10 @@ class HttpMapper(FieldMapper):
         'leak_2': 'ch_leak.2.status',
         'leak_3': 'ch_leak.3.status',
         'leak_4': 'ch_leak.4.status',
-        'thi_ch1': 'ch_lds.1.air',
-        'thi_ch2': 'ch_lds.2.air',
-        'thi_ch3': 'ch_lds.3.air',
-        'thi_ch4': 'ch_lds.4.air',
+        'air_ch1': 'ch_lds.1.air',
+        'air_ch2': 'ch_lds.2.air',
+        'air_ch3': 'ch_lds.3.air',
+        'air_ch4': 'ch_lds.4.air',
         'depth_ch1': 'ch_lds.1.depth',
         'depth_ch2': 'ch_lds.2.depth',
         'depth_ch3': 'ch_lds.3.depth',
@@ -1578,10 +1780,10 @@ class HttpMapper(FieldMapper):
         'ldsheat_ch2': 'ch_lds.2.total_heat',
         'ldsheat_ch3': 'ch_lds.3.total_heat',
         'ldsheat_ch4': 'ch_lds.4.total_heat',
-        'height_ch1': 'ch_lds.1.total_height',
-        'height_ch2': 'ch_lds.2.total_height',
-        'height_ch3': 'ch_lds.3.total_height',
-        'height_ch4': 'ch_lds.4.total_height',
+        'thi_ch1': 'ch_lds.1.total_height',
+        'thi_ch2': 'ch_lds.2.total_height',
+        'thi_ch3': 'ch_lds.3.total_height',
+        'thi_ch4': 'ch_lds.4.total_height',
         'heap': 'debug.heap',
         'runtime': 'debug.runtime',
         'ws_interval': 'debug.usr_interval',
@@ -1619,14 +1821,29 @@ class HttpMapper(FieldMapper):
         'soilad14': 'ch_soil14nowAd',
         'soilad15': 'ch_soil15nowAd',
         'soilad16': 'ch_soil16nowAd',
-        'bgt': 'wn38.bgt',
-        'wbgt': 'wn38.wbgt',
+        #'soilECad1': 'ch_soil.1.ecad',
+        'soilECad1': 'ch_ec1nowAd',
+        'soilECad2': 'ch_ec2nowAd',
+        'soilECad3': 'ch_ec3nowAd',
+        'soilECad4': 'ch_ec4nowAd',
+        'soilECad5': 'ch_ec5nowAd',
+        'soilECad6': 'ch_ec6nowAd',
+        'soilECad7': 'ch_ec7nowAd',
+        'soilECad8': 'ch_ec8nowAd',
+        'soilECad9': 'ch_ec9nowAd',
+        'soilECad10': 'ch_ec10nowAd',
+        'soilECad11': 'ch_ec11nowAd',
+        'soilECad12': 'ch_ec12nowAd',
+        'soilECad13': 'ch_ec13nowAd',
+        'soilECad14': 'ch_ec14nowAd',
+        'soilECad15': 'ch_ec15nowAd',
+        'soilECad16': 'ch_ec16nowAd',
     }
     # modular rain map
     default_rain_map = {
         #'t_rainevent': 'rain.0x0D.val',
         #'t_rainRate': 'rain.0x0E.val',
-        #'t_rainhour': 't_rainhour',
+        #'t_rainhour': 'rain.0x0F.val',
         #'t_rainday': 'rain.0x10.val',
         #'t_rainweek': 'rain.0x11.val',
         #'t_rainmonth': 'rain.0x12.val',
@@ -1636,16 +1853,16 @@ class HttpMapper(FieldMapper):
         'eventRain': 'rain.0x0D.val',
         'rain': 'rain',
         'rainRate': 'rain.0x0E.val',
-        'hourRain': 'rain.0x0F.val',
+        'hourRain': 'rain.0x7D.val',
         'dayRain': 'rain.0x10.val',
         'weekRain': 'rain.0x11.val',
         'monthRain': 'rain.0x12.val',
         'yearRain': 'rain.0x13.val',
         'rain24': 'rain.0x7C.val',
-        #'rain60': 'rain60',
+        'totalRain': 'rain.0x14.val',
         #'p_rainevent': 'piezoRain.0x0D.val',
         #'p_rainrate': 'piezoRain.0x0E.val',
-        #'p_rainhour': 'p_rainhour',
+        #'p_rainhour': 'piezoRain.0x0F.val',
         #'p_rainday': 'piezoRain.0x10.val',
         #'p_rainweek': 'piezoRain.0x11.val',
         #'p_rainmonth': 'piezoRain.0x12.val',
@@ -1657,13 +1874,13 @@ class HttpMapper(FieldMapper):
         'hail': 'hail',
         'rrain_piezo': 'piezoRain.0x0E.val',
         'hailRate': 'piezoRain.0x0E.val',
-        'hrain_piezo': 'piezoRain.0x1F.val',
+        'hrain_piezo': 'piezoRain.0x7D.val',
         'drain_piezo': 'piezoRain.0x10.val',
         'wrain_piezo': 'piezoRain.0x11.val',
         'mrain_piezo': 'piezoRain.0x12.val',
         'yrain_piezo': 'piezoRain.0x13.val',
         'rain24_piezo': 'piezoRain.0x7C.val',
-        #'rain60_piezo': 'rain60_piezo',
+        'train_piezo': 'rain.0x14.val',
     }
     # modular wind map
     default_wind_map = {
@@ -1719,7 +1936,6 @@ class HttpMapper(FieldMapper):
         'wh40_batt': 'wh40.battery',
         'wn20_batt': 'wn20.battery',
         'wn38_batt': 'wn38.battery',
-
         'leak_Batt1': 'wh55.ch1.battery',
         'leak_Batt2': 'wh55.ch2.battery',
         'leak_Batt3': 'wh55.ch3.battery',
@@ -1762,11 +1978,15 @@ class HttpMapper(FieldMapper):
         'ldsbatt2': 'ch_lds.2.voltage',
         'ldsbatt3': 'ch_lds.3.voltage',
         'ldsbatt4': 'ch_lds.4.voltage',
+        'bgtbatt': 'common_list.0xA1.voltage',
         'wh68_batt': 'wh68.battery',
         'wh69_batt': 'wh69.battery',
         'wh80_batt': 'ws80.battery',
         'wh85_batt': 'ws85.battery',
         'wh90_batt': 'ws90.battery',
+
+        'rain_batt': 'rain.0x13.battery',
+        'piezorain_batt': 'piezoRain.0x13.battery',
 
         'ws85cap_volt': 'piezoRain.0x13.ws85cap_volt',
         'ws90cap_volt': 'piezoRain.0x13.ws90cap_volt',
@@ -1788,6 +2008,9 @@ class HttpMapper(FieldMapper):
         'ws1900batt': 'wh25.ws1900_batt',
         'ws1800batt': 'wh25.ws1800_batt',
         'ws6006batt': 'wh25.ws6006_batt',
+
+        'wqt01_batt': 'wqt01.battery',
+        'wqt01batt': 'wqt01.voltage',
 
         'ws85_ver': 'piezoRain.0x13.ws85_ver',
         #'ws85_ver': 'ws85.version',
@@ -1852,6 +2075,8 @@ class HttpMapper(FieldMapper):
         'wh55_ch2_sig': 'wh55.ch2.signal',
         'wh55_ch3_sig': 'wh55.ch3.signal',
         'wh55_ch4_sig': 'wh55.ch4.signal',
+
+        'wqt01_sig': 'wqt01.signal',
 
         'wh57_sig': 'wh57.signal',
         'wh68_sig': 'wh68.signal',
@@ -1925,6 +2150,9 @@ class HttpMapper(FieldMapper):
         'ws80_rssi': 'ws80.rssi',
         'ws85_rssi': 'ws85.rssi',
         'ws90_rssi': 'ws90.rssi',
+
+        'wqt01_rssi': 'wqt01.rssi',
+
     }
     # construct the default map based on the modular maps
     default_map = (dict(default_obs_map))
@@ -2043,18 +2271,22 @@ class SdMapper(FieldMapper):
         'common_list.0x0C.val': 'Gust',
         'common_list.0x0A.val': 'Wind Direction',
         'common_list.0x6D.val': 'windDir_10min_avg',
+        #'common_list.0x6D.val': '10Min.Avg Wind Direction',
         'common_list.0x15.val': 'Solar Rad',
         'common_list.0x17.val': 'UV-Index',
+        'common_list.0xA1.val': 'BGT',
+        'common_list.0xA2.val': 'WBGT',
         'rain.0x0E.val': 'Rain Rate',
-        'rain.0x0F.val': 'Hourly Rain',
+        'rain.0x7D.val': 'Hourly Rain',
         'rain.0x0D.val': 'Event Rain',
         'rain.0x10.val': 'Daily Rain',
         'rain.0x7C.val': '24h Rain',
         'rain.0x11.val': 'Weekly Rain',
         'rain.0x12.val': 'Monthly Rain',
         'rain.0x13.val': 'Yearly Rain',
+        'piezoRain.srain_piezo.val': 'Rain Level',
         'piezoRain.0x0E.val': 'Piezo Rate',
-        'piezoRain.0x0F.val': 'Piezo Hourly Rain',
+        'piezoRain.0x7D.val': 'Piezo Hourly Rain',
         'piezoRain.0x0D.val': 'Piezo Event Rain',
         'piezoRain.0x10.val': 'Piezo Daily Rain',
         'piezoRain.0x7C.val': 'Piezo 24h Rain',
@@ -2143,10 +2375,46 @@ class SdMapper(FieldMapper):
         'ch_soil14nowAd': 'SoilMoistureAD CH14',
         'ch_soil15nowAd': 'SoilMoistureAD CH15',
         'ch_soil16nowAd': 'SoilMoistureAD CH16',
+        'ch_ec.1.temp': 'SoilTemp CH1',
+        'ch_ec.2.temp': 'SoilTemp CH2',
+        'ch_ec.3.temp': 'SoilTemp CH3',
+        'ch_ec.4.temp': 'SoilTemp CH4',
+        'ch_ec.5.temp': 'SoilTemp CH5',
+        'ch_ec.6.temp': 'SoilTemp CH6',
+        'ch_ec.7.temp': 'SoilTemp CH7',
+        'ch_ec.8.temp': 'SoilTemp CH8',
+        'ch_ec.9.temp': 'SoilTemp CH9',
+        'ch_ec.10.temp': 'SoilTemp CH10',
+        'ch_ec.11.temp': 'SoilTemp CH11',
+        'ch_ec.12.temp': 'SoilTemp CH12',
+        'ch_ec.13.temp': 'SoilTemp CH13',
+        'ch_ec.14.temp': 'SoilTemp CH14',
+        'ch_ec.15.temp': 'SoilTemp CH15',
+        'ch_ec.16.temp': 'SoilTemp CH16',
+        'ch_ec.1.ec': 'SoilEC CH1',
+        'ch_ec.2.ec': 'SoilEC CH2',
+        'ch_ec.3.ec': 'SoilEC CH3',
+        'ch_ec.4.ec': 'SoilEC CH4',
+        'ch_ec.5.ec': 'SoilEC CH5',
+        'ch_ec.6.ec': 'SoilEC CH6',
+        'ch_ec.7.ec': 'SoilEC CH7',
+        'ch_ec.8.ec': 'SoilEC CH8',
+        'ch_ec.9.ec': 'SoilEC CH9',
+        'ch_ec.10.ec': 'SoilEC CH10',
+        'ch_ec.11.ec': 'SoilEC CH11',
+        'ch_ec.12.ec': 'SoilEC CH12',
+        'ch_ec.13.ec': 'SoilEC CH13',
+        'ch_ec.14.ec': 'SoilEC CH14',
+        'ch_ec.15.ec': 'SoilEC CH15',
+        'ch_ec.16.ec': 'SoilEC CH16',
         'ch_leak.1.status': 'Water CH1',
         'ch_leak.2.status': 'Water CH2',
         'ch_leak.3.status': 'Water CH3',
         'ch_leak.4.status': 'Water CH4',
+        'ch_pm25.1.PM25x': 'Pm2.5 CH1',		# only WS6210!
+        'ch_pm25.2.PM25x': 'Pm2.5 CH2',		# only WS6210!
+        'ch_pm25.3.PM25x': 'Pm2.5 CH3',		# only WS6210!
+        'ch_pm25.4.PM25x': 'Pm2.5 CH4',		# only WS6210!
         'ch_pm25.1.PM25': 'PM2.5 CH1',
         'ch_pm25.2.PM25': 'PM2.5 CH2',
         'ch_pm25.3.PM25': 'PM2.5 CH3',
@@ -2172,12 +2440,16 @@ class SdMapper(FieldMapper):
         'ch_lds.4.depth': 'LDS_Depth CH4',
         'ch_lds.4.total_heat': 'LDS_Heat CH4',
         #'console.battery': 'Console Battery', 
-        'console.console_batt_volt': 'Console Battery',
-        'console.console_ext_volt': 'External Supply',
+        'console.console_batt_volt': 'Console Battery ',
+        'console.console_ext_volt': 'External Supply ',
         'console.battery_proz': 'Console Battery Percentage',
         'console.charge_stat': 'Charge',
-        'wn38.bgt': 'BGT',
-        'wn38.wbgt': 'WBGT',
+        'wqt01.ec': 'WQT_EC',
+        'wqt01.toc': 'WQT_TOC',
+        'wqt01.turb': 'WQT_TURB',
+        'wqt01.cod': 'WQT_COD',
+        'wqt01.tds': 'WQT_TDS',
+        'wqt01.CO2': 'WQT_CO2',
     }
 
     def __init__(self, driver_debug=None, default_map=None, **mapper_config):
@@ -2219,6 +2491,7 @@ class SdMapper(FieldMapper):
         if self.field_map is not None and len(self.field_map) > 0:
             # we have a field map
             # initialise an empty dict to hold the mapped data
+
             mapped_rec = {}
             # iterate over the source data keys
             for field in rec.keys():
@@ -2232,11 +2505,23 @@ class SdMapper(FieldMapper):
                        if self.driver_debug.catchup:
                           log.info("Problem with key %s", clean_key)                        
                        continue
-                    dest_field = self.field_map.inverse[clean_key]
+                    #dest_field = self.field_map.inverse[clean_key]
+                    if 'Pm2.5 CH1' in clean_key:
+                       dest_field = 'ch_pm25.1.PM25'
+                    elif 'Pm2.5 CH2' in clean_key:
+                       dest_field = 'ch_pm25.2.PM25'
+                    elif 'Pm2.5 CH3' in clean_key:
+                       dest_field = 'ch_pm25.3.PM25'
+                    elif 'Pm2.5 CH4' in clean_key:
+                       dest_field = 'ch_pm25.4.PM25'
+                    else:
+                       dest_field = self.field_map.inverse[clean_key]
 
                     if clean_key == 'Thunder time':
-                       datetime_obj = datetime.datetime.strptime(rec[field], "%Y-%m-%d %H:%M") 
+                       datetime_obj = datetime.datetime.strptime(rec[field], "%Y-%m-%d %H:%M")
+                       #if self.timecorr == False:
                        mapped_rec[dest_field] = datetime_obj.timestamp()
+                       #mapped_rec[dest_field] = int(time.mktime(datetime_obj.utctimetuple()))
                        continue 
                     elif rec[field] == '--' or rec[field] == '':
                        if self.driver_debug.catchup:
@@ -2250,12 +2535,14 @@ class SdMapper(FieldMapper):
                        if rec[field] == 'Offline':
                           mapped_rec[dest_field] = 2
                        continue
-                    else:  
+                    else:
                       mapped_rec[dest_field] = float(rec[field])
-                except (KeyError, TypeError, ValueError) as e:
+                except (KeyError, TypeError, ValueError, OverflowError) as e:
                     # KeyError indicates no mapping exists for this source
                     # field, TypeError and ValueError indicate the source data
-                    # could not be converted to a float. In either case log it,
+                    # could not be converted to a float. OverflowError is when 
+                    # the result of an arithmetic operation is too large to be represented
+                    # In either case log it,
                     # ignore this field and continue.
                     if self.driver_debug.catchup:
                         log.info("Error mapping field '%s': %s", field, e)
@@ -2456,7 +2743,10 @@ class EcowittCommon:
         self.piezo_last_rainnew_a = None
         
         self.ws85 = None
-        self.ws90 = None    
+        self.ws90 = None
+        self.soilmoisture = False 
+        
+        self.timecorr = True     
 
         #self.version4 = True
 
@@ -2912,14 +3202,24 @@ class EcowittHttpService(weewx.engine.StdService, EcowittCommon):
 
                     if 'ws90.version' in queue_data:
                         event.packet['ws90_ver'] = queue_data['ws90.version'] 
-
+                    
+                    for test in range(1,16):
+                        t = f"ch_ec.{test}.humidity"
+                        if t in queue_data:
+                           z = f"soilMoist{test}"
+                           event.packet[z] = queue_data[t]
+                        t = f"ch_ec.{test}.voltage"
+                        if t in queue_data:
+                           z = f"soilMoistBatt{test}"
+                           event.packet[z] = queue_data[t]
+                    
                     if 'piezoRain.0x13.voltage' in queue_data:
                        if ('piezoRain.0x13.ws85_ver' in queue_data) or (self.ws85 == 1) or ('ws85.version' in queue_data):
                           event.packet['ws85_batt'] = queue_data['piezoRain.0x13.voltage']
                        elif ('piezoRain.0x13.ws90_ver' in queue_data)  or (self.ws90 == 1) or ('ws90.version' in queue_data): 
                           event.packet['ws90_batt'] = queue_data['piezoRain.0x13.voltage']
 
-                    if 'wn38.wbgt' not in queue_data:
+                    if 'common_list.0xA2.val' not in queue_data:
                        if 'common_list.0x02.val' in queue_data  and 'common_list.0x07.val' in queue_data:
                          if queue_data['common_list.0x02.val'] != None and queue_data['common_list.0x07.val'] != None:
                            # tempc = (float(queue_data['common_list.0x02.val'])-32)*5/9
@@ -3259,6 +3559,8 @@ class EcowittHttpDriverConfEditor(weewx.drivers.AbstractConfEditor):
     [[mrain_piezo]]
         extractor = last
     [[yrain_piezo]]
+        extractor = last
+    [[totalRain_piezo]]
         extractor = last
     
     [[p_rainrate]]
@@ -4237,7 +4539,13 @@ class EcowittNetCatchup(Catchup):
                          'leaf_ch1', 'leaf_ch2', 'leaf_ch3', 'leaf_ch4',
                          'leaf_ch5', 'leaf_ch6', 'leaf_ch7', 'leaf_ch8',
                          'battery',
-                         'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4')
+                         'ch_lds1', 'ch_lds2', 'ch_lds3', 'ch_lds4',
+                         'black_globe_temperature',
+                         'ch_soil_ec_temp_hum1', 'ch_soil_ec_temp_hum2', 'ch_soil_ec_temp_hum3', 'ch_soil_ec_temp_hum4',
+                         'ch_soil_ec_temp_hum5', 'ch_soil_ec_temp_hum6', 'ch_soil_ec_temp_hum7', 'ch_soil_ec_temp_hum8',
+                         'ch_soil_ec_temp_hum9', 'ch_soil_ec_temp_hum10', 'ch_soil_ec_temp_hum11', 'ch_soil_ec_temp_hum12',
+                         'ch_soil_ec_temp_hum13', 'ch_soil_ec_temp_hum14', 'ch_soil_ec_temp_hum15', 'ch_soil_ec_temp_hum16',
+                        )
     # Map from Ecowitt.net history fields to internal driver fields. Map is
     # keyed by Ecowitt.net history 'data set'. Individual key: value pairs are
     # Ecowitt.net field:driver field.
@@ -4257,7 +4565,7 @@ class EcowittNetCatchup(Catchup):
         'rainfall': {
             'rain_rate': 'rain.0x0E.val',
             'event': 'rain.0x0D.val',
-            'hourly': 't_rainhour',
+            'hourly': 'rain.0x7D.val',
             'daily': 'rain.0x10.val',
             '24_hours': 'rain.0x7C.val',
             'weekly': 'rain.0x11.val',
@@ -4267,7 +4575,7 @@ class EcowittNetCatchup(Catchup):
         'rainfall_piezo': {
             'rain_rate': 'piezoRain.0x0E.val',
             'event': 'piezoRain.0x0D.val',
-            'hourly': 'hrain_piezo',
+            'hourly': 'piezoRain.0x7D.val',
             'daily': 'piezoRain.0x10.val',
             '24_hours': 'rain.0x7C.val',
             'weekly': 'piezoRain.0x11.val',
@@ -4497,6 +4805,122 @@ class EcowittNetCatchup(Catchup):
             'depth_ch4': 'ch_lds.4.depth',
             'lds_heat_ch4': 'ch_lds.4.total_heat'
         },
+        'black_globe_temperature': {
+            'bgt': 'common_list.0xA1.val',
+            'wbgt': 'common_list.0xA2.val',
+        },
+        'ch_soil_ec_temp_hum1': {
+            'soilmoisture': 'ch_soil.1.humidity',
+            'ad': 'ch_soil1nowAd',
+            'temperature': 'ch_ec.1.temp',
+            'ec': 'ch_ec.1.ec',
+            'ec_ad': 'ch_ec1nowAd',
+        },
+        'ch_soil_ec_temp_hum2': {
+            'soilmoisture': 'ch_soil.2.humidity',
+            'ad': 'ch_soil2nowAd',
+            'temperature': 'ch_ec.2.temp',
+            'ec': 'ch_ec.2.ec',
+            'ec_ad': 'ch_ec2nowAd',
+        },
+        'ch_soil_ec_temp_hum3': {
+            'soilmoisture': 'ch_soil.3.humidity',
+            'ad': 'ch_soil3nowAd',
+            'temperature': 'ch_ec.3.temp',
+            'ec': 'ch_ec.3.ec',
+            'ec_ad': 'ch_ec3nowAd',
+        },
+        'ch_soil_ec_temp_hum4': {
+            'soilmoisture': 'ch_soil.4.humidity',
+            'ad': 'ch_soil4nowAd',
+            'temperature': 'ch_ec.4.temp',
+            'ec': 'ch_ec.4.ec',
+            'ec_ad': 'ch_ec4nowAd',
+        },
+        'ch_soil_ec_temp_hum5': {
+            'soilmoisture': 'ch_soil.5.humidity',
+            'ad': 'ch_soil5nowAd',
+            'temperature': 'ch_ec.5.temp',
+            'ec': 'ch_ec.5.ec',
+            'ec_ad': 'ch_ec5nowAd',
+        },
+        'ch_soil_ec_temp_hum6': {
+            'soilmoisture': 'ch_soil.6.humidity',
+            'ad': 'ch_soil6nowAd',
+            'temperature': 'ch_ec.6.temp',
+            'ec': 'ch_ec.6.ec',
+            'ec_ad': 'ch_ec6nowAd',
+        },
+        'ch_soil_ec_temp_hum7': {
+            'soilmoisture': 'ch_soil.7.humidity',
+            'ad': 'ch_soil7nowAd',
+            'temperature': 'ch_ec.7.temp',
+            'ec': 'ch_ec.7.ec',
+            'ec_ad': 'ch_ec7nowAd',
+        },
+        'ch_soil_ec_temp_hum8': {
+            'soilmoisture': 'ch_soil.8.humidity',
+            'ad': 'ch_soil8nowAd',
+            'temperature': 'ch_ec.8.temp',
+            'ec': 'ch_ec.8.ec',
+            'ec_ad': 'ch_ec8nowAd',
+        },
+        'ch_soil_ec_temp_hum9': {
+            'soilmoisture': 'ch_soil.9.humidity',
+            'ad': 'ch_soil9nowAd',
+            'temperature': 'ch_ec.9.temp',
+            'ec': 'ch_ec.9.ec',
+            'ec_ad': 'ch_ec9nowAd',
+        },
+        'ch_soil_ec_temp_hum10': {
+            'soilmoisture': 'ch_soil.10.humidity',
+            'ad': 'ch_soil10nowAd',
+            'temperature': 'ch_ec.10.temp',
+            'ec': 'ch_ec.10.ec',
+            'ec_ad': 'ch_ec10nowAd',
+        },
+        'ch_soil_ec_temp_hum11': {
+            'soilmoisture': 'ch_soil.11.humidity',
+            'ad': 'ch_soil11nowAd',
+            'temperature': 'ch_ec.11.temp',
+            'ec': 'ch_ec.11.ec',
+            'ec_ad': 'ch_ec11nowAd',
+        },
+        'ch_soil_ec_temp_hum12': {
+            'soilmoisture': 'ch_soil.12.humidity',
+            'ad': 'ch_soil12nowAd',
+            'temperature': 'ch_ec.12.temp',
+            'ec': 'ch_ec.12.ec',
+            'ec_ad': 'ch_ec12nowAd',
+        },
+        'ch_soil_ec_temp_hum13': {
+            'soilmoisture': 'ch_soil.13.humidity',
+            'ad': 'ch_soil13nowAd',
+            'temperature': 'ch_ec.13.temp',
+            'ec': 'ch_ec.13.ec',
+            'ec_ad': 'ch_ec13nowAd',
+        },
+        'ch_soil_ec_temp_hum14': {
+            'soilmoisture': 'ch_soil.14.humidity',
+            'ad': 'ch_soil14nowAd',
+            'temperature': 'ch_ec.14.temp',
+            'ec': 'ch_ec.14.ec',
+            'ec_ad': 'ch_ec14nowAd',
+        },
+        'ch_soil_ec_temp_hum15': {
+            'soilmoisture': 'ch_soil.15.humidity',
+            'ad': 'ch_soil15nowAd',
+            'temperature': 'ch_ec.15.temp',
+            'ec': 'ch_ec.15.ec',
+            'ec_ad': 'ch_ec15nowAd',
+        },
+        'ch_soil_ec_temp_hum16': {
+            'soilmoisture': 'ch_soil.16.humidity',
+            'ad': 'ch_soil16nowAd',
+            'temperature': 'ch_ec.16.temp',
+            'ec': 'ch_ec.16.ec',
+            'ec_ad': 'ch_ec16nowAd',
+        },
         'battery': {
             'ws1900_console': 'wh25.ws1900_batt',
             'ws1800_console': 'wh25.ws1800_batt',
@@ -4544,7 +4968,24 @@ class EcowittNetCatchup(Catchup):
             'ldsbatt_2': 'ch_lds.2.voltage',
             'ldsbatt_3': 'ch_lds.3.voltage',
             'ldsbatt_4': 'ch_lds.4.voltage',
-        }
+            'bgt_sensor': 'common_list.0xA1.voltage',
+            'soilmoisture_ec_sensor_ch1': 'ch_soil.1.voltage',
+            'soilmoisture_ec_sensor_ch2': 'ch_soil.2.voltage',
+            'soilmoisture_ec_sensor_ch3': 'ch_soil.3.voltage',
+            'soilmoisture_ec_sensor_ch4': 'ch_soil.4.voltage',
+            'soilmoisture_ec_sensor_ch5': 'ch_soil.5.voltage',
+            'soilmoisture_ec_sensor_ch6': 'ch_soil.6.voltage',
+            'soilmoisture_ec_sensor_ch7': 'ch_soil.7.voltage',
+            'soilmoisture_ec_sensor_ch8': 'ch_soil.8.voltage',
+            'soilmoisture_ec_sensor_ch9': 'ch_soil.9.voltage',
+            'soilmoisture_ec_sensor_ch10': 'ch_soil.10.voltage',
+            'soilmoisture_ec_sensor_ch11': 'ch_soil.11.voltage',
+            'soilmoisture_ec_sensor_ch12': 'ch_soil.12.voltage',
+            'soilmoisture_ec_sensor_ch13': 'ch_soil.13.voltage',
+            'soilmoisture_ec_sensor_ch14': 'ch_soil.14.voltage',
+            'soilmoisture_ec_sensor_ch15': 'ch_soil.15.voltage',
+            'soilmoisture_ec_sensor_ch16': 'ch_soil.16.voltage',
+       }
     }
 
     def __init__(self, **options):
@@ -4821,6 +5262,7 @@ class EcowittNetCatchup(Catchup):
 
         # do we have a response
         if response is not None and len(response) > 0:
+            # log.info("JSON response: %s",response )
             # we have some sort of response, but is it JSON and is the response
             # code 0
             try:
@@ -5040,12 +5482,17 @@ class EcowittDeviceCatchup:
                               'ch_temp.1.temp', 'ch_temp.2.temp', 'ch_temp.3.temp', 'ch_temp.4.temp',
                               'ch_temp.5.temp', 'ch_temp.6.temp', 'ch_temp.7.temp', 'ch_temp.8.temp',
                               'co2.temperature', 'co2.temp',
-                              'wn38.bgt', 'wn38.wbgt'),
+                              'ch_ec.1.temp', 'ch_ec.2.temp', 'ch_ec.3.temp', 'ch_ec.4.temp',
+                              'ch_ec.5.temp', 'ch_ec.6.temp', 'ch_ec.7.temp', 'ch_ec.8.temp',
+                              'ch_ec.9.temp', 'ch_ec.10.temp', 'ch_ec.11.temp', 'ch_ec.12.temp',
+                              'ch_ec.13.temp', 'ch_ec.14.temp', 'ch_ec.15.temp', 'ch_ec.16.temp',
+                              'common_list.0xA1.val', 'common_list.0xA2.val'),
         'group_speed' : ('common_list.0x0B.val', 'common_list.0x0C.val'),
         'group_pressure': ('wh25.abs', 'wh25.rel', 'common_list.5.val'),
         'group_pressurevpd': ('common_list.5.val'),
         'group_rain': ('rain.0x0D.val', 'rain.0x10.val', 'rain.0x11.val', 'rain.0x12.val',
-                       'rain.0x13.val', 'rain.0x0F.val', 'piezoRain.0x0D.val', 'piezoRain.0x10.val',
+                       'rain.0x7D.val', 'piezoRain.0x7D.val',
+                       'rain.0x13.val', 'rain.0x0E.val', 'piezoRain.0x0D.val', 'piezoRain.0x10.val',
                        'piezoRain.0x11.val', 'piezoRain.0x12.val', 'piezoRain.0x13.val', 'piezoRain.0x0F.val'),
         'group_rainrate': ('rain.0x0E.val', 'piezoRain.0x0E.val'),
         'group_radiation': ('common_list.0x15.val', ),
@@ -5146,7 +5593,7 @@ class EcowittDeviceCatchup:
             for file in files[ym]:
                 if file == 'log':
                    continue 
-                if weewx.debug >= 2 or self.driver_debug.catchup:
+                if weewx.debug >= 2 or self.driver_debug.archive:
                     log.info("Processing history file '%s' from %s at %s",
                              file, self.device.model, self.ip_address)
                 # Obtain the records from all files belonging to this
@@ -5326,11 +5773,13 @@ class EcowittDeviceCatchup:
             "group_time"        : "unix_epoch",
             "group_uv"          : "uv_index",
             "group_volt"        : "volt",
-            "group_volume"      : "liter"
+            "group_volume"      : "liter",
+            "group_usiecm"      : "micro_siemens_per_centimeter",
+            "group_ntu"         : "nephelometric_turbidity_unit",
         }
         required_groups = {'group_temperature', 'group_speed', 'group_speed2',
                            'group_pressure', 'group_pressurevpd','group_rain', 'group_rainrate',
-                           'group_radiation', 'group_distance', 'group_depth'
+                           'group_radiation', 'group_distance', 'group_depth', 'group_usiecm'
                            }
         found_groups = set()
         # iterate over the keys in the record
@@ -5655,7 +6104,7 @@ class EcowittDeviceCatchup:
         file_list = sd_info['file_list']
         # now extract a list of file names but only include those whose type
         # is 'file'
-        files = [f['name'] for f in file_list if f['type'] == 'file']
+        files = [f['name'] for f in file_list if (f['type'] == 'file' or f['type'] == '1') ]  
         # Calculate an 'index' for start_ts based on the start_ts year and
         # month. The earlier the month and year the lower the index. This makes
         # it easier to sort files by date and exclude files that are too old.
@@ -5848,13 +6297,23 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                     if 'ws90.version' in queue_data:
                         packet['ws90_ver'] = queue_data['ws90.version'] 
 
+                    for test in range(1,16):
+                        t = f"ch_ec.{test}.humidity"
+                        if t in queue_data:
+                           z = f"soilMoist{test}"
+                           packet[z] = queue_data[t]
+                        t = f"ch_ec.{test}.voltage"
+                        if t in queue_data:
+                           z = f"soilMoistBatt{test}"
+                           packet[z] = queue_data[t]
+
                     if 'piezoRain.0x13.voltage' in queue_data:
                        if ('piezoRain.0x13.ws85_ver' in queue_data) or (self.ws85 == 1) or ('ws85.version' in queue_data):
                           packet['ws85_batt'] = queue_data['piezoRain.0x13.voltage']
                        elif ('piezoRain.0x13.ws90_ver' in queue_data)  or (self.ws90 == 1) or ('ws90.version' in queue_data): 
                           packet['ws90_batt'] = queue_data['piezoRain.0x13.voltage']
 
-                    if 'wn38.wbgt' not in queue_data:
+                    if 'common_list.0xA2.val' not in queue_data:
                        if 'common_list.0x02.val' in queue_data  and 'common_list.0x07.val' in queue_data:
                          if queue_data['common_list.0x02.val'] != None and queue_data['common_list.0x07.val'] != None:
                            # tempc = (float(queue_data['common_list.0x02.val'])-32)*5/9
@@ -6012,7 +6471,7 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
         """
 
         # if necessary log the MAC address being used
-        if self.driver_debug.catchup:
+        if self.driver_debug.archive or self.driver_debug.catchup:
             log.info('genArchiveRecords: Using MAC address: %s' % self.mac_address)
         try:
             for rec in self.gen_ecowitt_archive_records(since_ts=lastgood_ts):
@@ -6136,7 +6595,7 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                       log.info("calculate_lightning: last_lightning_count=%s new_total=%s "
                                "calculated lightning_count=%s" % (self.last_lightning,
                                                            new_total,
-                                                           data['lightning.count']))
+                                                           rec['lightning.count']))
 
                    self.last_lightning_a = new_total
 
@@ -6157,8 +6616,7 @@ class EcowittHttpDriver(weewx.drivers.AbstractDevice, EcowittCommon):
                    #log.info("calc VPD: %s ", vpdtest)
                    if not vpdtest == None:
                       rec['common_list.5.val'] = vpdtest
- 
- 
+
                 rec['rain'] = self.last_rainnew_a
                 rec['hail'] = self.piezo_last_rainnew_a
                 rec['t_rain'] = self.last_rainnew_a
@@ -6527,14 +6985,26 @@ class EcowittHttpCollector(Collector):
         # Now obtain the current data via the API. If the data cannot be
         # obtained we will see a DeviceIOError exception which we just let
         # bubble up. Otherwise, we are returned the parsed current live data.
+        self.soilmoisture = False
         curr_data = self.device.get_live_data()
         curr_data.update(self.device.get_rain_totalspart())
         curr_data.update(self.device.get_piezo_rain_datapart())
         curr_data.update(self.device.get_device_info_datapart())
         curr_data.update(self.device.get_stationtype())
 
-        if self.get_soilad:
-         curr_data.update(self.device.get_soil_adnow_data())
+        #if 'ch_soil.1.humidity' in curr_data:
+        for test in range(1,16):
+          t = f"ch_soil.{test}.humidity"
+          if t in curr_data:
+            self.soilmoisture = True
+        if self.get_soilad and self.soilmoisture:
+          curr_data.update(self.device.get_soil_adnow_data())
+
+        if 'apName' in curr_data:
+           if "WS6210" in curr_data['apName']:
+              if 'debug.usr_interval' in curr_data:
+                 curr_data['debug.usr_interval'] = curr_data['debug.usr_interval'] * 60
+
        
         # add the timestamp to the data dict
         curr_data['datetime'] = _timestamp
@@ -6813,13 +7283,13 @@ class EcowittHttpApi:
         page 2 or a combined all pages of sensor state data depending on the
         'page' parameter.
 
-        page: specify which page of sensor state data to return, 0 = return all
-              pages, 1 = return page 1, 2 = return page 2
+        page: specify which page of sensor state data to return, 0 = return all	
+              pages, 1 = return page 1, 2 = return page 2, 3 = return page 3, 4 = return page 4, 5 = return page 5
 
         Returns a dict of data from the 'get_sensors_info' API command.
         """
 
-        page_1 = page_2 = None
+        page_1 = page_2 = page_3 = page_4 = page_5 = None
         if page in [0, 1]:
             try:
                 page_1 = self.request('get_sensors_info', data={'page': 1})
@@ -6830,6 +7300,33 @@ class EcowittHttpApi:
                 page_2 = self.request('get_sensors_info', data={'page': 2})
             except (socket.timeout, urllib.error.URLError) as e:
                 raise DeviceIOError(f"Failed to obtain 'get_sensors_info' page 2 data: {e}")
+
+        #"GW1100" (v2.4.5) - GW3000 (V1.1.9) 
+        if page in [0, 3]:
+            try:
+                page_3 = self.request('get_sensors_info', data={'page': 3})
+            except (socket.timeout, urllib.error.URLError) as e:
+                raise DeviceIOError(f"Failed to obtain 'get_sensors_info' page 3 data: {e}")
+        if page in [0, 4] and page_3 is not None:
+            try:
+                page_4 = self.request('get_sensors_info', data={'page': 4})
+            except (socket.timeout, urllib.error.URLError) as e:
+                raise DeviceIOError(f"Failed to obtain 'get_sensors_info' page 4 data: {e}")
+        if page in [0, 5] and page_4 is not None:
+            try:
+                page_5 = self.request('get_sensors_info', data={'page': 5})
+            except (socket.timeout, urllib.error.URLError) as e:
+                raise DeviceIOError(f"Failed to obtain 'get_sensors_info' page 5 data: {e}")
+
+        if page_1 is not None and page_2 is not None and page_3 is not None and page_4 is not None and page_5 is not None:
+            return page_1 + page_2 + page_3 + page_4 + page_5
+
+        if page_1 is not None and page_2 is not None and page_3 is not None and page_4 is not None:
+            return page_1 + page_2 + page_3 + page_4
+
+        if page_1 is not None and page_2 is not None and page_3 is not None:
+            return page_1 + page_2 + page_3
+
         if page_1 is not None and page_2 is not None:
             return page_1 + page_2
         if page_1 is None:
@@ -6990,7 +7487,9 @@ class EcowittHttpParser:
         'group_direction': 'degree_compass',
         'group_fraction': 'ppm',
         'group_concentration': 'microgram_per_meter_cubed',
-        'group_boolean': 'boolean'
+        'group_boolean': 'boolean',
+        'group_usiecm': 'micro_siemens_per_centimeter',
+        'group_organicpollution': 'milligram_per_liter',
     }
     # lookup to find WeeWX equivalent of a lower case Ecowitt unit string
     unit_lookup = {
@@ -7015,7 +7514,10 @@ class EcowittHttpParser:
         'mph': 'mile_per_hour',
         'knots': 'knot',
         '%': 'percent',
-        'w/m2': 'watt_per_meter_squared'
+        'w/m2': 'watt_per_meter_squared',
+        'us/cm': 'micro_siemens_per_centimeter',
+        'mg/l': 'milligram_per_liter',			# 'lb/gal' 0,000008345
+        'ntu': 'nephelometric_turbidity_unit',					# Nephelometric Turbidity Unit
     }
     # processor function lookup used to select an appropriate processor
     # function for enumerated observation fields/codes in various common_list
@@ -7064,6 +7566,9 @@ class EcowittHttpParser:
         '0x19': 'process_speed_object', # day max wind speed
         '0x6D': 'process_direction_object', # wind direction 10min
         '0x7C': 'process_rainfall_object', # rain 24h
+        '0x7D': 'process_rainfall_object', # rain hourly
+        '0xA1': 'process_temperature_object', # BGT
+        '0xA2': 'process_temperature_object', # WBGT
         'srain_piezo': 'process_boolean_object' # is raining (?)
     }
     rain_map = {
@@ -7140,7 +7645,8 @@ class EcowittHttpParser:
         # firmware version from the 'version' key/value
         try:
             _parsed_data['version'] = str(response['version'])
-            _parsed_data['stationtype'] = _parsed_data['version'][8:]
+            _parsed_data['stationtype'] = str(response['version'])[8:].strip(' \n\r')
+            #_parsed_data['stationtype'] = _parsed_data['version'][8:]
             _parsed_data['firmware_version'] = str(response['version']).split('_')[1].strip()
         except KeyError as e:
             # we have no 'version' key, do nothing and continue
@@ -7202,6 +7708,8 @@ class EcowittHttpParser:
                                         sensors)
             process_ch_aisle_array    - process ch_aisle array (multichannel
                                         temperature and humidity sensors)
+            process_ch_ec_array       - process ch_soil ec (multichannel
+                                        soil moisture ec sensors)
             process_ch_soil_array     - process ch_soil array (multichannel
                                         soil moisture sensors)
             process_ch_temp_array     - process ch_temp array (multichannel
@@ -7214,6 +7722,7 @@ class EcowittHttpParser:
             process_rain_array        - process rain array (rain sensor)
             process_debug_array       - process debug array (device info)
             process_console_array     - process console array (WS6210 info)
+            process_wqt01_array       - process wqt01 array (EC, TOC, TURB, COD, TDS, CO2 data)
 
         Parameters
             response:     The API JSON response to be parsed. List representing
@@ -7492,7 +8001,7 @@ class EcowittHttpParser:
         # first parse the 'version' key/value and extract the short form
         # firmware version from the 'version' key/value
         try:
-            _parsed_data['stationtype'] = str(response['version'])[9:]
+            _parsed_data['stationtype'] = str(response['version'])[8:].strip(' \n\r')
         except KeyError as e:
             # we have no 'version' key, do nothing and continue
             pass
@@ -9677,6 +10186,151 @@ class EcowittHttpParser:
         # return the result
         return result
 
+    def process_ch_ec_array(self, response):
+        """Process a ch_ec JSON array.
+
+        Processes a ch_soil JSON array resulting from a get_livedata_info local
+        HTTP API call. This method:
+
+        - ignores sensors where the 'channel' key cannot be converted to a
+          numeric or there is no temperature data
+        - converts observation values to a unit consistent with the WeeWX unit
+          system (self.unit_system) used by the driver
+        - returns numeric observation values rather than as a string as used in
+          the API response
+        - returns a value of None if a key exists but it's contents could not
+          be converted to a numeric value
+        - does not change the original JSON data
+
+        Example JSON array:
+
+        "ch_ec": [{"channel": "1",
+                     "name":"",
+                     "battery":"5",
+                     "voltage":"1.68", 
+                     "humidity":"0%",
+                     "temp":"21.6",
+                     "unit":"C",
+                     "ec":"0 uS/cm"}
+                 ]
+
+
+        Returns a list of dicts where each dict contains the data from a single
+        sensor. Each dict includes a 'channel' key and other keys depending on
+        the data included in the API response. Available keys are:
+
+        channel:  channel number. Mandatory. Integer.
+        name:     sensor name. Optional. String, may be None.
+        humidity: sensor 'humidity' value in %. Optional. Integer, may be None.
+        voltage:  battery voltage in volts. Optional. Float, may be None.
+
+        Note the key 'battery' was dropped as get_sensors_info is considered the
+        primary source for battery state data.
+
+        The list is sorted in ascending channel order.
+        """
+
+        # create an empty list to hold our result
+        result = []
+        # iterate over the elements/sensors in the JSON array
+        for sensor in response:
+            # create a dict to hold the data for this sensor
+            _sensor = dict()
+            # obtain the channel number
+            try:
+                _sensor['channel'] = int(sensor['channel'])
+            except (KeyError, TypeError, ValueError) as e:
+                # There is no channel number or we cannot convert the channel
+                # value to an int. Either way we cannot continue with this
+                # sensor. Move on to the next channel.
+                continue
+            # process the humidity value, wrap in a try..except in case there
+            # is a problem
+            try:
+                # first obtain the humidity as a ValueTuple
+                hum_vt = self.parse_obs_value(key='humidity',
+                                              json_object=sensor,
+                                              unit_group='group_percent')
+            except KeyError as e:
+                # the 'humidity' key does not exist, we cannot continue with
+                # this sensor
+                continue
+            except ParseError as e:
+                # the 'humidity' key exists but there was a problem processing
+                # the data, set the 'humidity' key/value to None
+                _sensor['humidity'] = None
+            else:
+                # we have a numeric value, there is no unit conversion required
+                # so coalesce to an int and save against the 'humidity' key
+                _sensor['humidity'] = int(hum_vt.value)
+
+            # obtain the temperature value, wrap in a try.. except in case there is
+            # a problem
+            try:
+                # first obtain the temperature as a ValueTuple
+                temp_vt = self.parse_obs_value(key='temp',
+                                               json_object=sensor,
+                                               unit_group='group_temperature')
+            except KeyError as e:
+                # the 'temp' key does not exist, we cannot continue with this
+                # sensor
+                continue
+            except ParseError as e:
+                # the 'temp' key exists but there was a problem processing the
+                # data, set the 'temp' key/value to None
+                _sensor['temp'] = None
+            else:
+                # we have a numeric value, convert it to the unit system used
+                # by the driver and save against the 'temp' key
+                _sensor['temp'] = weewx.units.convert(temp_vt,
+                                                      weewx.units.std_groups[self.unit_system]['group_temperature']).value
+
+            # process the ec value, wrap in a try..except in case there
+            # is a problem
+            try:
+                ec = sensor['ec'].strip(' uS/cm')
+                #log.info("EC '%s' " % ec)
+                ec_vt = self.parse_obs_value(key='ec', json_object=sensor, unit_group='group_usiecm')
+                #log.info("EC %s " % ec_vt.value)
+
+            except KeyError as e:
+                # the 'ec' key does not exist, we cannot continue with
+                # this sensor
+                pass
+            except ParseError as e:
+                # the 'ec' key exists but there was a problem processing
+                # the data, set the 'ec' key/value to None
+                _sensor['ec'] = None
+            else:
+                # we have a numeric value, there is no unit conversion required
+                # so coalesce to an int and save against the 'ec' key
+                # if ec = 4095, this is fault reception, so ignore this value
+                if int(ec_vt.value) == 4095:
+                  _sensor['ec'] = None  
+                else:
+                  _sensor['ec'] = int(ec_vt.value)
+
+            # add the sensor name
+            _sensor['name'] = sensor.get('name')
+            # process the 'voltage' key/value if it exists, wrap in a try.. except
+            # in case there is a problem
+            try:
+                # first obtain the voltage as a ValueTuple
+                voltage_vt = self.parse_obs_value('voltage', sensor, 'group_volt')
+                # we have a numeric value, save it against the 'voltage' key
+                _sensor['voltage'] = voltage_vt.value
+            except KeyError as e:
+                # no 'voltage' key exists, ignore and continue
+                pass
+            except ParseError as e:
+                # the key 'voltage' exists, but the value could not be converted to
+                # a float, so save None to the 'voltage' key/value
+                _sensor['voltage'] = None
+            # add the sensor data to our result list
+            result.append(_sensor)
+        # return the result
+        return result
+
     def process_ch_soil_array(self, response):
         """Process a ch_soil JSON array.
 
@@ -10146,7 +10800,9 @@ class EcowittHttpParser:
         else:
             # we have a datetime object, convert to and save as an epoch timestamp
             try:
+              #if self.timecorr == False:
               timestamp_ts = int(time.mktime(_timestamp_dt.timetuple()))
+              #timestamp_ts = int(time.mktime(_timestamp_dt.utctimetuple()))
               _item['timestamp'] = timestamp_ts
             except:
               _item['timestamp'] = None
@@ -10846,6 +11502,169 @@ class EcowittHttpParser:
         # return the parsed data
         return _item
  
+    def process_wqt01_array(self, response):
+        """Process a wqt01 JSON array.
+         Returns a dict.
+
+        Example local HTTP API response 'wqt01' JSON array:
+
+        "wqt01": [{"ec": "30.6",
+                  "unit": "C",
+                  "inhumi": "47%",
+
+                  "CO2": "495",
+                  "CO2_24H": "538"
+                  }]
+        """
+
+        # obtain the first (and only) array element, wrap in a try..except in
+        # case there is a problem
+        try:
+            item = response[0]
+        except (KeyError, TypeError) as e:
+            # we have something other than a JSON array, raise a ParseError
+            # with an appropriate error message
+            raise ParseError("Cannot parse 'wqt01' array: %s" % e)
+        # we have the raw response, create a dict to hold the parsed data for
+        # this item
+        _item = dict()
+
+        # process the ec value, wrap in a try..except in case there
+        # is a problem
+        try:
+           ec = ítem['ec'].strip(' uS/cm')
+           #log.info("EC '%s' " % ec)
+           ec_vt = self.parse_obs_value(key='ec', json_object=sensor, unit_group='group_usiecm')
+           #log.info("EC %s " % ec_vt.value)
+
+        except KeyError as e:
+           # the 'ec' key does not exist, we cannot continue with
+           # this sensor
+           pass
+        except ParseError as e:
+           # the 'ec' key exists but there was a problem processing
+           # the data, set the 'ec' key/value to None
+          _item['ec'] = None
+        else:
+           # we have a numeric value, there is no unit conversion required
+           # so coalesce to an int and save against the 'ec' key
+           _item['ec'] = int(ec_vt.value)
+
+
+        # process the turb value, wrap in a try..except in case there
+        # is a problem
+        try:
+           _item['turb'] = int(item['turb'])
+           #log.info("TURB '%s' " % turb)
+        except KeyError as e:
+           pass
+        except (TypeError, ValueError):
+           _item['turb'] = None
+
+        # process the toc value, wrap in a try..except in case there
+        # is a problem
+        try:
+           toc = ítem['toc'].strip(' mg/l')
+           #log.info("TOC '%s' " % toc)
+           toc_vt = self.parse_obs_value(key='toc', json_object=sensor, unit_group='group_organicpollution')
+           #log.info("TOC %s " % toc_vt.value)
+
+        except KeyError as e:
+           # the 'toc' key does not exist, we cannot continue with
+           # this sensor
+           pass
+        except ParseError as e:
+           # the 'toc' key exists but there was a problem processing
+           # the data, set the 'toc' key/value to None
+          _item['toc'] = None
+        else:
+           # we have a numeric value, there is no unit conversion required
+           # so coalesce to an int and save against the 'toc' key
+           _item['toc'] = toc_vt.value
+
+        # process the cod value, wrap in a try..except in case there
+        # is a problem
+        try:
+           cod = ítem['cod'].strip(' mg/l')
+           #log.info("COD '%s' " % cod)
+           cod_vt = self.parse_obs_value(key='cod', json_object=sensor, unit_group='group_organicpollution')
+           #log.info("COD %s " % cod_vt.value)
+
+        except KeyError as e:
+           pass
+        except ParseError as e:
+          _item['cod'] = None
+        else:
+           _item['cod'] = cod_vt.value
+
+        # process the tds value, wrap in a try..except in case there
+        # is a problem
+        try:
+           tds = ítem['tds'].strip(' mg/l')
+           #log.info("TDS '%s' " % tds)
+           tds_vt = self.parse_obs_value(key='tds', json_object=sensor, unit_group='group_organicpollution')
+           #log.info("TDS %s " % tds_vt.value)
+
+        except KeyError as e:
+           pass
+        except ParseError as e:
+          _item['tds'] = None
+        else:
+           _item['tds'] = tds_vt.value
+
+        # process the CO2 value if it exists, wrap in a try..except in case
+        # there is a problem
+        try:
+            _item['CO2'] = int(item['CO2'])
+        except KeyError:
+            # there is no key 'CO2', do nothing
+            pass
+        except (TypeError, ValueError):
+            # the 'CO2' value cannot be converted to an int, save as None
+            # instead
+            _item['CO2'] = None
+        # process the CO2_24H value if it exists, wrap in a try..except in
+        # case there is a problem
+        try:
+            _item['CO2_24H'] = int(item['CO2_24H'])
+        except KeyError:
+            # there is no key 'CO2_24H', do nothing
+            pass
+        except (TypeError, ValueError):
+            # the 'CO2_24H' value cannot be converted to an int, save as None
+            # instead
+            _item['CO2_24H'] = None
+        # return the parsed data
+
+        try:
+            # first obtain the voltage as a ValueTuple
+            voltage_vt = self.parse_obs_value('voltage', item, 'group_volt')
+            # we have a numeric value, save it against the 'voltage' key
+            _item['voltage'] = voltage_vt.value
+        except KeyError:
+            # no 'voltage' key exists, ignore and continue
+            pass
+        except UnitError as e:
+            # the key 'voltage' exists, but the value could not be converted to
+            # a float, so save None to the 'voltage' key/value
+           _item['voltage'] = None
+
+
+        # We have a 'battery' field, now convert to an integer. Wrap in a
+        # try..except in case there is a problem.
+        try:
+            _item['battery'] = int(item['battery'])
+        except KeyError:
+            # the item has no 'battery' key, so continue
+            pass
+        except (TypeError, ValueError):
+            # the 'battery' value could not be converted to an integer,
+            # so save None to the 'battery' field
+            _item['battery'] = None
+
+
+        return _item
+
 
     def process_sensor_array(self, sensor, connected_only):
         """Process sensor data obtained via the 'get_sensors_info' API command.
@@ -11573,10 +12392,9 @@ class EcowittHttpParser:
         unit.
 
         Ecowitt has added 'battery' and (battery) 'voltage' fields to some
-        observations. However, the driver obtains battery state data via the
-        get_sensors_info HTTP API command so the battery state data in this
-        object is not required. To avoid confusion pop the 'battery' key if it
-        exists. Also check for the 'voltage' key/value, if it exists convert
+        observations. The driver also obtains battery state data via the
+        get_sensors_info HTTP API command. 
+        Also check for the 'voltage' key/value, if it exists convert
         the value to a float and return the key/value in the response. If the
         'voltage' key does not exist it is ignored.
         The ws85_ver and ws90_ver key is are now new (from GW3000 V1.0.9.6)
@@ -11587,6 +12405,7 @@ class EcowittHttpParser:
 
         id:      common_list observation ID number. String.
         val:     rain value in driver rainfall unit. float.
+        battery: rain battery state (0..5)
         voltage: sensor battery voltage if provided. Float.
         new:
         ws85cap_volt: sensor cap voltage if provided. Float.
@@ -11627,6 +12446,12 @@ class EcowittHttpParser:
             # driver and save against the 'val' key
             _item['val'] = weewx.units.convert(rain_vt,
                                                weewx.units.std_groups[self.unit_system]['group_rain']).value
+
+        try:
+            _item['battery'] = int(item['battery'])
+        except (KeyError, TypeError, ValueError):
+            pass
+
         # process the 'voltage' key/value if it exists, wrap in a try.. except
         # in case there is a problem
         try:
@@ -11750,6 +12575,11 @@ class EcowittHttpParser:
             # driver and save against the 'val' key
             _item['val'] = weewx.units.convert(rainrate_vt,
                                                weewx.units.std_groups[self.unit_system]['group_rainrate']).value
+        try:
+            _item['battery'] = int(item['battery'])
+        except (KeyError, TypeError, ValueError):
+            pass
+
         # process the 'voltage' key/value if it exists, wrap in a try.. except
         # in case there is a problem
         try:
@@ -11963,9 +12793,9 @@ class EcowittSensors:
     # sensors whose battery state is determined from a binary value (0|1)
     batt_binary = ('wh68', 'wh69', 'wh25', 'wh26', 'wn31', 'wn32')
     # sensors whose battery state is determined from an integer value
-    batt_int = ('wn20', 'wh40', 'wh41', 'wh43', 'wh45', 'wh55', 'wh57')
+    batt_int = ('wn20', 'wn38', 'wh40', 'wh41', 'wh43', 'wh45', 'wh55', 'wh57')
     # sensors whose battery state is determined from a battery voltage value
-    batt_volt = ('wh68', 'wh51', 'wh54', 'wn34', 'wn35', 'ws80', 'ws85', 'ws90')
+    batt_volt = ('wh68', 'wh51', 'wh54', 'wn34', 'wn35', 'wn38', 'ws80', 'ws85', 'ws90')
     # map of 'dotted' get_livedata_info sensor voltage fields to sensor address
     sensor_with_voltage = {
         'rain.0x13.voltage': 3,		#wh40 
@@ -11988,6 +12818,22 @@ class EcowittSensors:
         'ch_soil.14.voltage': 63,
         'ch_soil.15.voltage': 64,
         'ch_soil.16.voltage': 65,
+        'ch_ec.1.voltage': 14,
+        'ch_ec.2.voltage': 15,
+        'ch_ec.3.voltage': 16,
+        'ch_ec.4.voltage': 17,
+        'ch_ec.5.voltage': 18,
+        'ch_ec.6.voltage': 19,
+        'ch_ec.7.voltage': 20,
+        'ch_ec.8.voltage': 21,
+        'ch_ec.9.voltage': 58,
+        'ch_ec.10.voltage': 59,
+        'ch_ec.11.voltage': 60,
+        'ch_ec.12.voltage': 61,
+        'ch_ec.13.voltage': 62,
+        'ch_ec.14.voltage': 63,
+        'ch_ec.15.voltage': 64,
+        'ch_ec.16.voltage': 65,
         'ch_temp.1.voltage': 31,
         'ch_temp.2.voltage': 32,
         'ch_temp.3.voltage': 33,
@@ -12007,7 +12853,9 @@ class EcowittSensors:
         'ch_lds.1.voltage': 66,
         'ch_lds.2.voltage': 67,
         'ch_lds.3.voltage': 68,
-        'ch_lds.4.voltage': 69
+        'ch_lds.4.voltage': 69,
+        'common_list.0xA1.voltage': 71,
+        'wqt01.voltage': 72,
     }
     # map of sensor address to composite sensor name (ie sensor model and
     # channel (as applicable))
@@ -12076,6 +12924,7 @@ class EcowittSensors:
         69: 'wh54_ch4',
         70: 'wn20',
         71: 'wn38',
+        72: 'wqt01',
     }
 
     def __init__(self, all_sensor_data=None, live_data=None):
@@ -12873,7 +13722,8 @@ class EcowittDevice:
         version_data = self.api.get_version()
         version = self.parser.parse_get_version(version_data).get('version')
         #return self.parser.get_model_from_firmware(version)
-        ergebnis = version[8:]
+        ergebnis = version[8:].strip(' \n\r')
+        #ergebnis = version[8:]
         #log.info("Hardware is %s" % (ergebnis))
         return ergebnis
 
@@ -13040,12 +13890,39 @@ def define_units():
     weewx.units.MetricUnits["group_pressurevpd"] = "hPa"
     weewx.units.MetricWXUnits["group_pressurevpd"] = "hPa"
 
+    weewx.units.obs_group_dict['micro_siemens_per_centimeter'] = 'group_usiecm'
+    weewx.units.USUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+    weewx.units.MetricUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+    weewx.units.MetricWXUnits["group_usiecm"] = "micro_siemens_per_centimeter"
+    weewx.units.default_unit_label_dict['micro_siemens_per_centimeter'] = ' µS/cm'
+    weewx.units.default_unit_format_dict["micro_siemens_per_centimeter"] = '%.0f'
+
     # set default formats and labels for depth
     weewx.units.default_unit_format_dict['foot2'] = '%.2f'
     weewx.units.default_unit_label_dict['foot2'] = ' ft'
     weewx.units.default_unit_format_dict['mm2'] = '%.0f'
     weewx.units.default_unit_label_dict['mm2'] = ' mm'
+
     weewx.units.default_unit_format_dict['microgram_per_meter_cubed'] = '%.1f'
+
+    # create group for organic pollution (WQT_TOC, WQT_COD, WQT_TDS)
+    # 'mg/L': 'milligram_per_liter',  'lb/gal' 0.000008345
+    weewx.units.USUnits['group_organicpollution'] = 'pounds_per_gallon'
+    weewx.units.MetricUnits['group_organicpollution'] = 'milligram_per_liter'
+    weewx.units.MetricWXUnits['group_organicpollution'] = 'milligram_per_liter'
+    weewx.units.default_unit_label_dict['milligram_per_liter'] = ' mg/L'
+    weewx.units.default_unit_label_dict['pounds_per_gallon'] = ' lb/gal'
+    weewx.units.default_unit_format_dict["milligram_per_liter"] = '%.1f'
+    weewx.units.default_unit_format_dict["pounds_per_gallon"] = '%.9f'
+    weewx.units.conversionDict['milligram_per_liter'] = {'pounds_per_gallon': lambda x: x * 0.000008345}
+    weewx.units.conversionDict['pounds_per_gallon'] = {'milligram_per_liter': lambda x: x / 0.000008345}
+
+    weewx.units.obs_group_dict['nephelometric_turbidity_unit'] = 'group_ntu'
+    weewx.units.USUnits["group_ntu"] = "nephelometric_turbidity_unit"
+    weewx.units.MetricUnits["group_ntu"] = "nephelometric_turbidity_unit"
+    weewx.units.MetricWXUnits["group_ntu"] = "nephelometric_turbidity_unit"
+    weewx.units.default_unit_label_dict['nephelometric_turbidity_unit'] = 'NTU'
+    weewx.units.default_unit_format_dict['nephelometric_turbidity_unit'] = '%.0f'
 
     # define conversion functions for depth
     weewx.units.conversionDict['mm2'] = {'inch2': lambda x: x / 25.4,
@@ -13459,7 +14336,8 @@ class DirectEcowittDevice:
                     'rain.0x11.val', 'rain.0x11.voltage',
                     'rain.0x12.val', 'rain.0x12.voltage',
                     'rain.0x13.val', 'rain.0x13.voltage',
-                    'rain.0x7C.val',
+                    'rain.0x13.battery', 'rain.0x7C.val',
+                    'rain.0x7D.val', 'piezoRain.0x7D.val',
                     'piezoRain.srain_piezo.val',
                     'piezoRain.0x0D.val', 'piezoRain.0x0D.voltage',
                     'piezoRain.0x0E.val', 'piezoRain.0x0E.voltage',
@@ -13467,7 +14345,7 @@ class DirectEcowittDevice:
                     'piezoRain.0x11.val', 'piezoRain.0x11.voltage',
                     'piezoRain.0x12.val', 'piezoRain.0x12.voltage',
                     'piezoRain.0x13.val', 'piezoRain.0x13.voltage',
-                    'piezoRain.0x7C.val',
+                    'piezoRain.0x13.battery','piezoRain.0x7C.val',
                     'piezoRain.0x13.ws85_ver', 'piezoRain.0x13.ws85cap_volt',
                     'piezoRain.0x13.ws90_ver', 'piezoRain.0x13.ws90cap_volt',
                     'wh25.intemp', 'wh25.inhumi', 'wh25.abs', 'wh25.rel',
@@ -13482,7 +14360,11 @@ class DirectEcowittDevice:
                     'common_list.0x15.val', 'common_list.0x15.voltage',
                     'common_list.0x16.val', 'common_list.0x16.voltage',
                     'common_list.0x17.val', 'common_list.0x17.voltage',
-                    'common_list.0x6D.val',
+                    'common_list.0x6D.val', 
+                    'common_list.0xA1.val', 'common_list.0xA1.battery', 'common_list.0xA1.voltage',
+                    'common_list.0xA2.val', 
+                    'console.console_batt_volt', 'console.battery', 'console.console_ext_volt',
+                    'console.charge_stat', 'console.battery_proz',
                     'co2.temperature', 'co2.temp', 'co2.humidity', 'co2.CO2', 'co2.CO2_24H', 'co2.battery',
                     'co2.PM25', 'co2.PM25_RealAQI', 'co2.PM25_24HAQI', 'co2.PM25_24H',
                     'co2.PM10', 'co2.PM10_RealAQI', 'co2.PM10_24HAQI', 'co2.PM10_24H',
@@ -13505,10 +14387,30 @@ class DirectEcowittDevice:
                     'ch_soil.11.humidity', 'ch_soil.11.voltage', 'ch_soil.12.humidity', 'ch_soil.12.voltage',
                     'ch_soil.13.humidity', 'ch_soil.13.voltage', 'ch_soil.14.humidity', 'ch_soil.14.voltage',
                     'ch_soil.15.humidity', 'ch_soil.15.voltage', 'ch_soil.16.humidity', 'ch_soil.16.voltage',
+                    'ch_ec.1.temp', 'ch_ec.1.ec', 'ch_ec.1.voltage',
+                    'ch_ec.2.temp', 'ch_ec.2.ec', 'ch_ec.2.voltage',
+                    'ch_ec.3.temp', 'ch_ec.3.ec', 'ch_ec.3.voltage',
+                    'ch_ec.4.temp', 'ch_ec.4.ec', 'ch_ec.4.voltage',
+                    'ch_ec.5.temp', 'ch_ec.5.ec', 'ch_ec.5.voltage',
+                    'ch_ec.6.temp', 'ch_ec.6.ec', 'ch_ec.6.voltage',
+                    'ch_ec.7.temp', 'ch_ec.7.ec', 'ch_ec.7.voltage',
+                    'ch_ec.8.temp', 'ch_ec.8.ec', 'ch_ec.8.voltage',
+                    'ch_ec.9.temp', 'ch_ec.9.ec', 'ch_ec.9.voltage',
+                    'ch_ec.10.temp', 'ch_ec.10.ec', 'ch_ec.10.voltage',
+                    'ch_ec.11.temp', 'ch_ec.11.ec', 'ch_ec.11.voltage',
+                    'ch_ec.12.temp', 'ch_ec.12.ec', 'ch_ec.12.voltage',
+                    'ch_ec.13.temp', 'ch_ec.13.ec', 'ch_ec.13.voltage',
+                    'ch_ec.14.temp', 'ch_ec.14.ec', 'ch_ec.14.voltage',
+                    'ch_ec.15.temp', 'ch_ec.15.ec', 'ch_ec.15.voltage',
+                    'ch_ec.16.temp', 'ch_ec.16.ec', 'ch_ec.16.voltage',
                     'ch_soil1nowAd', 'ch_soil2nowAd', 'ch_soil3nowAd', 'ch_soil4nowAd',
                     'ch_soil5nowAd', 'ch_soil6nowAd', 'ch_soil7nowAd', 'ch_soil8nowAd',
                     'ch_soil9nowAd', 'ch_soil10nowAd', 'ch_soil11nowAd', 'ch_soil12nowAd',
                     'ch_soil13nowAd', 'ch_soil14nowAd', 'ch_soil15nowAd', 'ch_soil16nowAd',
+                    'ch_ec1nowAd', 'ch_ec2nowAd', 'ch_ec3nowAd', 'ch_ec4nowAd',
+                    'ch_ec5nowAd', 'ch_ec6nowAd', 'ch_ec7nowAd', 'ch_ec8nowAd',
+                    'ch_ec9nowAd', 'ch_ec10nowAd', 'ch_ec11nowAd', 'ch_ec12nowAd',
+                    'ch_ec13nowAd', 'ch_ec14nowAd', 'ch_ec15nowAd', 'ch_ec16nowAd',
                     'ch_temp.1.temp', 'ch_temp.1.voltage', 'ch_temp.2.temp', 'ch_temp.2.voltage',
                     'ch_temp.3.temp', 'ch_temp.3.voltage', 'ch_temp.4.temp', 'ch_temp.4.voltage',
                     'ch_temp.5.temp', 'ch_temp.5.voltage', 'ch_temp.6.temp', 'ch_temp.6.voltage',
@@ -13536,7 +14438,7 @@ class DirectEcowittDevice:
                     'wn35.ch3.battery', 'wn35.ch3.signal', 'wn35.ch4.battery', 'wn35.ch4.signal', 'wn34.ch11.rssi', 'wn34.ch12.rssi',
                     'wn35.ch5.battery', 'wn35.ch5.signal', 'wn35.ch6.battery', 'wn35.ch6.signal', 'wn34.ch13.rssi', 'wn34.ch14.rssi',
                     'wn35.ch7.battery', 'wn35.ch7.signal', 'wn35.ch8.battery', 'wn35.ch8.signal', 'wn34.ch15.rssi', 'wn34.ch16.rssi',
-                    'wn38.battery', 'wn38.signal', 'wn38.rssi', 'wn38.bgt', 'wn38.wbgt',
+                    'wn38.battery', 'wn38.signal', 'wn38.rssi',
                     'wh40.battery', 'wh40.signal', 'wh40.rssi',
                     'wh41.ch1.battery', 'wh41.ch1.signal', 'wh41.ch2.battery', 'wh41.ch2.signal', 'wh41.ch1.rssi', 'wh41.ch2.rssi',
                     'wh41.ch3.battery', 'wh41.ch3.signal', 'wh41.ch4.battery', 'wh41.ch4.signal', 'wh41.ch3.rssi', 'wh41.ch4.rssi',
@@ -13557,12 +14459,14 @@ class DirectEcowittDevice:
                     'wh65.battery', 'wh65.signal', 'wh68.battery', 'wh68.signal', 'wh65.rssi', 'wh68.rssi',
                     'wh69.battery', 'wh69.signal', 'wh69.rssi',
                     'ws80.battery', 'ws80.signal', 'ws80.rssi',
-                    'ws85.battery', 'ws85.signal', 'ws90.battery', 'ws90.signal', 'ws85.rssi', 'ws90.rssi'
+                    'ws85.battery', 'ws85.signal', 'ws90.battery', 'ws90.signal', 'ws85.rssi', 'ws90.rssi',
+                    'wqt01.battery', 'wqt01.signal', 'wqt01.rssi', 'wqt01.voltage',
+                    'wqt01.ec', 'wqt01.toc', 'wqt01.turb', 'wqt01.cod', 'wqt01.tds', 'wqt01.CO2', 'wqt01.CO2_24H',
                     ]
 
     sensor_display_order = ( 'wn20', 'wh25', 'wh26', 'wn31', 'wn34', 'wn35', 'wn38', 'wh40', 
                              'wh41', 'wh45', 'wh51', 'wh54', 'wh55', 'wh57',
-                             'wh68', 'wh69', 'ws80', 'ws85', 'ws90')
+                             'wh68', 'wh69', 'ws80', 'ws85', 'ws90', 'wqt01' )
     def __init__(self, namespace, arg_parser, stn_dict, **kwargs):
         """Initialise a DirectEcowittDevice object."""
 
