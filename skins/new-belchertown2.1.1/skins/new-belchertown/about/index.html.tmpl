@@ -1,0 +1,26 @@
+#errorCatcher Echo
+#encoding UTF-8
+#set global $page = "about"
+
+#include "header.html.tmpl"
+
+<div class="site-inner">
+    <main class="content">
+        <article class="weewx about" itemscope itemtype="https://schema.org/CreativeWork">
+
+            #include "page-header.inc"
+
+            <div class="about-page-card">
+            #if os.path.exists("about.inc")
+            #include "about.inc"
+            #else
+            #include "about.inc.example"
+            #end if
+            </div>
+
+        </article>
+    </main>
+</div>
+
+
+#include "footer.html.tmpl"

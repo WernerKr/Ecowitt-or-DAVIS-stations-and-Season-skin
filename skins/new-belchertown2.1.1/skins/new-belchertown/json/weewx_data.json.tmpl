@@ -1,0 +1,1094 @@
+#encoding UTF-8
+#import datetime
+#import json
+#import math
+#from user.new_belchertown import build_almanac_template_context, build_earthquake_map_context
+#errorCatcher Echo
+
+## Almanac/daylight precompute (safe defaults so values are available even without hasExtras).
+#set $sun_None = "--"
+#set $daylight_str = "--"
+#set $sun_azimuth = "--"
+#set $sun_ra = "--"
+#set $sun_dec = "--"
+#set $moon_azimuth = "--"
+#set $moon_altitude = "--"
+#set $moon_ra = "--"
+#set $moon_dec = "--"
+#set $moon_age_label = "Moon age"
+#set $moon_age_days_label = "days"
+#set $moon_age_days = None
+#set $moon_age_display = "--"
+#set $moon_tilt_degrees = None
+#set $synodic_month_days = 29.530588853
+#set $sun_altitude_raw = None
+#set $sun_altitude = "--"
+#try
+    #set $sun_altitude_raw = $almanac.sun.alt
+#except
+    #set $sun_altitude_raw = None
+#end try
+#if $sun_altitude_raw is None
+    #set $sun_altitude_raw = -90.0
+#end if
+#try
+    #if $obs.label.moon_age != "moon_age"
+        #set $moon_age_label = $obs.label.moon_age
+    #end if
+#except
+    #set $unused_moon_age_label = None
+#end try
+#try
+    #if $obs.label.moon_age_days != "moon_age_days"
+        #set $moon_age_days_label = $obs.label.moon_age_days
+    #end if
+#except
+    #set $unused_moon_age_days_label = None
+#end try
+#set $next_new_moon_raw = None
+#set $now_raw = None
+#try
+    #set $next_new_moon_raw = $almanac.next_new_moon.raw
+#except
+    #set $next_new_moon_raw = None
+#end try
+#try
+    #set $now_raw = $current.dateTime.raw
+#except
+    #set $now_raw = None
+#end try
+#if $next_new_moon_raw is not None and $now_raw is not None
+    #set $days_to_next_new = (float($next_new_moon_raw) - float($now_raw)) / 86400.0
+    #set $moon_age_days = $synodic_month_days - $days_to_next_new
+    #while $moon_age_days < 0
+        #set $moon_age_days = $moon_age_days + $synodic_month_days
+    #end while
+    #while $moon_age_days >= $synodic_month_days
+        #set $moon_age_days = $moon_age_days - $synodic_month_days
+    #end while
+    #set $moon_age_display = "%.1f %s" % ($moon_age_days, $moon_age_days_label)
+#end if
+#if $moon_age_days is not None and not math.isfinite($moon_age_days)
+    #set $moon_age_days = None
+#end if
+#include "almanac_daylight_data.inc"
+## If extended almanac information is available, do extra calculations.
+#if $almanac.hasExtras
+    #import locale
+        #set $sun_azimuth = locale.format_string( "%.1f&deg;", $almanac.sun.az )
+        #set $sun_ra = locale.format_string( "%.1f&deg;", $almanac.sun.ra )
+        #set $sun_dec = locale.format_string( "%.1f&deg;", $almanac.sun.dec )
+        #set $moon_azimuth = locale.format_string( "%.1f&deg;", $almanac.moon.az )
+        #set $moon_altitude = locale.format_string( "%.1f&deg;", $almanac.moon.alt )
+        #set $moon_ra = locale.format_string( "%.1f&deg;", $almanac.moon.ra )
+        #set $moon_dec = locale.format_string( "%.1f&deg;", $almanac.moon.dec )
+        #set $sun_altitude = locale.format_string( "%.1f&deg;", $sun_altitude_raw )
+#end if
+
+#set $almanac_diagram_context = build_almanac_template_context($almanac, $current.dateTime.raw, $almanac.hasExtras)
+#set $almanac_data_source = $almanac_diagram_context.get("almanac_data_source", "none")
+#set $sun_az_attr = $almanac_diagram_context.get("sun_az_attr", "")
+#set $sun_alt_attr = $almanac_diagram_context.get("sun_alt_attr", "")
+#set $moon_az_attr = $almanac_diagram_context.get("moon_az_attr", "")
+#set $moon_alt_attr = $almanac_diagram_context.get("moon_alt_attr", "")
+#set $sun_rise_epoch_attr = $almanac_diagram_context.get("sun_rise_epoch_attr", "")
+#set $sun_set_epoch_attr = $almanac_diagram_context.get("sun_set_epoch_attr", "")
+#set $moon_rise_epoch_attr = $almanac_diagram_context.get("moon_rise_epoch_attr", "")
+#set $moon_set_epoch_attr = $almanac_diagram_context.get("moon_set_epoch_attr", "")
+#set $sun_rise_az_attr = $almanac_diagram_context.get("sun_rise_az_attr", "")
+#set $sun_rise_alt_attr = $almanac_diagram_context.get("sun_rise_alt_attr", "")
+#set $sun_transit_az_attr = $almanac_diagram_context.get("sun_transit_az_attr", "")
+#set $sun_transit_alt_attr = $almanac_diagram_context.get("sun_transit_alt_attr", "")
+#set $sun_set_az_attr = $almanac_diagram_context.get("sun_set_az_attr", "")
+#set $sun_set_alt_attr = $almanac_diagram_context.get("sun_set_alt_attr", "")
+#set $moon_rise_az_attr = $almanac_diagram_context.get("moon_rise_az_attr", "")
+#set $moon_rise_alt_attr = $almanac_diagram_context.get("moon_rise_alt_attr", "")
+#set $moon_transit_az_attr = $almanac_diagram_context.get("moon_transit_az_attr", "")
+#set $moon_transit_alt_attr = $almanac_diagram_context.get("moon_transit_alt_attr", "")
+#set $moon_set_az_attr = $almanac_diagram_context.get("moon_set_az_attr", "")
+#set $moon_set_alt_attr = $almanac_diagram_context.get("moon_set_alt_attr", "")
+#set $sun_track_points_attr = $almanac_diagram_context.get("sun_track_points_attr", "")
+#set $moon_track_points_attr = $almanac_diagram_context.get("moon_track_points_attr", "")
+#set $sun_track_path_attr = $almanac_diagram_context.get("sun_track_path_attr", "")
+#set $moon_track_path_attr = $almanac_diagram_context.get("moon_track_path_attr", "")
+#set $diagram_centering_mode_attr = $almanac_diagram_context.get("diagram_centering_mode_attr", "off")
+#set $sun_x_offset_attr = $almanac_diagram_context.get("sun_x_offset_attr", "0.000")
+#set $moon_x_offset_attr = $almanac_diagram_context.get("moon_x_offset_attr", "0.000")
+#set $diagram_current_ts_attr = $almanac_diagram_context.get("diagram_current_ts_attr", "")
+#set $diagram_current_x_attr = $almanac_diagram_context.get("diagram_current_x_attr", "")
+#set $almanac_svg_markup_attr = $almanac_diagram_context.get("almanac_svg_markup_attr", "")
+#set $earthquake_map_context = build_earthquake_map_context($earthquake_lat, $earthquake_lon)
+
+#try
+    #set $moon_tilt_degrees = float($almanac.moon.moon_tilt.raw)
+#except
+    #set $moon_tilt_degrees = None
+#end try
+#if $moon_tilt_degrees is not None and not math.isfinite($moon_tilt_degrees)
+    #set $moon_tilt_degrees = None
+#end if
+
+#if $almanac_data_source == "none"
+    #if $sun_az_attr != "" or $moon_az_attr != "" or $sun_track_path_attr != "" or $moon_track_path_attr != ""
+        #set $almanac_data_source = "pyephem"
+    #end if
+#end if
+
+{
+    "site": "$station.location",
+    "station_url": "$station.station_url",
+    "version": "$station.version",
+    "belchertown_version": "$belchertown_version",
+    "weewxuptime": "$station.uptime",
+    "serveruptime": "$station.os_uptime",
+    "serverLocale": "$system_locale",
+    "serverLocaleJS": "$system_locale_js",
+    "momentLocaleJS": "$moment_locale_js",
+    "localeEncoding": "$locale_encoding",
+    "station": {
+        "hardware": "$station.hardware",
+        "location": "$station.location",
+        "latitude": "$station.latitude[0] $station.latitude[1]' $station.latitude[2]",
+        "longitude": "$station.longitude[0] $station.longitude[1]' $station.longitude[2]",
+        "latitude_dd": "$station.stn_info.latitude_f",
+        "longitude_dd": "$station.stn_info.longitude_f",
+        "altitude": "$station.altitude",
+        "archive_interval": "#echo $archive_interval_ms / 1000 #",
+        "archive_interval_ms": "$archive_interval_ms"
+    },
+    "extras": {
+        "belchertown_theme": "$Extras.theme",
+        "theme_toggle_enabled": "$Extras.theme_toggle_enabled",
+        "belchertown_locale": "$Extras.belchertown_locale",
+        "reload_hook_images": "$Extras.reload_hook_images",
+        "reload_images_radar": "$Extras.reload_images_radar",
+        "reload_images_hook_asi": "$Extras.reload_images_hook_asi",
+        "reload_images_hook_af": "$Extras.reload_images_hook_af",
+        "reload_images_hook_as": "$Extras.reload_images_hook_as",
+        "reload_images_hook_ac": "$Extras.reload_images_hook_ac",
+        "station_observations": "$Extras.station_observations",
+        "highcharts_homepage_chartgroup": "$Extras.highcharts_homepage_chartgroup",
+        "highcharts_decimal": "$Extras.highcharts_decimal",
+        "highcharts_thousands": "$Extras.highcharts_thousands"
+    },
+    "earthquake": {
+        "time": "$earthquake_time",
+        "place": "$earthquake_place",
+        "latitude": "$earthquake_lat",
+        "longitude": "$earthquake_lon",
+        "magnitude": "$earthquake_magnitude",
+        "url": "$earthquake_url",
+        "distance_away": "$earthquake_distance_away",
+        "distance_label": "$earthquake_distance_label",
+        "bearing": "$earthquake_bearing",
+        "bearing_raw": "$earthquake_bearing_raw",
+        "map": #if $earthquake_map_context##echo json.dumps($earthquake_map_context)##else#null#end if#
+    },
+    "station_observations": {
+        "current": $station_obs_json,
+        "sources": $station_obs_source_json,
+        "unit_switch": $station_obs_unit_json
+    },
+    "unit_rounding": $all_obs_rounding_json,
+    "unit_label": $all_obs_unit_labels_json,
+    "current": {
+        "datetime": "$current.dateTime",
+        #if $current.dateTime.raw is not None
+        "datetime_raw": "$current.dateTime.raw",
+        #else
+        "datetime_raw": null,
+        #end if
+        "epoch": "#echo int( time.time() )#",
+        "outTemp": "$current.outTemp",
+        "outTemp_formatted": "$current.outTemp.toString(addLabel=False, localize=False)",
+        "outTemp_raw": $json.dumps($current.outTemp.degree_C.raw),
+        "outHumidity": "$current.outHumidity",
+        ## TODO: Move inside data to it's own json file, and update ajax functions to correctly pull and parse data.
+        #if $Extras.has_key("aqi_enabled_kiosk") and $Extras.aqi_enabled_kiosk == '0'
+        "inTemp": "$current.inTemp",
+        "inTemp_formatted": "$current.inTemp.toString(addLabel=False, localize=False)",
+        "inTemp_raw": $json.dumps($current.inTemp.degree_C.raw),
+        "inHumidity": "$current.inHumidity",
+        "inHumidity_formatted": "$current.inHumidity.toString(addLabel=False, localize=False)",
+        #end if
+        #if $records_has_app_temp
+        "appTemp": "$current.appTemp",
+        "appTemp_raw": $json.dumps($current.appTemp.degree_C.raw),
+        #end if
+        "windchill": "$current.windchill",
+        "windchill_raw": $json.dumps($current.windchill.degree_C.raw),
+        "heatindex": "$current.heatindex",
+        "heatindex_raw": $json.dumps($current.heatindex.degree_C.raw),
+        "dewpoint": "$current.dewpoint",
+        "dewpoint_raw": $json.dumps($current.dewpoint.degree_C.raw),
+        "barometer": "$current.barometer",
+        "barometer_formatted": "$current.barometer.toString(addLabel=False, localize=False)",
+        "barometer_raw": $json.dumps($current.barometer.hPa.raw),
+        "barometer_trend": "$trend.barometer",
+        "barometer_trend_formatted": "$trend.barometer.toString(addLabel=False, localize=False)",
+        "windspeed": "$current.windSpeed",
+        "windspeed_raw": $json.dumps($current.windSpeed.meter_per_second.raw),
+        "winddir": "$current.windDir",
+        "winddir_raw": $json.dumps($current.windDir.raw),
+        "winddir_formatted": "$current.windDir.toString(addLabel=False, localize=False)",
+        "windGust": "$current.windGust",
+        "windGust_formatted": "$current.windGust.toString(addLabel=False, localize=False)",
+        "windGust_raw": $json.dumps($current.windGust.meter_per_second.raw),
+        "windGustDir": "$current.windGustDir",
+        "windcompass": "$current.windDir.ordinal_compass",
+        #if $records_has_windrun
+        "windrun": "$current.windrun",
+        #end if
+        #if $day.extraTemp1.has_data
+        "extraTemp1": "$current.extraTemp1",
+        "extraTemp1_raw": $json.dumps($current.extraTemp1.degree_C.raw),
+        #end if
+        #if $records_has_uv
+        "uv": "$current.UV",
+        #end if
+        #if $records_has_radiation
+        "solar_radiation": "$current.radiation",
+        #end if
+        ## et is the current archive interval; dayET is today's accumulated ET.
+        #if $day.ET.has_data
+        "et": "$current.ET",
+        "dayET": "$day.ET.sum",
+        "dayET_raw": $json.dumps($day.ET.sum.mm.raw),
+        #end if
+        "rainRate": "$current.rainRate",
+        "rainRate_raw": $json.dumps($current.rainRate.mm_per_hour.raw),
+        "rain": "$current.rain",
+        "rain_raw": $json.dumps($current.rain.mm.raw),
+        "dayRain_raw": $json.dumps($day.rain.sum.mm.raw),
+        "unit_system": "metricwx"
+    },
+    ## Keep numeric raw observations JSON-safe: json.dumps(None) renders null instead of
+    ## leaving an empty Cheetah substitution that invalidates the entire response.
+    "day": {
+        "outTemp": {
+            "max": "$day.outTemp.max",
+            "max_formatted": "$day.outTemp.max.toString(addLabel=False, localize=False)",
+            "max_raw": $json.dumps($day.outTemp.max.degree_C.raw),
+            "maxtime": "$day.outTemp.maxtime",
+            "maxtime_raw": "$day.outTemp.maxtime.raw",
+            "average": "$day.outTemp.avg",
+            "avg_raw": $json.dumps($day.outTemp.avg.degree_C.raw),
+            "min": "$day.outTemp.min",
+            "min_formatted": "$day.outTemp.min.toString(addLabel=False, localize=False)",
+            "min_raw": $json.dumps($day.outTemp.min.degree_C.raw),
+            "mintime": "$day.outTemp.mintime",
+            "mintime_raw": "$day.outTemp.mintime.raw"
+        },
+        #if $records_has_app_temp
+        "appTemp": {
+            "max": "$day.appTemp.max",
+            "max_raw": $json.dumps($day.appTemp.max.degree_C.raw),
+            "maxtime": "$day.appTemp.maxtime",
+            "maxtime_raw": "$day.appTemp.maxtime.raw",
+            "min": "$day.appTemp.min",
+            "min_raw": $json.dumps($day.appTemp.min.degree_C.raw),
+            "mintime": "$day.appTemp.mintime",
+            "mintime_raw": "$day.appTemp.mintime.raw"
+        },
+        #end if
+        "heatindex": {
+            "max": "$day.heatindex.max",
+            "max_raw": $json.dumps($day.heatindex.max.degree_C.raw),
+            "maxtime": "$day.heatindex.maxtime",
+            "maxtime_raw": "$day.heatindex.maxtime.raw"
+        },
+        "windchill": {
+            "max": "$day.windchill.min",
+            "max_raw": $json.dumps($day.windchill.min.degree_C.raw),
+            "maxtime": "$day.windchill.mintime",
+            "maxtime_raw": "$day.windchill.mintime.raw"
+        },
+        "humidity": {
+            "max": "$day.outHumidity.max",
+            "maxtime": "$day.outHumidity.maxtime",
+            "maxtime_raw": "$day.outHumidity.maxtime.raw",
+            "min": "$day.outHumidity.min",
+            "mintime": "$day.outHumidity.mintime",
+            "mintime_raw": "$day.outHumidity.mintime.raw"
+        },
+        "dewpoint": {
+            "max": "$day.dewpoint.max",
+            "max_raw": $json.dumps($day.dewpoint.max.degree_C.raw),
+            "maxtime": "$day.dewpoint.maxtime",
+            "maxtime_raw": "$day.dewpoint.maxtime.raw",
+            "min": "$day.dewpoint.min",
+            "min_raw": $json.dumps($day.dewpoint.min.degree_C.raw),
+            "mintime": "$day.dewpoint.mintime",
+            "mintime_raw": "$day.dewpoint.mintime.raw"
+        },
+        "barometer": {
+            "max": "$day.barometer.max",
+            "max_raw": $json.dumps($day.barometer.max.hPa.raw),
+            "maxtime": "$day.barometer.maxtime",
+            "maxtime_raw": "$day.barometer.maxtime.raw",
+            "min": "$day.barometer.min",
+            "min_raw": $json.dumps($day.barometer.min.hPa.raw),
+            "mintime": "$day.barometer.mintime",
+            "mintime_raw": "$day.barometer.mintime.raw"
+        },
+        "wind": {
+            "max": "$day.wind.max",
+            "max_formatted": "$day.wind.max.toString(addLabel=False, localize=False)",
+            "max_raw": $json.dumps($day.wind.max.meter_per_second.raw),
+            "maxtime": "$day.wind.maxtime",
+            "maxtime_raw": "$day.wind.maxtime.raw",
+            "gustdir": "$day.wind.gustdir",
+            "average": "$day.wind.avg",
+            "avg_raw": $json.dumps($day.wind.avg.meter_per_second.raw),
+            "vectordir": "$day.wind.vecdir",
+            "vectoravg": "$day.wind.vecavg",
+            "rms": "$day.wind.rms"
+            #if $records_has_windrun
+            ,"windrun_maxsum": "$day.windrun.sum",
+            "windrun_maxsum_raw": $json.dumps($day.windrun.sum.km.raw),
+            "windrun_maxsumtime": "$day.windrun.maxtime",
+            "windrun_maxsumtime_raw": "$day.windrun.maxtime.raw",
+            "windrun_max": "$day.windrun.max",
+            "windrun_maxtime": "$day.windrun.maxtime",
+            "windrun_min": "$day.windrun.min",
+            "windrun_mintime": "$day.windrun.mintime",
+            "windrun": "$day.windrun.sum"
+            #end if
+        },
+        "windGust": {
+            "max": "$day.windGust.max",
+            "max_raw": $json.dumps($day.windGust.max.meter_per_second.raw),
+            "maxtime": "$day.windGust.maxtime"
+        },
+        #if $records_has_uv
+        "uv": {
+            "max": "$day.UV.max",
+            "maxtime": "$day.UV.maxtime",
+            "maxtime_raw": "$day.UV.maxtime.raw",
+            "average": "$day.UV.avg",
+            "min": "$day.UV.min",
+            "mintime": "$day.UV.mintime"
+        },
+        #end if
+        #if $records_has_radiation
+        "solar_radiation": {
+            "max": "$day.radiation.max",
+            "maxtime": "$day.radiation.maxtime",
+            "maxtime_raw": "$day.radiation.maxtime.raw",
+            "average": "$day.radiation.avg",
+            "min": "$day.radiation.min",
+            "mintime": "$day.radiation.mintime"
+        },
+        #end if
+        #if $records_has_sunshine_dur
+        "sunshineDur": {
+            "sum": "$day.sunshineDur.sum"
+        },
+        #end if
+        #if $records_has_rain_dur
+        "rainDur": {
+            "sum": "$day.rainDur.sum"
+        },
+        #end if
+        "rain": {
+            "sum": "$day.rain.sum",
+            "sum_raw": $json.dumps($day.rain.sum.mm.raw),
+            "maxsum": "$day.rain.sum",
+            "maxsum_raw": $json.dumps($day.rain.sum.mm.raw),
+            "maxsumtime": "$day.dateTime",
+            "max": "$day.rainRate.max",
+            "max_raw": $json.dumps($day.rainRate.max.mm_per_hour.raw),
+            "maxtime": "$day.rainRate.maxtime",
+            "maxtime_raw": "$day.rainRate.maxtime.raw"
+        }
+    },
+    "week": {
+        "outTemp": {
+            "max": "$span(time_delta=604800).outTemp.max",
+            "max_raw": $json.dumps($span(time_delta=604800).outTemp.max.degree_C.raw),
+            "maxtime": "$span(time_delta=604800).outTemp.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).outTemp.maxtime.raw",
+            "average": "$span(time_delta=604800).outTemp.avg",
+            "avg_raw": $json.dumps($span(time_delta=604800).outTemp.avg.degree_C.raw),
+            "min": "$span(time_delta=604800).outTemp.min",
+            "min_raw": $json.dumps($span(time_delta=604800).outTemp.min.degree_C.raw),
+            "mintime": "$span(time_delta=604800).outTemp.mintime",
+            "mintime_raw": "$span(time_delta=604800).outTemp.mintime.raw"
+        },
+        #if $records_has_app_temp
+        "appTemp": {
+            "max": "$span(time_delta=604800).appTemp.max",
+            "max_raw": $json.dumps($span(time_delta=604800).appTemp.max.degree_C.raw),
+            "maxtime": "$span(time_delta=604800).appTemp.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).appTemp.maxtime.raw",
+            "min": "$span(time_delta=604800).appTemp.min",
+            "min_raw": $json.dumps($span(time_delta=604800).appTemp.min.degree_C.raw),
+            "mintime": "$span(time_delta=604800).appTemp.mintime",
+            "mintime_raw": "$span(time_delta=604800).appTemp.mintime.raw"
+        },
+        #end if
+        "heatindex": {
+            "max": "$span(time_delta=604800).heatindex.max",
+            "max_raw": $json.dumps($span(time_delta=604800).heatindex.max.degree_C.raw),
+            "maxtime": "$span(time_delta=604800).heatindex.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).heatindex.maxtime.raw"
+        },
+        "windchill": {
+            "max": "$span(time_delta=604800).windchill.min",
+            "max_raw": $json.dumps($span(time_delta=604800).windchill.min.degree_C.raw),
+            "maxtime": "$span(time_delta=604800).windchill.mintime",
+            "maxtime_raw": "$span(time_delta=604800).windchill.mintime.raw"
+        },
+        "humidity": {
+            "max": "$span(time_delta=604800).outHumidity.max",
+            "maxtime": "$span(time_delta=604800).outHumidity.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).outHumidity.maxtime.raw",
+            "min": "$span(time_delta=604800).outHumidity.min",
+            "mintime": "$span(time_delta=604800).outHumidity.mintime",
+            "mintime_raw": "$span(time_delta=604800).outHumidity.mintime.raw"
+        },
+        "dewpoint": {
+            "max": "$span(time_delta=604800).dewpoint.max",
+            "max_raw": $json.dumps($span(time_delta=604800).dewpoint.max.degree_C.raw),
+            "maxtime": "$span(time_delta=604800).dewpoint.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).dewpoint.maxtime.raw",
+            "min": "$span(time_delta=604800).dewpoint.min",
+            "min_raw": $json.dumps($span(time_delta=604800).dewpoint.min.degree_C.raw),
+            "mintime": "$span(time_delta=604800).dewpoint.mintime",
+            "mintime_raw": "$span(time_delta=604800).dewpoint.mintime.raw"
+        },
+        "barometer": {
+            "max": "$span(time_delta=604800).barometer.max",
+            "max_raw": $json.dumps($span(time_delta=604800).barometer.max.hPa.raw),
+            "maxtime": "$span(time_delta=604800).barometer.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).barometer.maxtime.raw",
+            "min": "$span(time_delta=604800).barometer.min",
+            "min_raw": $json.dumps($span(time_delta=604800).barometer.min.hPa.raw),
+            "mintime": "$span(time_delta=604800).barometer.mintime",
+            "mintime_raw": "$span(time_delta=604800).barometer.mintime.raw"
+        },
+        "wind": {
+            "max": "$span(time_delta=604800).wind.max",
+            "maxtime": "$span(time_delta=604800).wind.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).wind.maxtime.raw",
+            "gustdir": "$span(time_delta=604800).wind.gustdir",
+            "max_raw": $json.dumps($span(time_delta=604800).wind.max.meter_per_second.raw),
+            "average": "$span(time_delta=604800).wind.avg",
+            "avg_raw": $json.dumps($span(time_delta=604800).wind.avg.meter_per_second.raw),
+            "vectordir": "$span(time_delta=604800).wind.vecdir",
+            "vectoravg": "$span(time_delta=604800).wind.vecavg"
+            #if $records_has_windrun
+            ,"windrun_maxsum": "$week_windrun_maxsum[1]",
+            "windrun_maxsum_raw": $json.dumps($week_windrun_maxsum_raw[1]),
+            "windrun_maxsumtime": "$week_windrun_maxsum_raw[0]",
+            "windrun_maxsumtime_raw": $json.dumps($week_windrun_maxsum_raw[0]),
+            "windrun_max": "$span(time_delta=604800).windrun.max",
+            "windrun_maxtime": "$span(time_delta=604800).windrun.maxtime",
+            "windrun_maxtime_raw": "$span(time_delta=604800).windrun.maxtime.raw",
+            "windrun_min": "$span(time_delta=604800).windrun.min",
+            "windrun_mintime": "$span(time_delta=604800).windrun.mintime"
+            #end if
+        },
+        "windGust": {
+            "max": "$span(time_delta=604800).windGust.max",
+            "maxtime": "$span(time_delta=604800).windGust.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).windGust.maxtime.raw"
+        },
+        #if $records_has_uv
+        "uv": {
+            "max": "$span(time_delta=604800).UV.max",
+            "maxtime": "$span(time_delta=604800).UV.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).UV.maxtime.raw",
+            "average": "$span(time_delta=604800).UV.avg",
+            "min": "$span(time_delta=604800).UV.min",
+            "mintime": "$span(time_delta=604800).UV.mintime"
+        },
+        #end if
+        #if $records_has_radiation
+        "solar_radiation": {
+            "max": "$span(time_delta=604800).radiation.max",
+            "maxtime": "$span(time_delta=604800).radiation.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).radiation.maxtime.raw",
+            "average": "$span(time_delta=604800).radiation.avg",
+            "min": "$span(time_delta=604800).radiation.min",
+            "mintime": "$span(time_delta=604800).radiation.mintime"
+        },
+        #end if
+        #if $records_has_sunshine_dur
+        "sunshineDur": {
+            "sum": "$span(time_delta=604800).sunshineDur.sum"
+        },
+        #end if
+        #if $records_has_rain_dur
+        "rainDur": {
+            "sum": "$span(time_delta=604800).rainDur.sum"
+        },
+        #end if
+        "rain": {
+            "sum": "$span(time_delta=604800).rain.sum",
+            "sum_raw": $json.dumps($span(time_delta=604800).rain.sum.mm.raw),
+            "maxsum": "$week_rainiest_day[1] $unit.label.rain",
+            "maxsum_raw": $json.dumps($week_rainiest_day_raw[1]),
+            "maxsumtime": "$week_rainiest_day[0]",
+            "maxsumtime_raw": "$week_rainiest_day[0]",
+            "max": "$span(time_delta=604800).rainRate.max",
+            "max_raw": $json.dumps($span(time_delta=604800).rainRate.max.mm_per_hour.raw),
+            "maxtime": "$span(time_delta=604800).rainRate.maxtime",
+            "maxtime_raw": "$span(time_delta=604800).rainRate.maxtime.raw"
+        }
+    },
+    "month": {
+        "outTemp": {
+            "max": "$month.outTemp.max",
+            "max_raw": $json.dumps($month.outTemp.max.degree_C.raw),
+            "maxtime": "$month.outTemp.maxtime",
+            "maxtime_raw": "$month.outTemp.maxtime.raw",
+            "average": "$month.outTemp.avg",
+            "avg_raw": $json.dumps($month.outTemp.avg.degree_C.raw),
+            "min": "$month.outTemp.min",
+            "min_raw": $json.dumps($month.outTemp.min.degree_C.raw),
+            "mintime": "$month.outTemp.mintime",
+            "mintime_raw": "$month.outTemp.mintime.raw"
+        },
+        #if $records_has_app_temp
+        "appTemp": {
+            "max": "$month.appTemp.max",
+            "max_raw": $json.dumps($month.appTemp.max.degree_C.raw),
+            "maxtime": "$month.appTemp.maxtime",
+            "maxtime_raw": "$month.appTemp.maxtime.raw",
+            "min": "$month.appTemp.min",
+            "min_raw": $json.dumps($month.appTemp.min.degree_C.raw),
+            "mintime": "$month.appTemp.mintime",
+            "mintime_raw": "$month.appTemp.mintime.raw"
+        },
+        #end if
+        "heatindex": {
+            "max": "$month.heatindex.max",
+            "max_raw": $json.dumps($month.heatindex.max.degree_C.raw),
+            "maxtime": "$month.heatindex.maxtime",
+            "maxtime_raw": "$month.heatindex.maxtime.raw"
+        },
+        "windchill": {
+            "max": "$month.windchill.min",
+            "max_raw": $json.dumps($month.windchill.min.degree_C.raw),
+            "maxtime": "$month.windchill.mintime",
+            "maxtime_raw": "$month.windchill.mintime.raw"
+        },
+        "humidity": {
+            "max": "$month.outHumidity.max",
+            "maxtime": "$month.outHumidity.maxtime",
+            "maxtime_raw": "$month.outHumidity.maxtime.raw",
+            "min": "$month.outHumidity.min",
+            "mintime": "$month.outHumidity.mintime",
+            "mintime_raw": "$month.outHumidity.mintime.raw"
+        },
+        "dewpoint": {
+            "max": "$month.dewpoint.max",
+            "max_raw": $json.dumps($month.dewpoint.max.degree_C.raw),
+            "maxtime": "$month.dewpoint.maxtime",
+            "maxtime_raw": "$month.dewpoint.maxtime.raw",
+            "min": "$month.dewpoint.min",
+            "min_raw": $json.dumps($month.dewpoint.min.degree_C.raw),
+            "mintime": "$month.dewpoint.mintime",
+            "mintime_raw": "$month.dewpoint.mintime.raw"
+        },
+        "barometer": {
+            "max": "$month.barometer.max",
+            "max_raw": $json.dumps($month.barometer.max.hPa.raw),
+            "maxtime": "$month.barometer.maxtime",
+            "maxtime_raw": "$month.barometer.maxtime.raw",
+            "min": "$month.barometer.min",
+            "min_raw": $json.dumps($month.barometer.min.hPa.raw),
+            "mintime": "$month.barometer.mintime",
+            "mintime_raw": "$month.barometer.mintime.raw"
+        },
+        "wind": {
+            "max": "$month.wind.max",
+            "maxtime": "$month.wind.maxtime",
+            "maxtime_raw": "$month.wind.maxtime.raw",
+            "max_raw": $json.dumps($month.wind.max.meter_per_second.raw),
+            "gustdir": "$month.wind.gustdir",
+            "average": "$month.wind.avg",
+            "avg_raw": $json.dumps($month.wind.avg.meter_per_second.raw),
+            "vectordir": "$month.wind.vecdir",
+            "vectoravg": "$month.wind.vecavg",
+            "rms": "$month.wind.rms"
+            #if $records_has_windrun
+            ,"windrun_maxsum": "$month_windrun_maxsum[1]",
+            "windrun_maxsum_raw": $json.dumps($month_windrun_maxsum_raw[1]),
+            "windrun_maxsumtime": "$month_windrun_maxsum_raw[0]",
+            "windrun_maxsumtime_raw": $json.dumps($month_windrun_maxsum_raw[0]),
+            "windrun_max": "$month.windrun.max",
+            "windrun_maxtime": "$month.windrun.maxtime",
+            "windrun_maxtime_raw": "$month.windrun.maxtime.raw",
+            "windrun_min": "$month.windrun.min",
+            "windrun_mintime": "$month.windrun.mintime"
+            #end if
+        },
+        "windGust": {
+            "max": "$month.windGust.max",
+            "maxtime": "$month.windGust.maxtime",
+            "maxtime_raw": "$month.windGust.maxtime.raw"
+        },
+        #if $records_has_uv
+        "uv": {
+            "max": "$month.UV.max",
+            "maxtime": "$month.UV.maxtime",
+            "maxtime_raw": "$month.UV.maxtime.raw",
+            "average": "$month.UV.avg",
+            "min": "$month.UV.min",
+            "mintime": "$month.UV.mintime"
+        },
+        #end if
+        #if $records_has_sunshine_dur
+        "sunshineDur": {
+            "sum": "$month.sunshineDur.sum"
+        },
+        #end if
+        #if $records_has_radiation
+        "solar_radiation": {
+            "max": "$month.radiation.max",
+            "maxtime": "$month.radiation.maxtime",
+            "maxtime_raw": "$month.radiation.maxtime.raw",
+            "average": "$month.radiation.avg",
+            "min": "$month.radiation.min",
+            "mintime": "$month.radiation.mintime"
+        },
+        #end if
+        #if $records_has_rain_dur
+        "rainDur": {
+            "sum": "$month.rainDur.sum"
+        },
+        #end if
+        "rain": {
+            "sum": "$month.rain.sum",
+            "sum_raw": $json.dumps($month.rain.sum.mm.raw),
+            "maxsum": "$month.rain.maxsum",
+            "maxsum_raw": $json.dumps($month.rain.maxsum.mm.raw),
+            "maxsumtime": "$month.rain.maxsumtime",
+            "maxsumtime_raw": "$month.rain.maxsumtime.raw",
+            "max": "$month.rainRate.max",
+            "max_raw": $json.dumps($month.rainRate.max.mm_per_hour.raw),
+            "maxtime": "$month.rainRate.maxtime",
+            "maxtime_raw": "$month.rainRate.maxtime.raw"
+        }
+    },
+    "year": {
+        "outTemp": {
+            "max": "$year.outTemp.max",
+            "max_raw": $json.dumps($year.outTemp.max.degree_C.raw),
+            "maxtime": "$year.outTemp.maxtime",
+            "maxtime_raw": "$year.outTemp.maxtime.raw",
+            "min": "$year.outTemp.min",
+            "min_raw": $json.dumps($year.outTemp.min.degree_C.raw),
+            "mintime": "$year.outTemp.mintime"
+        },
+        #if $records_has_app_temp
+        "appTemp": {
+            "max": "$year.appTemp.max",
+            "max_raw": $json.dumps($year.appTemp.max.degree_C.raw),
+            "maxtime": "$year.appTemp.maxtime",
+            "maxtime_raw": "$year.appTemp.maxtime.raw",
+            "min": "$year.appTemp.min",
+            "min_raw": $json.dumps($year.appTemp.min.degree_C.raw),
+            "mintime": "$year.appTemp.mintime",
+            "mintime_raw": "$year.appTemp.mintime.raw"
+        },
+        #end if
+        "heatindex": {
+            "max": "$year.heatindex.max",
+            "max_raw": $json.dumps($year.heatindex.max.degree_C.raw),
+            "maxtime": "$year.heatindex.maxtime",
+            "maxtime_raw": "$year.heatindex.maxtime.raw"
+        },
+        "windchill": {
+            "max": "$year.windchill.min",
+            "max_raw": $json.dumps($year.windchill.min.degree_C.raw),
+            "maxtime": "$year.windchill.mintime",
+            "maxtime_raw": "$year.windchill.mintime.raw"
+        },
+        "humidity": {
+            "max": "$year.outHumidity.max",
+            "maxtime": "$year.outHumidity.maxtime",
+            "min": "$year.outHumidity.min",
+            "mintime": "$year.outHumidity.mintime"
+        },
+        "dewpoint": {
+            "max": "$year.dewpoint.max",
+            "max_raw": $json.dumps($year.dewpoint.max.degree_C.raw),
+            "maxtime": "$year.dewpoint.maxtime",
+            "maxtime_raw": "$year.dewpoint.maxtime.raw",
+            "min": "$year.dewpoint.min",
+            "min_raw": $json.dumps($year.dewpoint.min.degree_C.raw),
+            "mintime": "$year.dewpoint.mintime",
+            "mintime_raw": "$year.dewpoint.mintime.raw"
+        },
+        "barometer": {
+            "max": "$year.barometer.max",
+            "max_raw": $json.dumps($year.barometer.max.hPa.raw),
+            "maxtime": "$year.barometer.maxtime",
+            "maxtime_raw": "$year.barometer.maxtime.raw",
+            "min": "$year.barometer.min",
+            "min_raw": $json.dumps($year.barometer.min.hPa.raw),
+            "mintime": "$year.barometer.mintime",
+            "mintime_raw": "$year.barometer.mintime.raw"
+        },
+        "wind": {
+            "max": "$year.wind.max",
+            "max_raw": $json.dumps($year.wind.max.meter_per_second.raw),
+            "maxtime": "$year.wind.maxtime",
+            "gustdir": "$year.wind.gustdir",
+            "average": "$year.wind.avg",
+            "avg_raw": $json.dumps($year.wind.avg.meter_per_second.raw),
+            "vectordir": "$year.wind.vecdir",
+            "vectoravg": "$year.wind.vecavg",
+            "rms": "$year.wind.rms"
+            #if $records_has_windrun
+            ,"windrun_max": "$year.windrun.max",
+            "windrun_maxtime": "$year.windrun.maxtime",
+            "windrun_min": "$year.windrun.min",
+            "windrun_mintime": "$year.windrun.mintime"
+            #end if
+        },
+        #if $records_has_uv
+        "uv": {
+            "max": "$year.UV.max",
+            "maxtime": "$year.UV.maxtime",
+            "average": "$year.UV.avg",
+            "min": "$year.UV.min",
+            "mintime": "$year.UV.mintime"
+        },
+        #end if
+        #if $records_has_sunshine_dur
+        "sunshineDur": {
+            "sum": "$year.sunshineDur.sum"
+        },
+        #end if
+        #if $records_has_radiation
+        "solar_radiation": {
+            "max": "$year.radiation.max",
+            "maxtime": "$year.radiation.maxtime",
+            "average": "$year.radiation.avg",
+            "min": "$year.radiation.min",
+            "mintime": "$year.radiation.mintime"
+        },
+        #end if
+        #if $records_has_rain_dur
+        "rainDur": {
+            "sum": "$year.rainDur.sum"
+        },
+        #end if
+        "rain": {
+            "sum": "$year.rain.sum",
+            "sum_raw": $json.dumps($year.rain.sum.mm.raw),
+            "max": "$year.rainRate.max",
+            "max_raw": $json.dumps($year.rainRate.max.mm_per_hour.raw),
+            "maxtime": "$year.rainRate.maxtime"
+        }
+    },
+    "yesterday": {
+        "outTemp": {
+            "max": "$yesterday.outTemp.max",
+            "max_raw": $json.dumps($yesterday.outTemp.max.degree_C.raw),
+            "maxtime": "$yesterday.outTemp.maxtime",
+            "maxtime_raw": "$yesterday.outTemp.maxtime.raw",
+            "average": "$yesterday.outTemp.avg",
+            "avg_raw": $json.dumps($yesterday.outTemp.avg.degree_C.raw),
+            "min": "$yesterday.outTemp.min",
+            "min_raw": $json.dumps($yesterday.outTemp.min.degree_C.raw),
+            "mintime": "$yesterday.outTemp.mintime",
+            "mintime_raw": "$yesterday.outTemp.mintime.raw"
+        },
+        #if $records_has_app_temp
+        "appTemp": {
+            "max": "$yesterday.appTemp.max",
+            "max_raw": $json.dumps($yesterday.appTemp.max.degree_C.raw),
+            "maxtime": "$yesterday.appTemp.maxtime",
+            "maxtime_raw": "$yesterday.appTemp.maxtime.raw",
+            "min": "$yesterday.appTemp.min",
+            "min_raw": $json.dumps($yesterday.appTemp.min.degree_C.raw),
+            "mintime": "$yesterday.appTemp.mintime",
+            "mintime_raw": "$yesterday.appTemp.mintime.raw"
+        },
+        #end if
+        "heatindex": {
+            "max": "$yesterday.heatindex.max",
+            "max_raw": $json.dumps($yesterday.heatindex.max.degree_C.raw),
+            "maxtime": "$yesterday.heatindex.maxtime",
+            "maxtime_raw": "$yesterday.heatindex.maxtime.raw"
+        },
+        "windchill": {
+            "max": "$yesterday.windchill.min",
+            "max_raw": $json.dumps($yesterday.windchill.min.degree_C.raw),
+            "maxtime": "$yesterday.windchill.mintime",
+            "maxtime_raw": "$yesterday.windchill.mintime.raw"
+        },
+        "humidity": {
+            "max": "$yesterday.outHumidity.max",
+            "maxtime": "$yesterday.outHumidity.maxtime",
+            "maxtime_raw": "$yesterday.outHumidity.maxtime.raw",
+            "min": "$yesterday.outHumidity.min",
+            "mintime": "$yesterday.outHumidity.mintime",
+            "mintime_raw": "$yesterday.outHumidity.mintime.raw"
+        },
+        "dewpoint": {
+            "max": "$yesterday.dewpoint.max",
+            "max_raw": $json.dumps($yesterday.dewpoint.max.degree_C.raw),
+            "maxtime": "$yesterday.dewpoint.maxtime",
+            "maxtime_raw": "$yesterday.dewpoint.maxtime.raw",
+            "min": "$yesterday.dewpoint.min",
+            "min_raw": $json.dumps($yesterday.dewpoint.min.degree_C.raw),
+            "mintime": "$yesterday.dewpoint.mintime",
+            "mintime_raw": "$yesterday.dewpoint.mintime.raw"
+        },
+        "barometer": {
+            "max": "$yesterday.barometer.max",
+            "max_raw": $json.dumps($yesterday.barometer.max.hPa.raw),
+            "maxtime": "$yesterday.barometer.maxtime",
+            "maxtime_raw": "$yesterday.barometer.maxtime.raw",
+            "min": "$yesterday.barometer.min",
+            "min_raw": $json.dumps($yesterday.barometer.min.hPa.raw),
+            "mintime": "$yesterday.barometer.mintime",
+            "mintime_raw": "$yesterday.barometer.mintime.raw"
+        },
+        "wind": {
+            "max": "$yesterday.wind.max",
+            "maxtime": "$yesterday.wind.maxtime",
+            "maxtime_raw": "$yesterday.wind.maxtime.raw",
+            "max_raw": $json.dumps($yesterday.wind.max.meter_per_second.raw),
+            "average": "$yesterday.wind.avg",
+            "avg_raw": $json.dumps($yesterday.wind.avg.meter_per_second.raw)
+            #if $records_has_windrun
+            ,"windrun_maxsum": "$yesterday.windrun.sum"
+            ,"windrun_maxsum_raw": $json.dumps($yesterday.windrun.sum.km.raw)
+            ,"windrun_maxsumtime": "$yesterday.windrun.maxtime"
+            ,"windrun_maxsumtime_raw": "$yesterday.windrun.maxtime.raw"
+            ,"windrun": "$yesterday.windrun.sum"
+            ,"windrun_maxtime": "$yesterday.windrun.maxtime"
+            ,"windrun_maxtime_raw": "$yesterday.windrun.maxtime.raw"
+            #end if
+        },
+        "windGust": {
+            "max": "$yesterday.windGust.max",
+            "maxtime": "$yesterday.windGust.maxtime",
+            "maxtime_raw": "$yesterday.windGust.maxtime.raw"
+        },
+        #if $records_has_uv
+        "uv": {
+            "max": "$yesterday.UV.max",
+            "maxtime": "$yesterday.UV.maxtime",
+            "maxtime_raw": "$yesterday.UV.maxtime.raw",
+            "average": "$yesterday.UV.avg"
+        },
+        #end if
+        #if $records_has_radiation
+        "solar_radiation": {
+            "max": "$yesterday.radiation.max",
+            "maxtime": "$yesterday.radiation.maxtime",
+            "maxtime_raw": "$yesterday.radiation.maxtime.raw",
+            "average": "$yesterday.radiation.avg"
+        },
+        #end if
+        #if $records_has_sunshine_dur
+        "sunshineDur": {
+            "sum": "$yesterday.sunshineDur.sum"
+        },
+        #end if
+        #if $records_has_rain_dur
+        "rainDur": {
+            "sum": "$yesterday.rainDur.sum"
+        },
+        #end if
+        "rain": {
+            "sum": "$yesterday.rain.sum",
+            "sum_raw": $json.dumps($yesterday.rain.sum.mm.raw),
+            "maxsum": "$yesterday.rain.sum",
+            "maxsum_raw": $json.dumps($yesterday.rain.sum.mm.raw),
+            "maxsumtime": "$yesterday.dateTime",
+            "max": "$yesterday.rainRate.max",
+            "max_raw": $json.dumps($yesterday.rainRate.max.mm_per_hour.raw),
+            "maxtime": "$yesterday.rainRate.maxtime",
+            "maxtime_raw": "$yesterday.rainRate.maxtime.raw"
+        }
+    },
+    "last365": {
+        "outTemp": {
+            "max": "$span(time_delta=31536000).outTemp.max",
+            "max_raw": $json.dumps($span(time_delta=31536000).outTemp.max.degree_C.raw),
+            "maxtime": "$span(time_delta=31536000).outTemp.maxtime",
+            "maxtime_raw": "$span(time_delta=31536000).outTemp.maxtime.raw",
+            "min": "$span(time_delta=31536000).outTemp.min",
+            "min_raw": $json.dumps($span(time_delta=31536000).outTemp.min.degree_C.raw),
+            "average": "$span(time_delta=31536000).outTemp.avg"
+        },
+        "wind": {
+            "max": "$span(time_delta=31536000).wind.max",
+            "max_raw": $json.dumps($span(time_delta=31536000).wind.max.meter_per_second.raw),
+            "average": "$span(time_delta=31536000).wind.avg",
+            "avg_raw": $json.dumps($span(time_delta=31536000).wind.avg.meter_per_second.raw)
+        },
+        #if $records_has_uv
+        "uv": {
+            "max": "$span(time_delta=31536000).UV.max",
+            "average": "$span(time_delta=31536000).UV.avg"
+        },
+        #end if
+        #if $records_has_radiation
+        "solar_radiation": {
+            "max": "$span(time_delta=31536000).radiation.max",
+            "average": "$span(time_delta=31536000).radiation.avg"
+        },
+        #end if
+        #if $records_has_sunshine_dur
+        "sunshineDur": {
+            "sum": "$span(time_delta=31536000).sunshineDur.sum"
+        },
+        #end if
+        #if $records_has_rain_dur
+        "rainDur": {
+            "sum": "$span(time_delta=31536000).rainDur.sum"
+        },
+        #end if
+        "rain": {
+            "sum": "$span(time_delta=31536000).rain.sum",
+            "sum_raw": $json.dumps($span(time_delta=31536000).rain.sum.mm.raw),
+            "max": "$span(time_delta=31536000).rainRate.max",
+            "max_raw": $json.dumps($span(time_delta=31536000).rainRate.max.mm_per_hour.raw)
+        }
+    },
+    "alltime": {
+        "outTemp": {
+            "max": "$alltime.outTemp.max",
+            "max_raw": $json.dumps($alltime.outTemp.max.degree_C.raw),
+            "maxtime": "$alltime.outTemp.maxtime",
+            "maxtime_raw": "$alltime.outTemp.maxtime.raw",
+            "min": "$alltime.outTemp.min",
+            "min_raw": $json.dumps($alltime.outTemp.min.degree_C.raw)
+        },
+        "wind": {
+            "max": "$alltime.wind.max",
+            "max_raw": $json.dumps($alltime.wind.max.meter_per_second.raw),
+            "average": "$alltime.wind.avg",
+            "avg_raw": $json.dumps($alltime.wind.avg.meter_per_second.raw)
+            #if $records_has_windrun
+            ,"windrun": "$alltime.windrun.sum"
+            #end if
+        },
+        #if $records_has_uv
+        "uv": {
+            "max": "$alltime.UV.max",
+            "average": "$alltime.UV.avg"
+        },
+        #end if
+        #if $records_has_radiation
+        "solar_radiation": {
+            "max": "$alltime.radiation.max",
+            "average": "$alltime.radiation.avg"
+        },
+        #end if
+        "rain": {
+            "sum": "$alltime.rain.sum",
+            "sum_raw": $json.dumps($alltime.rain.sum.mm.raw),
+            "max": "$alltime.rainRate.max",
+            "max_raw": $json.dumps($alltime.rainRate.max.mm_per_hour.raw)
+        }
+    },
+    "almanac": {
+        "source": "$almanac_data_source",
+        "sunrise": "$almanac.sunrise",
+        "sunrise_epoch": "$almanac.sunrise.raw",
+        #if $almanac.sunrise.raw is not None
+        "sunrise_hour": "#echo datetime.datetime.fromtimestamp($almanac.sunrise.raw).strftime('%H')#",
+        "sunrise_minute": "#echo datetime.datetime.fromtimestamp($almanac.sunrise.raw).strftime('%M')#",
+        #else
+        "sunrise_hour": "0",
+        "sunrise_minute": "0",
+        #end if
+        "sunset": "$almanac.sunset",
+        "sunset_epoch": "$almanac.sunset.raw",
+        #if $almanac.sunset.raw is not None
+        "sunset_hour": "#echo datetime.datetime.fromtimestamp($almanac.sunset.raw).strftime('%H')#",
+        "sunset_minute": "#echo datetime.datetime.fromtimestamp($almanac.sunset.raw).strftime('%M')#",
+        #else
+        "sunset_hour": "0",
+        "sunset_minute": "0",
+        #end if
+        "diagram": {
+            "hasExtras": #if $almanac.hasExtras#true#else#false#end if#,
+            "sun": {
+                "azimuth": #if $sun_az_attr != ""##echo $sun_az_attr##else#null#end if#,
+                "altitude": #if $sun_alt_attr != ""##echo $sun_alt_attr##else#null#end if#,
+                "x_offset": #if $sun_x_offset_attr != ""##echo $sun_x_offset_attr##else#0#end if#,
+                "rise_epoch": #if $sun_rise_epoch_attr != ""##echo $sun_rise_epoch_attr##else#null#end if#,
+                "set_epoch": #if $sun_set_epoch_attr != ""##echo $sun_set_epoch_attr##else#null#end if#,
+                "track_points": "$sun_track_points_attr",
+                "path_d": "$sun_track_path_attr",
+                "rise": {
+                    "azimuth": #if $sun_rise_az_attr != ""##echo $sun_rise_az_attr##else#null#end if#,
+                    "altitude": #if $sun_rise_alt_attr != ""##echo $sun_rise_alt_attr##else#null#end if#
+                },
+                "transit": {
+                    "azimuth": #if $sun_transit_az_attr != ""##echo $sun_transit_az_attr##else#null#end if#,
+                    "altitude": #if $sun_transit_alt_attr != ""##echo $sun_transit_alt_attr##else#null#end if#
+                },
+                "set": {
+                    "azimuth": #if $sun_set_az_attr != ""##echo $sun_set_az_attr##else#null#end if#,
+                    "altitude": #if $sun_set_alt_attr != ""##echo $sun_set_alt_attr##else#null#end if#
+                }
+            },
+            "moon": {
+                "azimuth": #if $moon_az_attr != ""##echo $moon_az_attr##else#null#end if#,
+                "altitude": #if $moon_alt_attr != ""##echo $moon_alt_attr##else#null#end if#,
+                "x_offset": #if $moon_x_offset_attr != ""##echo $moon_x_offset_attr##else#0#end if#,
+                "rise_epoch": #if $moon_rise_epoch_attr != ""##echo $moon_rise_epoch_attr##else#null#end if#,
+                "set_epoch": #if $moon_set_epoch_attr != ""##echo $moon_set_epoch_attr##else#null#end if#,
+                "track_points": "$moon_track_points_attr",
+                "path_d": "$moon_track_path_attr",
+                "rise": {
+                    "azimuth": #if $moon_rise_az_attr != ""##echo $moon_rise_az_attr##else#null#end if#,
+                    "altitude": #if $moon_rise_alt_attr != ""##echo $moon_rise_alt_attr##else#null#end if#
+                },
+                "transit": {
+                    "azimuth": #if $moon_transit_az_attr != ""##echo $moon_transit_az_attr##else#null#end if#,
+                    "altitude": #if $moon_transit_alt_attr != ""##echo $moon_transit_alt_attr##else#null#end if#
+                },
+                "set": {
+                    "azimuth": #if $moon_set_az_attr != ""##echo $moon_set_az_attr##else#null#end if#,
+                    "altitude": #if $moon_set_alt_attr != ""##echo $moon_set_alt_attr##else#null#end if#
+                }
+            },
+            "centering_mode": "$diagram_centering_mode_attr",
+            "current_ts": #if $diagram_current_ts_attr != ""##echo $diagram_current_ts_attr##else#null#end if#,
+            "current_x": #if $diagram_current_x_attr != ""##echo $diagram_current_x_attr##else#null#end if#
+        },
+        #if $almanac.hasExtras
+        "almanac_extras_modal_html": "<div id='celestial_widget' class='widget'> <div class='widget_contents'> <div id='celestial_details'> <div class='celestial_source_note'><small>$obs.label.data_source: WeeWX <code>$almanac</code> $obs.label.almanac_data_source_suffix</small></div> <div class='celestial_body'> <table class='celestial'> <tr><th>&#9728; $obs.label.sun</th><th></th></tr> <tr> <td class='label'>$obs.label.start_civil_twilight</td> <td class='data'>$almanac(horizon=-6).sun(use_center=1).rise</td> </tr> <tr> <td class='label'>$obs.label.rise</td> <td class='data'>$almanac.sun.rise.format(None_string=$sun_None)</td> </tr> <tr> <td class='label'>$obs.label.transit</td> <td class='data'>$almanac.sun.transit</td> </tr> <tr> <td class='label'>$obs.label.set</td> <td class='data'>$almanac.sun.set.format(None_string=$sun_None)</td> </tr> <tr> <td class='label'>$obs.label.end_civil_twilight</td> <td class='data'>$almanac(horizon=-6).sun(use_center=1).set</td> </tr> <tr> <td class='label'>$obs.label.azimuth</td> <td class='data'>$sun_azimuth</td> </tr> <tr> <td class='label'>$obs.label.altitude</td> <td class='data'>$sun_altitude</td> </tr> <tr> <td class='label'>$obs.label.right_ascension</td> <td class='data'>$sun_ra</td> </tr> <tr> <td class='label'>$obs.label.declination</td> <td class='data'>$sun_dec</td> </tr>#slurp
+        #if $almanac.next_equinox.raw < $almanac.next_solstice.raw
+        ## The equinox is before the solstice. Display them in order.
+        <tr><td class='label'>$obs.label.equinox</td><td class='data'>$almanac.next_equinox</td></tr><tr><td class='label'>$obs.label.solstice</td><td class='data'>$almanac.next_solstice</td></tr>#slurp
+        #else
+        ## The solstice is before the equinox. Display them in order.
+        <tr><td class='label'>$obs.label.solstice</td><td class='data'>$almanac.next_solstice</td></tr><tr><td class='label'>$obs.label.equinox</td><td class='data'>$almanac.next_equinox</td></tr>#slurp
+        #end if
+        <tr> <td class='label'>$obs.label.total_daylight</td> <td class='data'>$daylight_str</td> </tr> </table> </div> <div class='celestial_body'> <table class='celestial'> <tr><th>&#9789; $obs.label.moon</th><th></th></tr> <tr><td class='label'>&nbsp;</td><td class='data'>&nbsp;</td></tr> <tr> <td class='label'>$obs.label.rise</td> <td class='data'>$almanac.moon.rise</td> </tr> <tr> <td class='label'>$obs.label.transit</td> <td class='data'>$almanac.moon.transit</td> </tr> <tr> <td class='label'>$obs.label.set</td> <td class='data'>$almanac.moon.set</td> </tr> <tr><td class='label'>&nbsp;</td><td class='data'>&nbsp;</td></tr> <tr> <td class='label'>$obs.label.azimuth</td> <td class='data'>$moon_azimuth</td> </tr> <tr> <td class='label'>$obs.label.altitude</td> <td class='data'>$moon_altitude</td> </tr> <tr> <td class='label'>$obs.label.right_ascension</td> <td class='data'>$moon_ra</td> </tr> <tr> <td class='label'>$obs.label.declination</td> <td class='data'>$moon_dec</td> </tr>#slurp
+        #if $almanac.next_full_moon.raw < $almanac.next_new_moon.raw
+        <tr> <td class='label'>$obs.label.full_moon</td> <td class='data'>$almanac.next_full_moon</td> </tr> <tr> <td class='label'>$obs.label.new_moon</td> <td class='data'>$almanac.next_new_moon</td> </tr>#slurp
+        #else
+        <tr> <td class='label'>$obs.label.new_moon</td> <td class='data'>$almanac.next_new_moon</td> </tr> <tr> <td class='label'>$obs.label.full_moon</td> <td class='data'>$almanac.next_full_moon</td> </tr>#slurp
+        #end if
+        <tr> <td class='label'>$obs.label.phase</td> <td class='data'>$almanac.moon_phase<br/> $almanac.moon_fullness% $obs.label.full</td> </tr> </table> </div> </div> </div> </div> <div class='clear'></div><div class='almanac_last_updated'></div>",
+        #end if
+        "moon": {
+            "moon_fullness": "$almanac.moon_fullness",
+            "moon_phase": "$almanac.moon_phase",
+            "moon_index": "$almanac.moon_index",
+            "moon_tilt": #if $moon_tilt_degrees is not None##echo "%.6f" % $moon_tilt_degrees##else#null#end if#,
+            "moon_age": "$moon_age_display",
+            "moon_age_days": #if $moon_age_days is not None##echo "%.6f" % $moon_age_days##else#null#end if#,
+            "moon_rise": "$almanac.moon.rise",
+            "moon_rise_epoch": #if $moon_rise_epoch_attr != ""##echo $moon_rise_epoch_attr##else#null#end if#,
+            "moon_set": "$almanac.moon.set",
+            "moon_set_epoch": #if $moon_set_epoch_attr != ""##echo $moon_set_epoch_attr##else#null#end if#
+        }
+    }
+}

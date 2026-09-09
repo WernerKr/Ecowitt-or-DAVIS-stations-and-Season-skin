@@ -1,0 +1,149 @@
+#errorCatcher Echo
+#encoding UTF-8
+#set global $page = "reports"
+
+#include "header.html.tmpl"
+
+<script>
+    (function() {
+        var availableNoaaFiles = $available_noaa_files_json;
+        var defaultNoaaFile = $default_noaa_file_json;
+        var noaaRelativeDir = $noaa_relative_dir_json;
+        var availableNoaaFileSet = {};
+        for (var i = 0; i < availableNoaaFiles.length; i++) {
+            availableNoaaFileSet[availableNoaaFiles[i]] = true;
+        }
+
+        function buildNoaaUrl(filename) {
+            return '$relative_url/' + encodeURIComponent(noaaRelativeDir) + '/' + encodeURIComponent(filename);
+        }
+
+        function resolveNoaaFile(year, month) {
+            var candidate = "";
+            if (/^\d{4}$/.test(year || "")) {
+                if (/^\d{2}$/.test(month || "")) {
+                    candidate = "NOAA-" + year + "-" + month + ".txt";
+                } else if (month === null) {
+                    candidate = "NOAA-" + year + ".txt";
+                }
+            }
+
+            if (candidate && availableNoaaFileSet[candidate]) {
+                return candidate;
+            }
+            if (defaultNoaaFile && availableNoaaFileSet[defaultNoaaFile]) {
+                return defaultNoaaFile;
+            }
+            return "";
+        }
+
+        function setReportText(message) {
+            var noaaContents = document.getElementById("noaa_contents");
+            if (noaaContents) {
+                noaaContents.textContent = message;
+            }
+        }
+
+        function setDirectLink(url) {
+            var directLink = document.querySelector(".noaa_direct_link");
+            if (!directLink) {
+                return;
+            }
+            if (url) {
+                directLink.setAttribute("href", url);
+                directLink.removeAttribute("aria-disabled");
+            } else {
+                directLink.removeAttribute("href");
+                directLink.setAttribute("aria-disabled", "true");
+            }
+        }
+
+        function decodeNoaaContent(rawContent) {
+            return rawContent
+                .replace(/<sup>/g, '')
+                .replace(/<\/sup>/g, '')
+                .replace(/&deg;/g, '\u00b0')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+        }
+
+        // Change the div to the right NOAA file.
+        function populatePre(url, filename) {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function() {
+                var rawContent = this.responseText || "";
+                var successfulStatus = (this.status >= 200 && this.status < 300) ||
+                    (this.status === 0 && rawContent !== "");
+
+                if (!successfulStatus) {
+                    setDirectLink("");
+                    setReportText("NOAA report " + filename + " is unavailable (HTTP " + this.status + ").");
+                    return;
+                }
+                if (/^\s*(?:<!doctype\s+html|<html[\s>])/i.test(rawContent)) {
+                    setDirectLink("");
+                    setReportText("NOAA report " + filename + " returned an HTML error page instead of report text.");
+                    return;
+                }
+
+                setReportText(decodeNoaaContent(rawContent));
+            };
+            xhr.onerror = function() {
+                setDirectLink("");
+                setReportText("NOAA report " + filename + " could not be loaded.");
+            };
+            xhr.open('GET', url);
+            xhr.send();
+        }
+
+        function initReportsPage() {
+            var params = new URLSearchParams(window.location.search);
+            var filename = resolveNoaaFile(params.get("yr"), params.get("mo"));
+            var url = filename ? buildNoaaUrl(filename) : "";
+
+            // Change the direct href link.
+            setDirectLink(url);
+
+            if (!filename) {
+                setReportText("No NOAA reports are available.");
+                return;
+            }
+
+            populatePre(url, filename);
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initReportsPage);
+        } else {
+            initReportsPage();
+        }
+    })();
+</script>
+
+<div class="site-inner">
+    <main class="content">
+        <article class="weewx reports" itemscope itemtype="https://schema.org/CreativeWork">
+
+            #include "page-header.inc"
+
+            <div class="noaa_reports">
+                <H1>$obs.label.reports_title</H1>
+                <div class="row">
+                    <div class="col-md-12 wx-year-row">
+                        $noaa_header_html
+                    </div>
+                </div>
+                <a href="#" class="noaa_direct_link">$obs.label.reports_click_here_link</a> $obs.label.reports_view_more
+                <br><br>
+                <div class="noaa_report_container">
+                    <pre id="noaa_contents"></pre>
+                </div> <!-- END noaa_report_container -->
+            </div> <!-- END noaa_reports -->
+
+        </article>
+    </main>
+</div>
+
+
+#include "footer.html.tmpl"

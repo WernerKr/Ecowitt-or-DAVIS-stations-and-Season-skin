@@ -1,0 +1,93 @@
+#errorCatcher Echo
+#encoding UTF-8
+#set global $page = "clima"
+
+#import datetime
+#from datetime import timedelta
+
+    #include "header.html.tmpl"
+
+##
+#set $YM="%Y %m"
+#set $D="%d. %m"
+#set $DM="%d. %b"
+#set $M="%b"
+#set $Time="%H:%M"
+#set $DTime="%d.%m.%Y %H:%M"
+#set $NODAY="-"
+#set $Temp="%6.1f"
+#set $Wind="%6.0f"
+#set $Dir="%6.0f"
+#set $Count="%6d"
+#set $Trace=(.1, "mm")
+#set $NONE="---"
+#set $Rain="%6.2f"
+##
+  
+<div class="table-container">
+  <main class="content">
+    <article class="weewx clima" itemscope itemtype="https://schema.org/CreativeWork">
+    #include "page-header.inc"
+      <br>
+      <h3>Klimatologische Werte f&uuml;r $month.dateTime.format("%B") $year_name</h3>
+      <br>
+      <div class="row records-table">
+        <table id="t1" class="table-striped">
+          <tbody>
+            <tr>
+              <td class="records-header-alltime-small" width="5%">Datum</td>
+              <td class="records-header-alltime-small" width="11%">Au&szlig;entemperatur</td>
+              <td class="records-header-alltime-small" width="11%">Max. Hitze-Index<br>Min. WindChill</td>
+              <td class="records-header-alltime-small" width="13%">Taupunkt</td>
+              <td class="records-header-alltime-small" width="13%">Luftfeuchte</td>
+              <td class="records-header-alltime-small" width="15%">Luftdruck</td>
+              <td class="records-header-alltime-small" width="8%">Niederschlag</td>
+              <td class="records-header-alltime-small" width="12%">Wind</td>
+              <td class="records-header-alltime-small" width="12%">Max. Solarstrahlung<br>Max. UV-Index</td>
+            </tr>
+   
+          #for $day in $month.days
+            #if $day.barometer.count.raw
+            <tr>
+              <td class="links1">$day.dateTime.format($DM)</td>
+              <td class="links1">Mittel:&nbsp;<font class="ds">$day.outTemp.avg.string($NONE)</font><br>Max: $day.outTemp.max.string($NONE) um $day.outTemp.maxtime.format($Time)<br>Min: $day.outTemp.min.string($NONE) um $day.outTemp.mintime.format($Time)</td>
+              <td class="links1">$day.heatindex.max um $day.heatindex.maxtime.format($Time)<br>$day.windchill.min um $day.windchill.mintime.format($Time)</td>
+              <td class="links1">Max: $day.dewpoint.max um $day.dewpoint.maxtime.format($Time)<br>Min: $day.dewpoint.min um $day.dewpoint.mintime.format($Time)</td>
+              <td class="links1">Max: $day.outHumidity.max um $day.outHumidity.maxtime.format($Time)<br>Min: $day.outHumidity.min um $day.outHumidity.mintime.format($Time)</td>
+              <td class="links1">Max: $day.barometer.max um $day.barometer.maxtime.format($Time)<br>Min: $day.barometer.min um $day.barometer.mintime.format($Time)</td>
+              <td class="links1">$day.rain.sum.string($NONE)
+              #if $day.rainRate.max.raw > 0
+                <br><br>Max Regenrate: $day.rainRate.max um $day.rainRate.maxtime.format($Time)
+              #end if
+              </td>
+              <td class="links1">Mittel:&nbsp;<font class="ds">$day.wind.avg.string($NONE)</font><br>Max: $day.wind.max.format($Wind,$NONE) um $day.wind.maxtime.format($Time)<br>Richtung: $day.wind.vecdir.ordinal_compass &nbsp;($day.wind.vecdir)</td>
+              <td class="links1">$day.radiation.max um $day.radiation.maxtime.format($Time)<br>$day.UV.max UV-I um $day.UV.maxtime.format($Time)</td>
+            </tr>
+            #end if
+          #end for
+            <tr>
+              <td class="records-header-alltime" colspan="11">$month.dateTime.format("%B") $year_name</td>
+            </tr>
+            <tr>
+              <td class="links1">$month.dateTime.format($M) $year_name</td>
+              <td class="links1">Mittel:&nbsp;<font class="ds">$month.outTemp.avg.string($NONE)</font><br>Max: $month.outTemp.max<br>am $month.outTemp.maxtime.format($DTime)<br>Min: $month.outTemp.min<br>am $month.outTemp.mintime.format($DTime)</td>
+              <td class="links1">$month.heatindex.max<br>am $month.heatindex.maxtime.format($DTime)<br>$month.windchill.min<br>am $month.windchill.mintime.format($DTime)</td>
+              <td class="links1">Max: $month.dewpoint.max<br>am $month.dewpoint.maxtime.format($DTime)<br>Min: $month.dewpoint.min<br>am $month.dewpoint.mintime.format($DTime)</td>
+              <td class="links1">Max: $month.outHumidity.max<br>am $month.outHumidity.maxtime.format($DTime)<br>Min: $month.outHumidity.min<br>am $month.outHumidity.mintime.format($DTime)</td>
+              <td class="links1">Max: $month.barometer.max<br>am $month.barometer.maxtime.format($DTime)<br>Min: $month.barometer.min<br>am $month.barometer.mintime.format($DTime)</td>
+              <td class="links1">$month.rain.sum<br><nobr>$month.rain.sum_ge($Trace).nolabel($Count,$NONE) Regentage</nobr>
+              #if $month.rainRate.max.raw > 0
+                <br><br>Max Regenrate: $month.rainRate.max am $month.rainRate.maxtime.format($DTime)
+              #end if
+              </td>
+              <td class="links1">Mittel:&nbsp;<font class="ds">$month.wind.avg</font><br>Max: $month.wind.max aus $month.wind.gustdir<br>am $month.wind.maxtime.format($DTime)</td>
+              <td class="links1">$month.radiation.max<br>am $month.radiation.maxtime.format($DTime)<br>$month.UV.max UV-I<br>am $month.UV.maxtime.format($DTime)</td>
+            </tr>
+          </tbody>
+        </table>
+        <hr>
+      </div>
+    </article>
+  </main>
+</div>
+#include "footer.html.tmpl"

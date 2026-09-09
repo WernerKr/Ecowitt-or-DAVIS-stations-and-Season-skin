@@ -1,0 +1,218 @@
+#errorCatcher Echo
+#encoding UTF-8
+#set global $page = "charts"
+
+#include "header.html.tmpl"
+
+<div class="site-inner">
+    <main class="content">
+        <article class="weewx charts" itemscope itemtype="https://schema.org/CreativeWork">
+
+            <script type="text/javascript">
+                (function() {
+                function initChartsPage() {
+                var chart = getURLvar("chart");
+                if (chart === undefined) {
+                    // If no URL VAR, default to the chart group defined in Extras
+                    chart = "$Extras.chart_page_default_chartgroup";
+                }
+                var thisPageCharts = chartgroups_raw[chart];
+                var renderedChartGroups = {};
+                var renderingChartGroups = {};
+                var chartGroupRetryTimers = {};
+
+                function scheduleChartGroupRetry(chartgroup, prependRenderTo) {
+                    if (chartGroupRetryTimers[chartgroup]) {
+                        return;
+                    }
+
+                    chartGroupRetryTimers[chartgroup] = window.setTimeout(function() {
+                        chartGroupRetryTimers[chartgroup] = null;
+                        renderChartGroupOnce(chartgroup, prependRenderTo);
+                    }, 15000);
+                }
+
+                function renderChartGroupOnce(chartgroup, prependRenderTo) {
+                    if (renderedChartGroups[chartgroup] || renderingChartGroups[chartgroup]) {
+                        return;
+                    }
+
+                    var renderNow = function() {
+                        renderingChartGroups[chartgroup] = true;
+                        var renderResult = showChart(chartgroup, prependRenderTo);
+
+                        if (renderResult && typeof renderResult.then === "function") {
+                            renderResult.then(function(rendered) {
+                                if (rendered === false) {
+                                    renderedChartGroups[chartgroup] = false;
+                                    scheduleChartGroupRetry(chartgroup, prependRenderTo);
+                                    return;
+                                }
+
+                                renderedChartGroups[chartgroup] = true;
+                                if (chartGroupRetryTimers[chartgroup]) {
+                                    window.clearTimeout(chartGroupRetryTimers[chartgroup]);
+                                    chartGroupRetryTimers[chartgroup] = null;
+                                }
+                            }).catch(function(err) {
+                                console.log("ERROR: Cannot render charts from [" + chartgroup + "]: " + err.message);
+                                renderedChartGroups[chartgroup] = false;
+                                scheduleChartGroupRetry(chartgroup, prependRenderTo);
+                            }).finally(function() {
+                                renderingChartGroups[chartgroup] = false;
+                            });
+                        } else {
+                            renderedChartGroups[chartgroup] = true;
+                            renderingChartGroups[chartgroup] = false;
+                        }
+                    };
+
+                    if (typeof showChart !== "function") {
+                        console.log("ERROR: Cannot render charts from [" + chartgroup + "] because showChart is unavailable.");
+                    } else {
+                        renderNow();
+                    }
+                }
+
+                belchertown_on_ready(function() {
+                    if (chart == "all") {
+                        // Build all chart sections first, then lazy-render by visibility.
+                        var i = 0;
+                        var chartGroupEntries = [];
+
+                        // Rename the chart-outer div to remove CSS
+                        var chartOuter = document.querySelector(".chart-outer");
+                        if (chartOuter) {
+                            chartOuter.setAttribute("class", "chart-outer-all");
+                        }
+
+                        for (var chartgroup in chartgroups_raw) {
+                            var page_content = "";
+                            if (chartpage_content[chartgroup]) {
+                                page_content = chartpage_content[chartgroup];
+                            }
+
+                            // Loop through every chart group defined and add a title section
+                            if (chartOuter) {
+                                chartOuter.insertAdjacentHTML("beforeend", '\
+                                    <div class="' + chartgroup + '_outer row" style="margin:25px 0px 25px 0px;clear:both;">\
+                                        <div class="chartpage-title wx-buttons-description">\
+                                            <a href="./?chart='+ chartgroup + '">' + chartgroups_titles[chartgroup] + '</a>\
+                                        </div>\
+                                        <div class="chartpage-content col-md-12">'+ page_content + '</div>\
+                                        <div class="' + chartgroup + '"></div>\
+                                    </div>\
+                                ');
+                            }
+
+                            var groupOuter = document.querySelector("." + chartgroup + "_outer");
+                            if (i > 0 && groupOuter) {
+                                groupOuter.style.borderTop = "1px solid #ccc";
+                            }
+
+                            // Within each title section add the chart divs with the chart group prepending to avoid conflicts
+                            var groupDiv = document.querySelector("." + chartgroup);
+                            chartgroups_raw[chartgroup].forEach(chartID => {
+                                if (groupDiv) {
+                                    groupDiv.insertAdjacentHTML("beforeend", '<div class="col-md-6"><div id="' + chartgroup + "_" + chartID + '" style="width:100%;height:100%;margin-top:20px;"></div></div>');
+                                }
+                            });
+
+                            chartGroupEntries.push({
+                                chartgroup: chartgroup,
+                                element: groupOuter,
+                            });
+
+                            i++;
+                        };
+
+                        // Render first chart group immediately for fast first paint.
+                        if (chartGroupEntries.length > 0) {
+                            renderChartGroupOnce(chartGroupEntries[0].chartgroup, true);
+                        }
+
+                        // For remaining groups, register visibility observers progressively.
+                        var deferredObserverTasks = chartGroupEntries.slice(1).map(function(entry) {
+                            return function() {
+                                belchertown_run_when_visible(entry.element, function() {
+                                    renderChartGroupOnce(entry.chartgroup, true);
+                                }, {
+                                    rootMargin: "500px 0px",
+                                    threshold: 0.01,
+                                    fallbackDelayMs: 15000,
+                                });
+                            };
+                        });
+                        belchertown_progressive_queue(deferredObserverTasks, {
+                            batchSize: 2,
+                            delayMs: 30,
+                            useIdleCallback: true,
+                        });
+                    } else {
+                        // Loop through the chart group for this page and add the chart divs to the page
+                        try {
+                            var singleChartOuter = document.querySelector(".chart-outer");
+                            thisPageCharts.forEach(chartID => {
+                                if (singleChartOuter) {
+                                    singleChartOuter.insertAdjacentHTML("beforeend", '<div class="col-md-12"><div id="' + chartID + '" style="width:100%;height:100%;margin-top:20px;"></div></div>');
+                                }
+                            });
+
+                            // Set page title
+                            belchertown_set_html(".chartpage-title", chartgroups_titles[chart]);
+
+                            // Set page content
+                            belchertown_set_html(".chartpage-content", chartpage_content[chart]);
+
+                            // Render when the chart area is near viewport.
+                            belchertown_run_when_visible(".chart-outer", function() {
+                                renderChartGroupOnce(chart, false);
+                            }, {
+                                rootMargin: "450px 0px",
+                                threshold: 0.01,
+                                fallbackDelayMs: 6000,
+                            });
+                        } catch (err) {
+                            console.log("ERROR: Cannot add charts from [" + chart + "] chart group: " + err.message);
+                        }
+                    }
+                });
+                }
+
+                if (document.readyState === "loading") {
+                    document.addEventListener("DOMContentLoaded", initChartsPage);
+                } else {
+                    initChartsPage();
+                }
+                })();
+            </script>
+
+            #include "page-header.inc"
+
+            <!-- Begin row -->
+            <div class="row">
+                <div class="col-md-12 wx-buttons">
+                    #if $Extras.has_key("chart_page_show_all_button") and $Extras.chart_page_show_all_button == '1'
+                    <a href="./?chart=all"><button type="button"
+                            class="btn btn-primary wx-btn-year">$charts_page_all_button_label</button></a>
+                    #end if
+                    $chart_page_buttons
+                </div>
+                <div class="col-md-12 wx-buttons-description">
+                    <span class='chartpage-title'></span>
+                </div>
+            </div>
+            <!-- End row -->
+
+            <div class="chartpage-content col-md-12"></div><!-- JS populated -->
+
+            <div class="chart-outer"></div><!-- JS populated -->
+
+            <div class="clear"></div>
+
+        </article>
+    </main>
+</div>
+
+
+#include "footer.html.tmpl"
