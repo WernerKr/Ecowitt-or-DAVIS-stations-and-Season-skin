@@ -1,7 +1,7 @@
-#errorCatcher Echo
 ## sensors module for weewx skins
 ## Copyright Tom Keffer, Matthew Wall
 ## See LICENSE.txt for your rights
+#errorCatcher Echo
 #encoding UTF-8
 
 ## this is a conditional display of sensor data, including connectivity,
@@ -16,9 +16,9 @@
 ## 2025-08-26 renamed wn31 to wh31
 ## 2025-08-29 variable $redcolorrssi for  red colour text at rssi
 ## 2025-11-12 WS6210 Charge, consolebattp, wh40_batt
-## 2025-11-14 rain_batt, piezorain_batt 
+## 2025-11-14 rain_batt, piezorain_batt
 ## 2026-04-07 removed 1x ws85_sig from $conns (was double)
-## 2026-04-14 recent for rssi
+## 2026-09-11 add wn64 and wqt01, new voltage value for red color 1.22 (1.2) and 2.43 (2.4) Volt 
 
 ## remember the current time - we will use it more than once.
 #import time
@@ -33,7 +33,7 @@
 #set $userecentvol = 1
 #set $userecentsig = 1
 
-#set $redcolorrssi = -83
+#set $redcolorrssi = -87
 
 ## if sensors can be shown on signalQuality and Signal change $notuse = 1
 #set $notuse = 0
@@ -192,11 +192,13 @@ $gettext('never')
                      ('wh54_ch4_sig'),
                      ('wn38_sig'),
                      ('wh57_sig'),
+                     ('wn64_sig'),
                      ('wh68_sig'),
                      ('wh69_sig'),
                      ('ws80_sig'),
                      ('ws85_sig'),
                      ('ws90_sig'),
+                     ('wqt01_sig'),
                     ]
 
 
@@ -269,17 +271,20 @@ $gettext('never')
                      ('wh54_ch4_'),
                      ('wn38_'),
                      ('wh57_'),
+                     ('wn64_'),
                      ('wh68_'),
                      ('wh69_'),
                      ('ws80_'),
                      ('ws85_'),
                      ('ws90_'),
+                     ('wqt01_'),
                     ]
 
 ##set $conns = $to_list(get('$signal_data', [ "rxCheckPercent", "ws85_sig", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala" ]))
 
 
 #set $conns = [ "rxCheckPercent", "signal1", "signal1_2", "signal2", "signal3", "signal4", "signal5", "signal6", "signal7", "signal8", "signalr", "signalw", "signala",
+('wn20_sig'),
 ('wh24_sig'),
 ('wh25_sig'),
 ('wh26_sig'),
@@ -348,12 +353,13 @@ $gettext('never')
 ('wh54_ch4_sig'),
 ('wn38_sig'),
 ('wh57_sig'),
+('wn64_sig'),
 ('wh68_sig'),
 ('wh69_sig'),
 ('ws80_sig'),
 ('ws85_sig'),
 ('ws90_sig'),
-('wn20_sig'),
+('wqt01_sig'),
 ]
 
 ##
@@ -367,69 +373,71 @@ $gettext('never')
 ("heatingVoltage",11.8),
 ("supplyVoltage",11.8),
 ("referenceVoltage",3.3),
-("windBatteryStatus",2.4),
-("rainBatteryStatus",1.2),
-("hailBatteryStatus",2.4),
-("ws80_batt",2.4),
-("ws85_batt",2.4),
-("ws85cap_volt",2.4),
-("ws90_batt",2.4),
-("ws90cap_volt",2.4),
-("soilMoistBatt1",1.2),
-("soilMoistBatt2",1.2),
-("soilMoistBatt3",1.2),
-("soilMoistBatt4",1.2),
-("soilMoistBatt5",1.2),
-("soilMoistBatt6",1.2),
-("soilMoistBatt7",1.2),
-("soilMoistBatt8",1.2),
-("soilMoistBatt9",1.2),
-("soilMoistBatt10",1.2),
-("soilMoistBatt11",1.2),
-("soilMoistBatt12",1.2),
-("soilMoistBatt13",1.2),
-("soilMoistBatt14",1.2),
-("soilMoistBatt15",1.2),
-("soilMoistBatt16",1.2),
-("soilTempBatt1",1.2),
-("soilTempBatt2",1.2),
-("soilTempBatt3",1.2),
-("soilTempBatt4",1.2),
-("soilTempBatt5",1.2),
-("soilTempBatt6",1.2),
-("soilTempBatt7",1.2),
-("soilTempBatt8",1.2),
-("soilTempBatt9",1.2),
-("soilTempBatt10",1.2),
-("soilTempBatt11",1.2),
-("soilTempBatt12",1.2),
-("soilTempBatt13",1.2),
-("soilTempBatt14",1.2),
-("soilTempBatt15",1.2),
-("soilTempBatt16",1.2),
-("leafTempBatt1",1.2),
-("leafTempBatt2",1.2),
-("leafTempBatt3",1.2),
-("leafTempBatt4",1.2),
-("leafTempBatt5",1.2),
-("leafTempBatt6",1.2),
-("leafTempBatt7",1.2),
-("leafTempBatt8",1.2),
-("leafWetBatt1",1.2),
-("leafWetBatt2",1.2),
-("leafWetBatt3",1.2),
-("leafWetBatt4",1.2),
-("leafWetBatt5",1.2),
-("leafWetBatt6",1.2),
-("leafWetBatt7",1.2),
-("leafWetBatt8",1.2),
-("ldsbatt1",2.4),
-("ldsbatt2",2.4),
-("ldsbatt3",2.4),
-("ldsbatt4",2.4),
-("bgtbatt",1.2),
-("console_batt",2.4),
-("consoleext_batt",2.4),
+("windBatteryStatus",2.43),
+("rainBatteryStatus",1.22),
+("hailBatteryStatus",2.43),
+("ws80_batt",2.43),
+("ws85_batt",2.43),
+("wn64batt",2.43),
+("ws85cap_volt",2.43),
+("ws90_batt",2.43),
+("ws90cap_volt",2.43),
+("soilMoistBatt1",1.22),
+("soilMoistBatt2",1.22),
+("soilMoistBatt3",1.22),
+("soilMoistBatt4",1.22),
+("soilMoistBatt5",1.22),
+("soilMoistBatt6",1.22),
+("soilMoistBatt7",1.22),
+("soilMoistBatt8",1.22),
+("soilMoistBatt9",1.22),
+("soilMoistBatt10",1.22),
+("soilMoistBatt11",1.22),
+("soilMoistBatt12",1.22),
+("soilMoistBatt13",1.22),
+("soilMoistBatt14",1.22),
+("soilMoistBatt15",1.22),
+("soilMoistBatt16",1.22),
+("soilTempBatt1",1.22),
+("soilTempBatt2",1.22),
+("soilTempBatt3",1.22),
+("soilTempBatt4",1.22),
+("soilTempBatt5",1.22),
+("soilTempBatt6",1.22),
+("soilTempBatt7",1.22),
+("soilTempBatt8",1.22),
+("soilTempBatt9",1.22),
+("soilTempBatt10",1.22),
+("soilTempBatt11",1.22),
+("soilTempBatt12",1.22),
+("soilTempBatt13",1.22),
+("soilTempBatt14",1.22),
+("soilTempBatt15",1.22),
+("soilTempBatt16",1.22),
+("leafTempBatt1",1.22),
+("leafTempBatt2",1.22),
+("leafTempBatt3",1.22),
+("leafTempBatt4",1.22),
+("leafTempBatt5",1.22),
+("leafTempBatt6",1.22),
+("leafTempBatt7",1.22),
+("leafTempBatt8",1.22),
+("leafWetBatt1",1.22),
+("leafWetBatt2",1.22),
+("leafWetBatt3",1.22),
+("leafWetBatt4",1.22),
+("leafWetBatt5",1.22),
+("leafWetBatt6",1.22),
+("leafWetBatt7",1.22),
+("leafWetBatt8",1.22),
+("ldsbatt1",2.43),
+("ldsbatt2",2.43),
+("ldsbatt3",2.43),
+("ldsbatt4",2.43),
+("bgtbatt",1.22),
+("wqt01batt",2.43),
+("console_batt",2.43),
+("consoleext_batt",2.43),
 ]
 
 #set $testvoltage = True
@@ -843,18 +851,12 @@ $gettext('never')
     #try
       #if ($getattr($latest, $signal).has_data or ($getattr($recent, $signal).has_data and $userecentsig == 1)) and $useit == 1
         #set $sstate = $getattr($latest, $signal).raw
-        #set $lasttime = "N/A"
         #set $sstatetxt = ''
         #set $sstatevar = -20
         #if ($getattr($latest, $rssi).has_data or ($getattr($recent, $rssi).has_data and $userecentsig == 1)) and $useit == 1
           #set $sstatevar = $getattr($latest, $rssi).raw
           #set $sstatetxt = $getattr($latest, $rssi)
-          #try
-            #set $lasttime = $getattr($recent, $rssi).lasttime.raw
-           #except 
-            #set $lasttime = "N/A"
-           #end try
-         #end if
+        #end if
 
         #if ($sstate <= 1) or ($sstatevar <= int($redcolorrssi) )
           <tr>
@@ -877,21 +879,9 @@ $gettext('never')
             #set $ux = '%'
           #end if
           <td class="data">$sstatetxt  $x$ux</td>
-          #if $lasttime != "N/A"
-           <td class="timestamp">$get_time_delta($lasttime, $now)</td>
-          #else
-           <td class="timestamp">$lasttime</td>
-          #end if
-          </tr>
-        #else
-          #if $lasttime != "N/A"
-           <td class="timestamp">$get_time_delta($lasttime, $now)</td>
-          #else
-           <td class="timestamp">$lasttime</td>
-          #end if
           </tr>
         #end if
-
+ 
       #end if
     #except (AttributeError, TypeError)
       ## there is no signal state data for that sensor

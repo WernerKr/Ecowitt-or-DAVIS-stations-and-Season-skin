@@ -6,11 +6,7 @@
 
 ## 2025-07-11 settings for lightning changed (lightning_num = new)
 ## 2025-09-02 new AQI values from EcowittHttp
-## 2025-11-09 leak1..4 with names
-## 2025-11-30 correction for lightning_distance
-## 2026-02-16 windir10 and windspeed10
-## 2026-02-26 new last_rain - need time_since.py
-##            and setting in skin.conf: search_list_extensions = user.historygenerator3.MyXSearch, user.time_since.TimeSince     
+## 2025-10-04 bgt,wbgt, soilad1..16
 
 #set $ecowitt_hw = [('GW1000'),
                     ('GW1100'),
@@ -51,7 +47,7 @@
 #set $observ = [('outTemp','#e85d0d','trend','1'),
 ('outTemp','#e85d0d','day','1'),
 ('outTemp','#e85d0d','yesterday','1'),
-('outTemp','#e85d0d','wx_binding, WS90mH','1'),
+('outTemp','#e85d0d','wx_binding, WH32','1'),
 ('outTemp','','wx_binding3','0'),
 ('heatindex','#b44242','current','1'),
 ('heatdeg','','current','1'),
@@ -72,7 +68,7 @@
 ('barometer','#25ea2f','trend','1'),
 ('pressure','','trend','1'),
 ('cloudbase','','current','1'),
-('- - - - - - - - - - - - - - - W S 9 0 m H','','','3'),
+('- - - - - - - - - - - - - - - - - W S 8 5','','','3'),
 ('windSpeed','#0000ff','current','1'),
 ('windSpeed','#0000ff','day','1'),
 ('windGust','#4282b4','current','1'),
@@ -119,12 +115,13 @@
 ('wrain_piezo','','current','1'),
 ('mrain_piezo','','current','1'),
 ('yrain_piezo','','current','1'),
+('train_piezo','#72b2c4','current','1'),
 ('hailDur','#006eff','deltatime','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('snow','','current','1'),
 ('snowRate','','current','1'),
 ('snowMoisture','','current','1'),
 ('snowDepth','','current','1'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
 ('ET','#42B4B4','current','1'),
 ('ET24','#42B4B4','current','1'),
  ('dayET','#42B4B4','current','1'),
@@ -397,8 +394,8 @@
  ('rain24_2','','current','1'),
  ('monthRain_2','','current','1'),
  ('yearRain_2','','current','1'),
-('- - - - - - - - - - - - - - - - - - - - -','','','0'),
-($gettext('Data FOSHKplugin'),'','','0'),
+('- - - - - - - - - - - - - - - - - - - - -','','','3'),
+($gettext('Data FOSHKplugin'),'','','3'),
 ('fdewptf','','current','1'),
 ('fwindchillf','','current','1'),
 ('ffeelslikef','','current','1'),
@@ -686,11 +683,11 @@
        #set $test = $time_at('rain>0')
        #if $test != "$time_at('rain>0')"
        <tr>
-        <td class="label">$obs.label.last_rain am</td>
+        <td class="label">$obs.label.last_rain</td>
         <td class="data">$time_at('rain>0')</td>
        </tr> 
        <tr>
-        <td class="label">vor</td>
+        <td class="label">$gettext("before")</td>
         <td class="data"><font size="2">$time_since('rain>0').long_form(format_string="%(day)d%(day_label)s, %(hour)d:%(minute)02d:%(second)02d")</font></td>
         ##<td class="data"><font size="2">$time_since('rain>0').long_form</font></td>
        </tr>
@@ -714,11 +711,11 @@
        #set $test = $time_at('hail>0')
        #if $test != "$time_at('hail>0')"
        <tr>
-        <td class="label">$obs.label.last_rain am</td>
+        <td class="label">$obs.label.last_rain</td>
         <td class="data">$time_at('hail>0')</td>
        </tr> 
        <tr>
-        <td class="label">vor</td>
+        <td class="label">$gettext("before")</td>
         <td class="data"><font size="2">$time_since('hail>0').long_form(format_string="%(day)d%(day_label)s, %(hour)d:%(minute)02d:%(second)02d")</font></td>
         ##<td class="data"><font size="2">$time_since('hail>0').long_form</font></td>
        </tr>
@@ -792,7 +789,7 @@
       </tr>
       <tr>
         <td class="label">$obs.label.lightning_distance$ztx</td>
-        <td class="data">$xt2 $unit.label.lightning_distance</td>
+        <td class="data">$xt2 km</td>
       </tr>
       <tr>
         <td class="label">$obs.label.lightning_disturber_count$ztx</td>
