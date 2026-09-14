@@ -55,7 +55,7 @@ if weewx.__version__ < "5":
 
 log = logging.getLogger(__name__)
 
-VERSION = "2.1.1_20260906"
+VERSION = "2.1.1_20260911"
 
 # Print version in syslog for easier troubleshooting
 log.info("version %s", VERSION)
@@ -1992,6 +1992,15 @@ def _station_observation_entries(station_observations):
         _station_observation_name_and_binding(observation)
         for observation in station_observations
     ]
+
+
+def _aqi_data_is_requested(extras_dict, station_observations):
+    """Return whether any configured homepage or kiosk element needs AQI data."""
+    return (
+        to_bool(extras_dict.get("aqi_enabled", "0"))
+        or to_bool(extras_dict.get("aqi_enabled_kiosk", "0"))
+        or any(obs == "aqi" for obs, _binding in station_observations)
+    )
 
 
 UNIT_SWITCH_GROUP_KINDS = {
@@ -6809,7 +6818,12 @@ class getData(SearchList):
 
         # Forecast enabled default should be on when missing.
         forecast_enabled = str(extras_dict.get("forecast_enabled", "1")).strip()
-        aqi_enabled = to_bool(extras_dict.get("aqi_enabled", "0"))
+        station_observations = _station_observation_entries(
+            extras_dict["station_observations"]
+        )
+        aqi_data_enabled = _aqi_data_is_requested(
+            extras_dict, station_observations
+        )
         aqi_source = _normalize_aqi_source(extras_dict.get("aqi_source", "auto"))
         aqi_local_max_age = to_int(extras_dict.get("aqi_local_max_age", 7200))
         if aqi_local_max_age is None or aqi_local_max_age < 0:
@@ -6827,12 +6841,15 @@ class getData(SearchList):
               log.info("AQI scale configured as '%s'.", aqi_scale)
         extras_dict["aqi_source"] = aqi_source
         local_aqi_enabled = (
-            aqi_enabled
+            aqi_data_enabled
             and aqi_source in ("auto", "local")
             and aqi_scale in VALID_AQI_SCALES
             and aqi_scale != "auto"
         )
-        forecast_aqi_enabled = aqi_enabled and aqi_source in ("auto", "forecast")
+        forecast_aqi_enabled = aqi_data_enabled and aqi_source in (
+            "auto",
+            "forecast",
+        )
 
         # Ensure AQI variables are always defined to avoid NameError when forecast is disabled or fails
         # aqi and aqi_category are global so they can be used by Highcharts
@@ -6860,7 +6877,7 @@ class getData(SearchList):
         # Keep a small standalone cache so this does not trigger a download on
         # every Cheetah search-list invocation.
         if (
-            aqi_enabled
+            aqi_data_enabled
             and local_aqi_payload is None
             and forecast_aqi_enabled
             and forecast_enabled != "1"
@@ -6961,7 +6978,7 @@ class getData(SearchList):
                     if cached_timezone:
                         aqi_scale = _auto_aqi_scale(cached_timezone, extras_dict)
                         local_aqi_enabled = (
-                            aqi_enabled
+                            aqi_data_enabled
                             and aqi_source in ("auto", "local")
                             and aqi_scale in VALID_AQI_SCALES
                             and aqi_scale != "auto"
@@ -7125,7 +7142,7 @@ class getData(SearchList):
                     return local_aqi_payload
 
                 def _refresh_aqi_payload(force=False):
-                    if not aqi_enabled:
+                    if not aqi_data_enabled:
                         return None
 
                     if local_aqi_enabled:
@@ -7547,7 +7564,7 @@ class getData(SearchList):
                                         om_raw.get("timezone"), extras_dict
                                     )
                                     local_aqi_enabled = (
-                                        aqi_enabled
+                                        aqi_data_enabled
                                         and aqi_source in ("auto", "local")
                                         and aqi_scale in VALID_AQI_SCALES
                                         and aqi_scale != "auto"
@@ -8276,9 +8293,6 @@ class getData(SearchList):
         station_obs_source_json = OrderedDict()
         station_obs_unit_json = OrderedDict()
         station_obs_parts = []
-        station_observations = _station_observation_entries(
-            extras_dict["station_observations"]
-        )
         default_current_stamp = manager.lastGoodStamp()
         default_current_record = manager.getRecord(default_current_stamp)
         default_current = weewx.tags.CurrentObj(
