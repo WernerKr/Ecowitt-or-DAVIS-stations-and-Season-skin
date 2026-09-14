@@ -21,7 +21,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see https://www.gnu.org/licenses/.
 
-Version: 0.3.4                                  Date: 30 Jun 2026
+Version: 0.3.5                                  Date: 11 Sep 2026
 
 Revision History
     X  May 2025            v0.1.0a28  Gary Roderick   		
@@ -154,8 +154,13 @@ Revision History
         - more WQT01 settings
 
      30 Jun 2026		v0.3.4 
-        hourrain, hpiezo_rain   
-       
+        - hourrain, hpiezo_rain   
+      
+     11 Sep 2026		v0.3.5
+        - RainTotal, Rain Status (Piezo)
+        - WN64
+
+ 
 This driver is based on the Ecowitt local HTTP API.
 The following sensors are supported:
 
@@ -188,7 +193,8 @@ WS85        piezo rain, wind speed, wind direction, signal level, battery
 WS90        temperature, humidity, piezo rain, wind speed, wind direction,
             illuminance, UV index, signal level, battery state. single device
             only
-
+WN64        Temp, Humidity, Wind, Rainstatus (outdoor 4-in-1 sensor)
+WQT01       WQT01 water quality sensor		
 
 The following deviations have been made from the known 'documentation':
 
@@ -275,7 +281,7 @@ KNOWN_DEVICES = SUPPORTED_DEVICES + UNSUPPORTED_DEVICES
 KNOWN_SENSORS = ('wn20', 'wh25', 'wh26', 'wn31', 'wn34', 'wn35', 'wn38',
                  'wh40', 'wh41', 'wh45',
                  'wh51', 'wh54', 'wh55', 'wh57',
-                 'wh65', 'wh68', 'ws69', 'ws80', 'ws85', 'ws90',
+                 'wh65', 'wh68', 'ws69', 'ws80', 'ws85', 'ws90', 'wn64',
                  'wqt01',)
 # default max number of attempts to obtain data from the device
 DEFAULT_MAX_TRIES = 3
@@ -467,6 +473,8 @@ weewx.units.obs_group_dict['windBatteryStatus'] = 'group_volt'
 weewx.units.obs_group_dict['ws80_batt'] = 'group_volt'
 weewx.units.obs_group_dict['ws85_batt'] = 'group_volt'
 weewx.units.obs_group_dict['ws90_batt'] = 'group_volt'
+weewx.units.obs_group_dict['wqt01batt'] = 'group_volt'
+weewx.units.obs_group_dict['wn64batt'] = 'group_volt'
 
 weewx.units.obs_group_dict['ws1900batt'] = 'group_volt'
 weewx.units.obs_group_dict['console_batt'] = 'group_volt'
@@ -480,8 +488,11 @@ weewx.units.obs_group_dict['wh69_batt'] = 'group_count'
 #weewx.units.obs_group_dict['wh80_batt'] = 'group_count'
 #weewx.units.obs_group_dict['wh85_batt'] = 'group_count'
 #weewx.units.obs_group_dict['wh90_batt'] = 'group_count'
-weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
+weewx.units.obs_group_dict['wqt01_batt'] = 'group_count'
+weewx.units.obs_group_dict['wn64_batt'] = 'group_count'
 
+weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
+weewx.units.obs_group_dict['srain'] = 'group_count'
 
 weewx.units.obs_group_dict['maxdailygust'] = 'group_speed2'
 
@@ -627,9 +638,13 @@ DEFAULT_GROUPS = {
     'rain.0x13.val': 'group_rain',
     'rain.0x13.voltage': 'group_volt',
     'rain.0x13.battery': 'group_count',
+    'rain.0x14.val': 'group_rain',
+    'rain.srain': 'group_boolean',
+    'rain.srain.val': 'group_boolean',
     't_rain': 'group_rain',
     't_rainyear': 'group_rain',
     'rain.0x13.voltage': 'group_volt',
+    'piezoRain.srain_piezo': 'group_boolean',
     'piezoRain.srain_piezo.val': 'group_boolean',
     'piezoRain.0x0D.val': 'group_rain',
     'piezoRain.0x0D.battery': 'group_count',
@@ -651,11 +666,11 @@ DEFAULT_GROUPS = {
     'piezoRain.0x13.val': 'group_rain',
     'piezoRain.0x13.battery': 'group_count',
     'piezoRain.0x13.voltage': 'group_volt',
-    'piezoRain.srain_piezo': 'group_boolean',
     'piezoRain.0x13.ws85cap_volt': 'group_volt',
     'piezoRain.0x13.ws90cap_volt': 'group_volt',
     'piezoRain.0x13.ws85_ver': 'group_count',
     'piezoRain.0x13.ws90_ver': 'group_count',
+    'piezoRain.0x14.val': 'group_rain',
     'p_rain': 'group_rain',
     'p_rainyear': 'group_rain',
     'wh25.intemp': 'group_temperature',
@@ -1107,6 +1122,10 @@ DEFAULT_GROUPS = {
     'wqt01.battery': 'group_count',
     'wqt01.signal': 'group_count',
     'wqt01.rssi': 'group_dbm',
+    'wn64.voltage': 'group_volt',
+    'wn64.battery': 'group_count',
+    'wn64.signal': 'group_count',
+    'wn64.rssi': 'group_dbm',
 }
 
 ## for WeeWx 4.x user
@@ -1860,6 +1879,7 @@ class HttpMapper(FieldMapper):
         'yearRain': 'rain.0x13.val',
         'rain24': 'rain.0x7C.val',
         'totalRain': 'rain.0x14.val',
+        'srain': 'rain.srain.val',
         #'p_rainevent': 'piezoRain.0x0D.val',
         #'p_rainrate': 'piezoRain.0x0E.val',
         #'p_rainhour': 'piezoRain.0x0F.val',
@@ -1880,7 +1900,7 @@ class HttpMapper(FieldMapper):
         'mrain_piezo': 'piezoRain.0x12.val',
         'yrain_piezo': 'piezoRain.0x13.val',
         'rain24_piezo': 'piezoRain.0x7C.val',
-        'train_piezo': 'rain.0x14.val',
+        'train_piezo': 'piezoRain.0x14.val',
     }
     # modular wind map
     default_wind_map = {
@@ -2011,6 +2031,8 @@ class HttpMapper(FieldMapper):
 
         'wqt01_batt': 'wqt01.battery',
         'wqt01batt': 'wqt01.voltage',
+        'wn64_batt': 'wn64.battery',
+        'wn64batt': 'wn64.voltage',
 
         'ws85_ver': 'piezoRain.0x13.ws85_ver',
         #'ws85_ver': 'ws85.version',
@@ -2077,6 +2099,7 @@ class HttpMapper(FieldMapper):
         'wh55_ch4_sig': 'wh55.ch4.signal',
 
         'wqt01_sig': 'wqt01.signal',
+        'wn64_sig': 'wn64.signal',
 
         'wh57_sig': 'wh57.signal',
         'wh68_sig': 'wh68.signal',
@@ -2152,7 +2175,7 @@ class HttpMapper(FieldMapper):
         'ws90_rssi': 'ws90.rssi',
 
         'wqt01_rssi': 'wqt01.rssi',
-
+        'wn64_rssi': 'wn64.rssi',
     }
     # construct the default map based on the modular maps
     default_map = (dict(default_obs_map))
@@ -2284,7 +2307,9 @@ class SdMapper(FieldMapper):
         'rain.0x11.val': 'Weekly Rain',
         'rain.0x12.val': 'Monthly Rain',
         'rain.0x13.val': 'Yearly Rain',
-        'piezoRain.srain_piezo.val': 'Rain Level',
+        'rain.0x14.val': 'Total Rain',
+        'rain.srain.val': 'Rain Status',
+        'piezoRain.srain_piezo.val': 'Piezo srain',
         'piezoRain.0x0E.val': 'Piezo Rate',
         'piezoRain.0x7D.val': 'Piezo Hourly Rain',
         'piezoRain.0x0D.val': 'Piezo Event Rain',
@@ -2293,6 +2318,7 @@ class SdMapper(FieldMapper):
         'piezoRain.0x11.val': 'Piezo Weekly Rain',
         'piezoRain.0x12.val': 'Piezo Monthly Rain',
         'piezoRain.0x13.val': 'Piezo Yearly Rain',
+        'piezoRain.0x14.val': 'Piezo Total Rain',
         'ch_aisle.1.temp': 'CH1 Temperature',
         'ch_aisle.2.temp': 'CH2 Temperature',
         'ch_aisle.3.temp': 'CH3 Temperature',
@@ -5492,8 +5518,8 @@ class EcowittDeviceCatchup:
         'group_pressurevpd': ('common_list.5.val'),
         'group_rain': ('rain.0x0D.val', 'rain.0x10.val', 'rain.0x11.val', 'rain.0x12.val',
                        'rain.0x7D.val', 'piezoRain.0x7D.val',
-                       'rain.0x13.val', 'rain.0x0E.val', 'piezoRain.0x0D.val', 'piezoRain.0x10.val',
-                       'piezoRain.0x11.val', 'piezoRain.0x12.val', 'piezoRain.0x13.val', 'piezoRain.0x0F.val'),
+                       'rain.0x13.val', 'rain.0x14.val','rain.0x0E.val', 'piezoRain.0x0D.val', 'piezoRain.0x10.val',
+                       'piezoRain.0x11.val', 'piezoRain.0x12.val', 'piezoRain.0x13.val', 'piezoRain.0x14.val', 'piezoRain.0x0F.val'),
         'group_rainrate': ('rain.0x0E.val', 'piezoRain.0x0E.val'),
         'group_radiation': ('common_list.0x15.val', ),
         'group_distance': ('lightning.distance', ),
@@ -7542,7 +7568,7 @@ class EcowittHttpParser:
         # get_livedata_info command returns a common_list field identified
         # as '5' that contains data in kPa, inHg or mmHg which is suggestive of
         # VPD.
-        '5': 'process_pressure_object', # VPD (suspected)
+        '5': 'process_pressure_object', # VPD
         '0x07': 'process_humidity_object', # outdoor humidity
         '0x08': 'process_noop_object', # absolute pressure, however absolute
         # pressure appears in the get_livedata_info response under 'WH25'
@@ -7569,21 +7595,24 @@ class EcowittHttpParser:
         '0x7D': 'process_rainfall_object', # rain hourly
         '0xA1': 'process_temperature_object', # BGT
         '0xA2': 'process_temperature_object', # WBGT
-        'srain_piezo': 'process_boolean_object' # is raining (?)
+        'srain_piezo': 'process_boolean_object', # is raining (?)
+        'srain': 'process_boolean_object', # is raining (?)
     }
     rain_map = {
         'day_rain': 'rainDay',
         '24h_rain': 'rain24',
         'week_rain': 'rainWeek',
         'month_rain': 'rainMonth',
-        'year_rain': 'rainYear'
+        'year_rain': 'rainYear',
+        'total_rain': 'rainTotal',
     }
     piezo_rain_map = {
         'day_rain': 'drain_piezo',
         '24h_rain': 'rain24_piezo',
         'week_rain': 'wrain_piezo',
         'month_rain': 'mrain_piezo',
-        'year_rain': 'yrain_piezo'
+        'year_rain': 'yrain_piezo',
+        'total_rain': 'train_piezo',
     }
     # sensor IDs for sensors that are not registered (ie learning/registering
     # and disabled)
@@ -8285,6 +8314,7 @@ class EcowittHttpParser:
              "rainWeek": "0.0",
              "rainMonth": "0.0",
              "rainYear": "0.0",
+             "rainTotal": "0.0",
              "rainGain": "1.00",
              "rstRainDay": "0",
              "rstRainWeek": "0",
@@ -8305,6 +8335,7 @@ class EcowittHttpParser:
         rain_week:       Current day total rainfall. ValueTuple.
         rain_month:      Current day total rainfall. ValueTuple.
         rain_year:       Current day total rainfall. ValueTuple.
+        rain_total:      rainTotal
         rain_gain:       Current day total rainfall. Float.
         rain_reset_day:  Current day total rainfall. Float.
         rain_reset_week: Current day total rainfall. Float.
@@ -8429,6 +8460,7 @@ class EcowittHttpParser:
              "rainWeek": "0.0",
              "rainMonth": "0.0",
              "rainYear": "0.0",
+             "rainTotal": "0.0",
              "rainGain": "1.00",
              "rstRainDay": "0",
              "rstRainWeek": "0",
@@ -9355,6 +9387,7 @@ class EcowittHttpParser:
          "wrain_piezo": "0.0",
          "mrain_piezo": "27.1",
          "yrain_piezo": "1077.5",
+         "train_piezo": "541.8",
          "rain1_gain": "0.90",
          "rain2_gain": "0.90",
          "rain3_gain": "0.90",
@@ -9368,6 +9401,8 @@ class EcowittHttpParser:
         week_rain:  Piezo week rain. Optional. Float, may be None.
         month_rain: Piezo month rain. Optional. Float, may be None.
         year_rain:  Piezo year rain. Optional. Float, may be None.
+        total_rain: Piezo total rain.
+
         gain1:      Piezo rain gain 1. Optional. Float, may be None.
         gain2:      Piezo rain gain 2. Optional. Float, may be None.
         gain3:      Piezo rain gain 3. Optional. Float, may be None.
@@ -9430,6 +9465,7 @@ class EcowittHttpParser:
          "wrain_piezo": "0.0",
          "mrain_piezo": "27.1",
          "yrain_piezo": "1077.5",
+         "train_piezo": "541.8",
          "rain1_gain": "0.90",
          "rain2_gain": "0.90",
          "rain3_gain": "0.90",
@@ -12925,6 +12961,7 @@ class EcowittSensors:
         70: 'wn20',
         71: 'wn38',
         72: 'wqt01',
+        73: 'wn64',
     }
 
     def __init__(self, all_sensor_data=None, live_data=None):
@@ -14338,6 +14375,7 @@ class DirectEcowittDevice:
                     'rain.0x13.val', 'rain.0x13.voltage',
                     'rain.0x13.battery', 'rain.0x7C.val',
                     'rain.0x7D.val', 'piezoRain.0x7D.val',
+                    'rain.0x14.val', 'piezoRain.0x14.val',
                     'piezoRain.srain_piezo.val',
                     'piezoRain.0x0D.val', 'piezoRain.0x0D.voltage',
                     'piezoRain.0x0E.val', 'piezoRain.0x0E.voltage',
@@ -14462,11 +14500,12 @@ class DirectEcowittDevice:
                     'ws85.battery', 'ws85.signal', 'ws90.battery', 'ws90.signal', 'ws85.rssi', 'ws90.rssi',
                     'wqt01.battery', 'wqt01.signal', 'wqt01.rssi', 'wqt01.voltage',
                     'wqt01.ec', 'wqt01.toc', 'wqt01.turb', 'wqt01.cod', 'wqt01.tds', 'wqt01.CO2', 'wqt01.CO2_24H',
+                    'wn64.battery', 'wn64.signal', 'wn64.rssi', 'wn64.voltage',
                     ]
 
     sensor_display_order = ( 'wn20', 'wh25', 'wh26', 'wn31', 'wn34', 'wn35', 'wn38', 'wh40', 
                              'wh41', 'wh45', 'wh51', 'wh54', 'wh55', 'wh57',
-                             'wh68', 'wh69', 'ws80', 'ws85', 'ws90', 'wqt01' )
+                             'wh68', 'wh69', 'ws80', 'ws85', 'ws90', 'wn64', 'wqt01' )
     def __init__(self, namespace, arg_parser, stn_dict, **kwargs):
         """Initialise a DirectEcowittDevice object."""
 
@@ -14871,6 +14910,12 @@ class DirectEcowittDevice:
                 print(f'{"Month rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
                 _vh = weewx.units.ValueHelper(rain_totals_data['year_rain'], formatter=f, converter=c)
                 print(f'{"Year rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
+                try:
+                  _vh = weewx.units.ValueHelper(rain_totals_data['total_rain'], formatter=f, converter=c)
+                  print(f'{"Total rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
+                except:
+                  pass
+
                 _data = rain_totals_data.get('rain_gain')
                 _data_str = f'{_data:.2f}' if _data is not None else '---'
                 print(f'{"Rain gain":>15}: {_data_str}')
@@ -14888,6 +14933,12 @@ class DirectEcowittDevice:
                 print(f'{"Month rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
                 _vh = weewx.units.ValueHelper(rain_piezo_data['year_rain'], formatter=f, converter=c)
                 print(f'{"Year rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
+                try:
+                  _vh = weewx.units.ValueHelper(rain_piezo_data['total_rain'], formatter=f, converter=c)
+                  print(f'{"Total rain":>15}: {_vh.convert(units[0]).toString()} ({_vh.convert(units[1]).toString()})')
+                except:
+                  pass
+
                 for gain_channel in range(5):
                     gain_field = f"gain{gain_channel + 1:d}"
                     _data = rain_piezo_data.get(gain_field)

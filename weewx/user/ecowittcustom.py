@@ -4,7 +4,7 @@
 # Modified 2025,2026 - now only Ecowitt client Werner Krenn
 
 """
-Version: 0.1.8                                  Date: 14 Feb 2026
+Version: 0.2.0                                  Date: 11 Sep 2026
 
 Revision History
     30 Nov 2025            v0.1.5
@@ -15,16 +15,15 @@ Revision History
         - bgt, wbgt, wbgtcat
     30 Dec 2025            v0.1.7
         - bgtbatt, wn38_sig, wn38_rssi, lightning_distance = group_distance 
-    14 Feb 2026            v0.1.8		
+    13 Feb 2026            v0.1.8		
         - add last24hourlyrainin
-        - Soil_EC 1..16: 
-          soil_ec_humN -> soilmoisture1..16, 
-          soil_ec_hum_adN -> soilad1..16, 
-          soil_ec_tempN -> soilmTemp1..16, 
-          soil_ecN -> soilECN1..16, 
-          soil_ec_adN -> soilECad1..16, 
-          soil_ec_battN -> soilbatt1..16
+        - Soil_EC 1..16: soil_ec_humN, soil_ec_hum_adN, soil_ec_tempN, soil_ecN, soil_ec_adN, soil_ec_battN
+    30 Mar 2026            v0.1.9
+        - add ws_interval
 
+    11 Sep 2026            v0.2.0
+        - add total_piezo
+	
 ===============================================================================
 This driver runs a simple web server or sniffs network traffic in order to
 capture data directly from an internet weather reporting device including:
@@ -75,7 +74,7 @@ variants of the Fine Offset GW1000, including:
   GW1000B - 915MHz	US
   GW1000BU - 915MHz with better rang
 
-Also valid for GW1100, GW1200, GW2000, GW3000, WS39xx, WS38xx, WS6210, wN1980, WN1900, HP2550, HP2560, HP3500 and so much more
+Also valid for GW1100, GW1200, GW2000, GW3000, WS39xx, WS38xx, wN1980, WN1900, HP2550, HP2560, HP3500 and so much more
 
 The transmission to wunderground can be captured using the 'wu-client' mode.
 The transmission using ecowitt protocol (see the 'customize' page in the WSView Plus
@@ -190,7 +189,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Ecowittcustom'
-DRIVER_VERSION = '0.1.8'
+DRIVER_VERSION = '0.1.9'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80
@@ -211,6 +210,25 @@ weewx.units.MetricUnits["group_usiecm"] = "micro_siemens_per_centimeter"
 weewx.units.MetricWXUnits["group_usiecm"] = "micro_siemens_per_centimeter"
 weewx.units.default_unit_label_dict['micro_siemens_per_centimeter'] = ' µS/cm' #umho/cm - µS/cm
 weewx.units.default_unit_format_dict["micro_siemens_per_centimeter"] = '%.0f'
+
+# create group for organic pollution (WQT_TOC, WQT_COD, WQT_TDS)
+# 'mg/L': 'milligram_per_liter',  'lb/gal' 0.000008345
+#weewx.units.USUnits['group_organicpollution'] = 'pounds_per_gallon'
+#weewx.units.MetricUnits['group_organicpollution'] = 'milligram_per_liter'
+#weewx.units.MetricWXUnits['group_organicpollution'] = 'milligram_per_liter'
+#weewx.units.default_unit_label_dict['milligram_per_liter'] = ' mg/L'
+#weewx.units.default_unit_label_dict['pounds_per_gallon'] = ' lb/gal'
+#weewx.units.default_unit_format_dict["milligram_per_liter"] = '%.1f'
+#weewx.units.default_unit_format_dict["pounds_per_gallon"] = '%.9f'
+#weewx.units.conversionDict['milligram_per_liter'] = {'pounds_per_gallon': lambda x: x * 0.000008345}
+#weewx.units.conversionDict['pounds_per_gallon'] = {'milligram_per_liter': lambda x: x / 0.000008345}
+
+#weewx.units.obs_group_dict['nephelometric_turbidity_unit'] = 'group_ntu'
+#weewx.units.USUnits["group_ntu"] = "nephelometric_turbidity_unit"
+#weewx.units.MetricUnits["group_ntu"] = "nephelometric_turbidity_unit"
+#weewx.units.MetricWXUnits["group_ntu"] = "nephelometric_turbidity_unit"
+#weewx.units.default_unit_label_dict['nephelometric_turbidity_unit'] = 'NTU'
+#weewx.units.default_unit_format_dict['nephelometric_turbidity_unit'] = '%.0f'
 
 weewx.units.obs_group_dict['co2'] = 'group_fraction'
 weewx.units.obs_group_dict['co2_Temp'] = 'group_temperature'
@@ -298,6 +316,7 @@ weewx.units.obs_group_dict['soilMoist15'] = 'group_percent'
 weewx.units.obs_group_dict['soilMoist16'] = 'group_percent'
 
 weewx.units.obs_group_dict['lightning_distance'] = 'group_distance'
+weewx.units.obs_group_dict['lightning_dist'] = 'group_distance'
 
 weewx.units.obs_group_dict['lightning_disturber_count'] = 'group_time'
 weewx.units.obs_group_dict['lightning_strike_count'] = 'group_count'
@@ -330,6 +349,7 @@ weewx.units.obs_group_dict['wrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['mrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['yrain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['train_piezo'] = 'group_rain'
+weewx.units.obs_group_dict['total_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['rain_piezo'] = 'group_rain'
 weewx.units.obs_group_dict['p_rain'] = 'group_rain'
 weewx.units.obs_group_dict['rain24'] = 'group_rain'
@@ -460,86 +480,6 @@ weewx.units.obs_group_dict['soilEC14'] = 'group_usiecm'
 weewx.units.obs_group_dict['soilEC15'] = 'group_usiecm'
 weewx.units.obs_group_dict['soilEC16'] = 'group_usiecm'
 
-"""
-#not used!
-weewx.units.obs_group_dict['wh24_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh25_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh26_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh31_ch1_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh31_ch2_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh31_ch3_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh31_ch4_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh31_ch5_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh31_ch6_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh31_ch7_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh31_ch8_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch1_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch2_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch3_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch4_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch5_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch6_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch7_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch8_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch9_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch10_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch11_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch12_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch13_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch14_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch15_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn34_ch16_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn35_ch1_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn35_ch2_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn35_ch3_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn35_ch4_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn35_ch5_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn35_ch6_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn35_ch7_sig'] = 'group_count'
-weewx.units.obs_group_dict['wn35_ch8_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh40_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh41_ch1_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh41_ch2_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh41_ch3_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh41_ch4_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh45_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch1_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch2_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch3_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch4_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch5_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch6_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch7_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch8_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch9_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch10_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch11_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch12_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch13_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch14_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch15_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh51_ch16_sig'] = 'group_count'
-
-weewx.units.obs_group_dict['wh54_ch1_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh54_ch2_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh54_ch3_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh54_ch4_sig'] = 'group_count'
-
-weewx.units.obs_group_dict['wh55_ch1_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh55_ch2_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh55_ch3_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh55_ch4_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh57_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh65_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh68_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh69_sig'] = 'group_count'
-weewx.units.obs_group_dict['ws80_sig'] = 'group_count'
-weewx.units.obs_group_dict['ws90_sig'] = 'group_count'
-weewx.units.obs_group_dict['ws85_sig'] = 'group_count'
-weewx.units.obs_group_dict['wh85_sig'] = 'group_percent'
-# not used!
-"""
-
 weewx.units.obs_group_dict['wn20_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['wh24_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['wh25_rssi'] = 'group_dbm'
@@ -620,6 +560,9 @@ weewx.units.obs_group_dict['ws80_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['ws85_rssi'] = 'group_dbm'
 weewx.units.obs_group_dict['ws90_rssi'] = 'group_dbm'
 
+weewx.units.obs_group_dict['wn64_rssi'] = 'group_dbm'
+weewx.units.obs_group_dict['wqt01_rssi'] = 'group_dbm'
+
 weewx.units.obs_group_dict['ldsbatt1'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt2'] = 'group_volt'
 weewx.units.obs_group_dict['ldsbatt3'] = 'group_volt'
@@ -635,6 +578,8 @@ weewx.units.obs_group_dict['srain_piezo'] = 'group_count'
 
 weewx.units.obs_group_dict['heap'] = 'group_data'
 weewx.units.obs_group_dict['pb'] = 'group_data'
+
+weewx.units.obs_group_dict['ws_interval'] = 'group_deltatime'
 
 weewx.units.obs_group_dict['fdewptf'] = 'group_temperature'
 weewx.units.obs_group_dict['fwindchillf'] = 'group_temperature'
@@ -720,6 +665,8 @@ weewx.units.obs_group_dict['wbgt'] = 'group_temperature'
 weewx.units.obs_group_dict['wbgtcat'] = 'group_count'
 weewx.units.obs_group_dict['bgtbatt'] = 'group_volt'
 
+weewx.units.obs_group_dict['wn64batt'] = 'group_volt'
+weewx.units.obs_group_dict['wqt01batt'] = 'group_volt'
 
 def loader(config_dict, _):
     return EcowittcustomDriver(**config_dict[DRIVER_NAME])
@@ -923,6 +870,7 @@ class Consumer(object):
         'leak_Batt2': 'leakbatt2',
         'leak_Batt3': 'leakbatt3',
         'leak_Batt4': 'leakbatt4',
+        'lightning_dist': 'lightning',
         'lightning_distance': 'lightning',
         'lightning_disturber_count': 'lightning_time',
         'lightning_num': 'lightning_num',
@@ -979,13 +927,14 @@ class Consumer(object):
         'mrain_piezo': 'mrain_piezo',
         'yrain_piezo': 'yrain_piezo',
         'train_piezo': 'train_piezo',
+        'train_piezo': 'total_piezo',
         'srain_piezo': 'srain_piezo',
         'ws90cap_volt': 'ws90cap_volt',
         'ws85cap_volt': 'ws85cap_volt',
         'ws90_ver': 'ws90_ver',
         'ws85_ver': 'ws85_ver',
         'runtime': 'runtime',
-        'ws_interval': 'interval',
+        'ws_interval': 'ws_interval',
         'model': 'model',
         'stationtype': 'stationtype',
         'gain0': 'gain0',
@@ -1139,6 +1088,8 @@ class Consumer(object):
         'wh54_ch2_sig': 'wh54sig2',
         'wh54_ch3_sig': 'wh54sig3',
         'wh54_ch4_sig': 'wh54sig4',
+        'wn64_sig': 'wn64sig',
+        'wqt01_sig': 'wqt01sig',
         'wn20_rssi': 'wn20rssi',
         'wh24_rssi': 'wh24rssi',
         'wh25_rssi': 'wh25rssi',
@@ -1216,6 +1167,8 @@ class Consumer(object):
         'ws80_rssi': 'wh80rssi',
         'ws90_rssi': 'wh90rssi',
         'ws85_rssi': 'wh85rssi',
+        'wn64_rssi': 'wn64rssi',
+        'wqt01_rssi': 'wqt01rssi',
         'thi_ch1': 'thi_ch1',
         'thi_ch2': 'thi_ch2',
         'thi_ch3': 'thi_ch3',
@@ -1292,7 +1245,8 @@ class Consumer(object):
         'wbgt': 'wbgt',
         'wbgtcat': 'wbgtcat',
         'bgtbatt': 'bgtbatt',
-
+        'wn64batt': 'wn64batt',
+        'wqt01batt': 'wqt01batt',
     }
 
     def default_sensor_map(self):
@@ -1945,9 +1899,6 @@ class EcowittClient(Consumer):
             'winddir': 'wind_dir',
             'solarradiation': 'solar_radiation',
             'uv': 'uv',
-            'totalrainin': 'rain_total',
-            #'totalainin': 'rain_total',
-            'rainratein': 'rain_rate',
             'wh25batt': 'wh25batt',
             'wh26batt': 'wh26batt',
             'wh40batt': 'wh40batt',
@@ -2056,6 +2007,8 @@ class EcowittClient(Consumer):
             'monthlyrainin' : 'monthlyrainin',
             'yearlyrainin' : 'yearlyrainin',
             'rainyear' : 'rainyear',
+            'totalrainin': 'rain_total',
+            'rainratein': 'rain_rate',
             'rrain_piezo' : 'rrain_piezo',
             'erain_piezo' : 'erain_piezo',
             'hrain_piezo' : 'hrain_piezo',
@@ -2065,6 +2018,7 @@ class EcowittClient(Consumer):
             'mrain_piezo' : 'mrain_piezo',
             'yrain_piezo' : 'yrain_piezo',
             'train_piezo' : 'train_piezo',
+            'total_piezo' : 'total_piezo',
             'srain_piezo': 'srain_piezo',
             'ws90_ver' : 'ws90_ver',
             'ws85_ver' : 'ws85_ver',
@@ -2081,7 +2035,7 @@ class EcowittClient(Consumer):
             'gain40_piezo' : 'gain3',
             'gain50_piezo' : 'gain4',
             'runtime' : 'runtime',
-            'interval' : 'interval',
+            'interval' : 'ws_interval',
             'stationtype' :  'stationtype',
             'model': 'model',
             'soilad1': 'soilad1',
@@ -2222,6 +2176,8 @@ class EcowittClient(Consumer):
             'wh54sig2': 'wh54sig2',
             'wh54sig3': 'wh54sig3',
             'wh54sig4': 'wh54sig4',
+            'wn64sig': 'wn64sig',
+            'wqt01sig': 'wqt01sig',
             'wn20rssi': 'wh20rssi',
             'wh24rssi': 'wh24rssi',
             'wh25rssi': 'wh25rssi',
@@ -2296,6 +2252,8 @@ class EcowittClient(Consumer):
             'wh80rssi': 'wh80rssi',
             'wh85rssi': 'wh85rssi',
             'wh90rssi': 'wh90rssi',
+            'wn64rssi': 'wn64rssi',
+            'wqt01rssi': 'wqt01rssi',
             'dewptf': 'dewptf',
             'windchillf': 'windchillf',
             'feelslikef': 'feelslikef',
@@ -2372,6 +2330,8 @@ class EcowittClient(Consumer):
             'wbgt': 'wbgt',
             'wbgtcat': 'wbgtcat',
             'bgtbatt': 'bgtbatt',
+            'wn64batt': 'wn64batt',
+            'wqt01batt': 'wqt01batt',
        }
 
         IGNORED_LABELS = [
