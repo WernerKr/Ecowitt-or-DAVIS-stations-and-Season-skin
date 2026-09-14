@@ -189,7 +189,7 @@ import weeutil.weeutil
 import weewx.units
 
 DRIVER_NAME = 'Ecowittcustom'
-DRIVER_VERSION = '0.1.9'
+DRIVER_VERSION = '0.2.0'
 
 DEFAULT_ADDR = ''
 DEFAULT_PORT = 80

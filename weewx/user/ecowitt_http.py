@@ -264,7 +264,7 @@ log = logging.getLogger(__name__)
 
 
 DRIVER_NAME = 'EcowittHttp'
-DRIVER_VERSION = '0.3.4'
+DRIVER_VERSION = '0.3.5'
 
 if weewx.__version__ < "4":
     raise weewx.UnsupportedFeature("weewx 4 or higher is required, found %s" % weewx.__version__)
