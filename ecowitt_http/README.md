@@ -157,6 +157,13 @@ you can find script files that extend an existing database schema for the values
         - Adjustments for the WS6210 (stationtyp, ws_interval ...)
         - ignores ec values of 4095, because this is fault reception (should be handled by gateway!) 
         - more WQT01 settings
+
+     30 Jun 2026		v0.3.4 
+        - hourrain, hpiezo_rain   
+      
+     11 Sep 2026		v0.3.5
+        - RainTotal, Rain Status (Piezo)
+        - WN64
 		  
 Tested and completed:
 ```
