@@ -577,6 +577,7 @@
                                                     #set $wgtxt = ""
                                                     #set $wgcolor = $compass_color
                                                     #set $wggcolor = $compass_color
+                                                    #set $wbft = ""
                                                     #if $current.windSpeed.beaufort != None
                                                      #if $Extras.has_key("beaufort_category_gusts") and $Extras.beaufort_category_gusts == '1'
                                                       #set $wgtxt = "*"
@@ -584,6 +585,11 @@
                                                       #set $wggcolor = $wcolor
                                                       $windcolor($current.windSpeed.beaufort)                  
                                                       #set $wgcolor = $wcolor
+                                                      #if $Extras.has_key("mqtt_websockets_enabled") and $Extras.mqtt_websockets_enabled == '0'
+                                                        #if $current.windSpeed.beaufort is not None:
+                                                          #set $wbft = $current.windSpeed.beaufort
+                                                        #end if
+                                                      #end if
                                                      #else
                                                       #set $wtxt = '*'
                                                       $windcolor($current.windSpeed.beaufort)
@@ -613,8 +619,16 @@
                                                     <tr>
                                                         <td>
                                                            <span class="curwindspeed" style="color: $wgcolor;">
-                                                                $current.windSpeed.toString(addLabel=False, NONE_string="--")
+                                                              $current.windSpeed.toString(addLabel=False, NONE_string="--")
                                                            </span>
+                                                           #if $Extras.has_key("show_windbft") and $Extras.show_windbft == '1' and $Extras.has_key("beaufort_category_gusts") and $Extras.beaufort_category_gusts == '1'
+                                                              #if $wbft != ""
+                                                                  ##<span style="font-size: 0.8em;">
+                                                                  <span class="curgustdir">
+                                                                     $wbft
+                                                                  </span>
+                                                              #end if
+                                                           #end if
                                                         </td>
                                                         <td class="border-left gust">&nbsp;
                                                            <span class="curwindgust" style="color: $wggcolor;">
