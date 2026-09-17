@@ -1531,10 +1531,10 @@ function wind_compass_value_to_knots(value, unitLabel) {
         return parsed * 0.8689758;
     }
     if (unit === "km/h" || unit === "kph" || unit.indexOf("km") !== -1) {
-        return parsed * 0.5399568;
+        return parsed * 0.539956803;
     }
     if (unit === "m/s" || unit.indexOf("meter") !== -1 || unit.indexOf("metre") !== -1) {
-        return parsed * 1.943844;
+        return parsed * 1.94384449;
     }
     if (unit === "kt" || unit === "kts" || unit.indexOf("knot") !== -1) {
         return parsed;
@@ -1563,10 +1563,10 @@ function knots_from_mqtt_payload(payload, obsName) {
         return parseFloat(payload[windObs + "_mph"]) * 0.8689758;
     }
     if (payload.hasOwnProperty(windObs + "_kph")) {
-        return parseFloat(payload[windObs + "_kph"]) * 0.5399568;
+        return parseFloat(payload[windObs + "_kph"]) * 0.539956803;
     }
     if (payload.hasOwnProperty(windObs + "_mps")) {
-        return parseFloat(payload[windObs + "_mps"]) * 1.943844;
+        return parseFloat(payload[windObs + "_mps"]) * 1.94384449;
     }
     if (payload.hasOwnProperty(windObs + "_beaufort")) {
         return beaufort_to_knots(payload[windObs + "_beaufort"]);
