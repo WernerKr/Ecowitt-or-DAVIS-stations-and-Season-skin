@@ -18,13 +18,13 @@ Zusätzliche Option show_gustdir, damit wird neben dem Windböen-Wert klein die 
 Bei den Dateien history.inc und records.inc wurden die Texte "internationalisiert"
 Bei den Min./Max.Werten (Rekorde) wurde die Regendauer ergänzt sofern vorhanden.
 
-Die zugehörigen Texte befinden sich in der Sprachdatei "de_neutral.conf"
+Die zugehörigen Texte befinden sich in der Sprachdatei "de.conf"
 Die Beispiel Charts-Datei charts_my.conf nutzt jetzt auch die "Internationalisierung" 
-zugehörige Texte in der de_neutral.conf
+zugehörige Texte in der de.conf
  
 Beigefügt ist meine chart.conf als chart_my.conf, hier sind die Texte größtenteils internationalisiert
 -> nötig dazu die entsprechenden Einträge in der Sprach-Datei (de.conf) bzw. in der 
-de_neutral.conf enthalten. 
+de.conf enthalten. 
 
  Der Haupttemperatur-Wert ist jetzt etwas vergrößert gegenüber dem Original
 
