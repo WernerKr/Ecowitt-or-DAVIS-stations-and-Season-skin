@@ -1,4 +1,10 @@
 ### New Belchertown Skin 2.1.1_20260916 (meine interne Namensgebung):
+
+##### Änderung 21.09.2026
+-  records.html unterstützt altes/vorheriges Zeit/Datum-Format
+-  de.conf bzw. en.conf Formatvorgaben für Zeit/Datum hinzugefügt
+-  mehrere Texte für internationale Texte in der charts.conf hinzugefügt
+
 Alle Änderungen wie eben in der Originalen V2.1.1
 History wurde auf 4.4 umgestellt, damit kann man dann für alle Daten: min, avg, max auch anzeigen lassen. 
 Die Farbzuordnung  für Windrichtungsring und Windwerte ist jetzt im Programm-Code.
