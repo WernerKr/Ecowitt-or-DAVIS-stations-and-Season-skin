@@ -10,9 +10,10 @@ Ein "O" zeigt an, das Windböen für den Windrichtungs-Farbring gewählt ist.
 Wichtig zu wissen: 
 Der Windrichtungsmarker bezieht sich immer auf die Windrichtung und nie auf die Böenwindrichtung
 auch wenn für die Farbwahl bzw. Windbarb-Zeichen Windböen gewählt ist:
+```
 wind_compass_marker = "windbarb"
 wind_compass_source = "windGust"
-
+```
 Zusätzliche Option show_gustdir, damit wird neben dem Windböen-Wert klein die zugehörige Richtung angezeigt.
 Bei den Dateien history.inc und records.inc wurden die Texte "internationalisiert"
 Bei den Min./Max.Werten (Rekorde) wurde die Regendauer ergänzt sofern vorhanden.
