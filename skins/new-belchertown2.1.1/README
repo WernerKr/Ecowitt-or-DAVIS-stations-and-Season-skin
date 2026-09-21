@@ -1,0 +1,165 @@
+### New Belchertown Skin 2.1.1_20260916 (meine interne Namensgebung):
+Alle Änderungen wie eben in der Originalen V2.1.1
+History wurde auf 4.4 umgestellt, damit kann man dann für alle Daten: min, avg, max auch anzeigen lassen. 
+Die Farbzuordnung  für Windrichtungsring und Windwerte ist jetzt im Programm-Code.
+Bei Nutzung von mqtt wird jetzt diese Farbzuordnung auch unterstützt. 
+Die Beaufort Wert-Einfärbung wurde jetzt in die Sprachdatei (de.conf bzw. de_neutral.conf ) verlegt.
+Ein "*" zeigt jetzt welcher Wert für Beaufort gewählt ist. 
+Ein "O" zeigt an, das Windböen für den Windrichtungs-Farbring gewählt ist. 
+
+Wichtig zu wissen: 
+Der Windrichtungsmarker bezieht sich immer auf die Windrichtung und nie auf die Böenwindrichtung
+auch wenn für die Farbwahl bzw. Windbarb-Zeichen Windböen gewählt ist:
+wind_compass_marker = "windbarb"
+wind_compass_source = "windGust"
+
+Zusätzliche Option show_gustdir, damit wird neben dem Windböen-Wert klein die zugehörige Richtung angezeigt.
+Bei den Dateien history.inc und records.inc wurden die Texte "internationalisiert"
+Bei den Min./Max.Werten (Rekorde) wurde die Regendauer ergänzt sofern vorhanden.
+
+Die zugehörigen Texte befinden sich in der Sprachdatei "de_neutral.conf"
+Die Beispiel Charts-Datei charts_my.conf nutzt jetzt auch die "Internationalisierung" 
+zugehörige Texte in der de_neutral.conf
+ 
+Beigefügt ist meine chart.conf als chart_my.conf, hier sind die Texte größtenteils internationalisiert
+-> nötig dazu die entsprechenden Einträge in der Sprach-Datei (de.conf) bzw. in der 
+de_neutral.conf enthalten. 
+
+ Der Haupttemperatur-Wert ist jetzt etwas vergrößert gegenüber dem Original
+
+ Bei der Erdbebenanzeige wird auch der Standort als Text angezeigt (z.B. Croatia)
+ und die Größe wurde an die zusätzliche Anzeige von UV und Solar angepasst.
+ Ausserdem ist der Standort-Punkt jetzt rot und kleiner. 
+
+ Im Original wird Windstille unter 1 Knoten gesetzt = 1.852 km/h, 
+ ich verwende 0.5 Knoten = 0,926 km/h
+ Windstille ist definiert < 0.3 m/s = 1.08 km/h = 0.58 Knoten
+
+ In der Kopfzeige wird die tatsächlich verwendete Wetterstation angezeigt (z.B. GW3000A_V1.2.1)
+ und die Aktualisierungszeit. 
+ Zusätzlich ist die Seitenaktualisierung für die Zusatzseiten alle 300sec (5Minuten) in der 
+ header.html.tmpl "eingebaut"
+
+ Grafiken: 
+ es wurde auf die frühere Nutzung der Zoomfunktion zurückgestellt (also immer aktiv!).
+ Wenn die Option zentral oder je Grafik in der charts.conf gesetzt:
+ zoom = 1
+ werden die neuen umfangreichen Zoom-Möglichkeiten aktiviert.
+
+ MIN/MAX bzw. Rekorde: 
+ zusätzliche Darstellungen: (Datei records.inc )
+ Mittlere Stundenwerte von heute
+ Mittelwerte von heute
+ Mittelwerte von gestern
+ Mittelwerte des aktullen Monats
+
+ Sonnenschein-Zeit, Regendauer-Zeit
+ Datei(en) records\index.html.tmpl
+ records-table.inc
+ records.inc
+
+ History: 
+ Übernommen von Manfred, mit ein paar Farbanpassungen und Erweiterungen mit zusätzlichen Werten
+ Datei history.inc, 
+ Ordner history mit Datei index.html.tmpl
+ Ordner klima mit Dateien weewx-m-YYYY-MM.html.tmpl und weewx-j-YYYY.html.tmpl
+
+Anmerkung: Belchertown bzw. auch New Belchertown zeigt bei der Windgeschwindigkeit bzw. Windböen den Wert 
+nur Ganzzahlig an (also keine Nachkommastelle), wer auch die Nachkommastelle haben möchte (wie ich) kann 
+das leicht in der Sprachdatei de.conf abändern (oder auch die Sonnenscheinzeit bzw. Regendauer 2 Nachkommastellen)
+[Units]
+    [[StringFormats]]
+        km_per_hour               = "%.1f"
+        hour                      = "%.2f"
+
+Option für Anzeigen in skin.conf (die möglichen Optionen hat der Author von new-belchertown leider entfernt!)
+
+#################################################################
+[Extras]
+#"auto", "light", "dark", "auto", "sun" hier wird auf dunkel umgeschaltet bei Nachtbeginn
+theme = "sun"
+
+# show_windbft = 1	wenn "beaufort_category_gusts = 1" gesetzt hat, wird damit klein neben der Windgeschwindigkeit auch dessen Beaufort-Wert angezeigt
+# show_gustdir = 1	damit wird neben der Böengeschwindigkeit zusätzlich die Böenwindrichtung angezeigt (klein)
+# show_gustdirtxt = 1	damit wird anstatt der Richtungszahl bei den Böen der Windrichtungstext (N, NO ...) angezeigt
+# show_aqi_scale = 1	Bei aktivierter Anzeige des AQI-Wertes  "aqi_enabled = 1" und "aqi_location_enabled = 1" wird klein eingeblendet auf was sich die 
+#                       aqi_scale bezieht, ist ein "a:" davor, wurde (aqi_scale = "auto") auch gewählt. 
+# unit_switching = 0	bei aktivierter Option kann man auf die verschiedenen möglichen Einheiten (us, metric ...) über Menü umstellen. 
+# records_old_date	seit 16.Sept. 2026 nutzt new-belchertown die Darstellung für Uhrzeit/Datum von WeeWx (dd.mm.jjjj hh:mm:ss)
+#                       man kann das in de.conf über ((hier Beispiel für Anzeige bei Woche) ändern
+#                       [Units] [[TimeFormats]] week = %a %d.%b %H:%M:%S 	-> Mi 16.Sep 15:05:00
+#                       oder mit dieser Option auf die Alte Darstellung zurückstellen (hier wird der Monat immer als Text z.B. Sept. angezeigt!)
+
+    show_apptemp = 1
+    show_windrun = 1
+    show_gustdir = 1
+    show_windbft = 1
+    show_gustdirtxt = 0
+    show_aqi_scale = 1
+    unit_switching = 0
+    records_old_date
+
+# Wind compass marker defaults
+# wind_compass_marker = triangle, windbarb
+# wind_compass_source = windSpeed, windGust
+wind_compass_marker = "windbarb"
+wind_compass_source = "windGust"
+
+ # Farbvorgaben für Einfärbung der Geschwindigkeit (->Beaufort 0 - 6)
+beauford0 = "#38C8F6"
+beauford1 = "#1278C8"
+beauford2 = "#71BC3C"
+beauford3 = "#FFAE00"
+beauford4 = "#FF7F00"
+beauford5 = "#FF4500"
+beauford6 = "#9F00C5"
+
+ # radar_overlay for Windy:
+#radar = default
+#wind, gust, Accu, satellite, pressure, temp, dewpoint, rh, wetbulbtemp, solarpower, uvindex, rain, rainAccu, snowAccu,
+#snowcover, ptype, thunder, clouds, hclouds, mclouds, lclouds, fog, cloudtop, cbase, visibility, cape, ccl,
+#wavePower, aod550, gtco3 (=Ozon), tcso2, cosc, dustsm, 
+#no2, pm2p5, go3
+
+radar_overlay = gust
+
+# Anzeigen AQI Sensor - kann jetzt auch der skin,
+
+# Air Quality Index (AQI) defaults
+aqi_enabled          = 1
+aqi_location_enabled = 1
+# aqi_source = auto (the default) checks local sources first, then falls back to forecast data or local or forecast
+aqi_source           = "forecast"
+# aqi_scale  = "us", "european", "canada", "uk", "auto" ( bei "auto" wird in der Regel "us" verwendet !)
+aqi_scale            = "auto"
+
+# zum Vergleichen deshalb immer noch enthalten!
+# Vorang hat der aqi_sensor (wenn Daten dafür vorhanden!)
+# vom PM2.5 Wert wird sonst der AQI Wert berechnet.
+local_api = 1
+pm25_sensor = "pm25_2" 
+#pm25_sensor = "pm2_5" ## for Weatherlink Live Airlink
+aqi_sensor = "pm25_RealAQI_ch2" ## AQI from Ecowitt_http Sensor 2 
+#aqi_sensor = "fpm25_AQI_ch2" ## AQI from FOSHKplugin Sensor 2
+#aqi_sensor = "pm2_5_aqi" ## Weatherlink Live Airlink
+
+# Beaufort Text anzeigen 
+beaufort_category = 1
+beaufort_category_gusts = 1
+# Beaufort Wert wird jetzt immer (eingefärbt) angezeigt wenn "beaufort_category = 1" gesetzt!
+
+# Auf dem Hauptschirm wird Solar und UV zusätzlich aufgeführt.
+# Bei der Wettervorhersage wird gegenüber dem Original die absolute Erfassungszeit und als Tooltip die relative Zeit angezeigt.
+# Original: Relative Zeit (zuletzt aktualisiert vor xx Minuten) und als Tooltip die absolute Zeit (z.B. 19. Juni 2026 15:03)
+
+# Zusätzlich bei gesetzter Option: current_conditions_timestamp_enabled = 1
+# diese Beobachtungszeit gibt es im Original nicht mehr und weicht in der Regel 
+# immer von der angezeigten Uhrzeit ab - ist die Zeit von wann die Vorhersage tatsächlich 
+# stammt.
+# Whether to display a timestamp when the observations (current conditions) were last made - see Daily Forecast row
+current_conditions_timestamp_enabled = 1
+
+Datei new-belchertown2.1.1_20260916.zip ist jetzt auch auf auf Github
+
+https://www.pc-wetterstation.de/wetter/weewx8/belchertown/  -> Ecowitt Station
+https://www.pc-wetterstation.de/wetter/weewx/belchertown/   -> Weatherlink Live Station
