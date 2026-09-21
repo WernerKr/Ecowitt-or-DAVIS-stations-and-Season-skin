@@ -632,6 +632,15 @@
                 return "";
             }
 
+            #if not $Extras.has_key("records_old_date") 
+             var configuredText = belchertown_trim(displayText(dateText || ""));
+             if (!rowOptions.omitTime && configuredText && configuredText !== "--") {
+                var configuredClass = (periodKey === "day" || periodKey === "yesterday" || periodKey === "week" || periodKey === "month")
+                    ? "records-record-period__time-line"
+                    : "records-record-period__date-line";
+                return '<span class="' + configuredClass + '">' + escapeHtml(configuredText) + '</span>';
+             }
+            #end if
             var parsed = parseSnapshotMoment(dateRaw, dateText);
 
             if (rowOptions.omitTime) {
