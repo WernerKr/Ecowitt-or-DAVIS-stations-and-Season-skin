@@ -55,7 +55,7 @@ if weewx.__version__ < "5":
 
 log = logging.getLogger(__name__)
 
-VERSION = "2.1.1_20260916"
+VERSION = "2.1.1_20261001"
 
 # Print version in syslog for easier troubleshooting
 log.info("version %s", VERSION)
@@ -552,7 +552,7 @@ def build_wind_compass_marker_context(
     direction,
     wind_speed_knots,
     wind_gust_knots,
-    calm_threshold_knots=0.5,
+    calm_threshold_knots=0.58,
 ):
     wind_values = [
         value for value in (
@@ -2712,6 +2712,35 @@ def _fresh_archive_value(archive_manager, column_name, max_age):
     return latest
 
 
+def _archive_latest_pm2_5_aqi_xtype(archive_manager):
+    """Latest (timestamp, pm2_5_aqi) via WeeWX's XType system (e.g. weewx-purple),
+    rather than a stored 'pm2_5_aqi' column. Extensions such as weewx-purple
+    compute pm2_5_aqi live from pm2_5 and deliberately never write it to the
+    archive table (averaging AQI across an archive interval is not
+    meaningful), so it must be asked for through weewx.xtypes.get_scalar()
+    instead of a plain SELECT."""
+    try:
+        row = archive_manager.getSql(
+            "SELECT dateTime, usUnits, pm2_5 FROM archive "
+            "WHERE pm2_5 IS NOT NULL ORDER BY dateTime DESC LIMIT 1"
+        )
+    except Exception:
+        return None
+    if not row:
+        return None
+    ts, us_units, pm25 = row
+    record = {"usUnits": us_units, "pm2_5": pm25}
+    try:
+        aqi_vt = weewx.xtypes.get_scalar("pm2_5_aqi", record, archive_manager)
+    except (weewx.CannotCalculate, weewx.UnknownType):
+        return None
+    timestamp = _safe_epoch(ts)
+    value = _safe_float(aqi_vt[0])
+    if timestamp is None or value is None:
+        return None
+    return timestamp, value
+
+
 def _pm25_nowcast_from_hourly(hourly_offsets):
     """Return PM NowCast concentration from (hours_ago, value) pairs."""
     if len(hourly_offsets) < 2:
@@ -2836,7 +2865,27 @@ def _archive_pm25_nowcast_payload(
 def _archive_local_aqi_payload(
     archive_manager, aqi_scale="us", max_age=7200
 ):
-    """Return the freshest usable AQI/PM2.5 payload from local sensor columns."""
+    """Return the freshest usable AQI/PM2.5 payload from local sensor data.
+
+    An XType-computed pm2_5_aqi (e.g. from weewx-purple) is tried first:
+    such extensions never store pm2_5_aqi in the archive, so column
+    discovery cannot find it. Otherwise fall back to archive columns."""
+    if aqi_scale == "us":
+        latest_aqi = _archive_latest_pm2_5_aqi_xtype(archive_manager)
+        if latest_aqi is not None and not (
+            max_age and int(time.time()) - latest_aqi[0] > max_age
+        ):
+            timestamp, aqi_value = latest_aqi
+            latest_pm25 = _fresh_archive_value(archive_manager, "pm2_5", max_age)
+            payload = _local_aqi_payload(
+                aqi_value,
+                timestamp,
+                "pm2_5_aqi",
+                pm25_value=latest_pm25[1] if latest_pm25 is not None else None,
+                aqi_scale=aqi_scale,
+            )
+            if payload is not None:
+                return payload
     columns = _local_pm25_columns(archive_manager)
     if not columns:
         columns = ["pm2_5_aqi", "pm2_5"]
@@ -9913,11 +9962,11 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                             # centered at 255/2 and have an amplitude of
                             # 255/2, so they vary from 0 to 255.
                             n = sin(i) * 127.5 + 127.5
-                            red = format(int(n), "x")  # convert to hex
+                            red = format(int(n), "02x")  # convert to hex, zero-padded
                             n = sin(i + 2.09) * 127.5 + 127.5
-                            green = format(int(n), "x")  # convert to hex
+                            green = format(int(n), "02x")  # convert to hex, zero-padded
                             n = sin(i + 4.19) * 127.5 + 127.5
-                            blue = format(int(n), "x")  # convert to hex
+                            blue = format(int(n), "02x")  # convert to hex, zero-padded
                             return "#" + red + green + blue
 
                         # Set default colors, unless the user has specified
