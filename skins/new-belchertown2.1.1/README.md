@@ -1,4 +1,9 @@
-### New Belchertown Skin 2.1.1_20260916 (meine interne Namensgebung):
+### New Belchertown Skin 2.1.1_20261010 (meine interne Namensgebung):
+
+##### Änderung 10.10.2026
+- Anzeige von Min./Max. Markers - default werden sie angezeigt.
+  können generell oder je Chart in der charts.conf  mit markerminmax = 0
+  deaktiviert werden.
 
 ##### Änderung 21.09.2026
 -  records.html unterstützt altes/vorheriges Zeit/Datum-Format
