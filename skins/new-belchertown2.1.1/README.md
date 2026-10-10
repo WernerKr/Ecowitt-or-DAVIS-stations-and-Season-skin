@@ -2,8 +2,11 @@
 
 ##### Änderung 10.10.2026
 - Anzeige von Min./Max. Markers - default werden sie angezeigt.
-  können generell oder je Chart in der charts.conf  mit markerminmax = 0
+  
+  Können generell oder je Chart in der charts.conf  mit markerminmax = 0
   deaktiviert werden.
+
+<img width="577" height="416" alt="Regen_b" src="https://github.com/user-attachments/assets/2db89f8e-7617-4967-9d8e-bade7e1f51ff" />
 
 ##### Änderung 21.09.2026
 -  records.html unterstützt altes/vorheriges Zeit/Datum-Format
