@@ -168,7 +168,7 @@ you can find script files that extend an existing database schema for the values
      06 Nov 2026		v0.3.6
         - add missing values
         - corrected supported devices
-        - WS39xx
+        - WS39xx, Ws6210 V1.1.9
 		  
 Tested and completed:
 ```
