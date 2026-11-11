@@ -763,8 +763,19 @@ new ApexCharts(document.querySelector('#$id'), {
   ##$getChartJsCode("lightning_distance", "lightning_distancechartt", "bar", "lightning_distance", "", "min")
   #end if
 
-  #if $year.ws1900batt.has_data
-  $getChartJsCode("ws1900batt", "ws1900battchart", "area", "ws1900batt")
+
+  #if $year.bgt.has_data
+  $getChartJsCode("bgt", "bgtchart", "area", "bgt", "wbgt", "avg", "outTemp")
+  #end if
+  #if $year.soilEC11.has_data
+  $getChartJsCode("soilEC11", "soilEC11chart", "area", "soilEC11")
+  #end if
+  #if $year.soilEC12.has_data
+  $getChartJsCode("soilEC12", "soilEC12chart", "area", "soilEC12")
+  #end if
+
+  #if $year.console_batt.has_data
+  $getChartJsCode("console_batt", "console_battchart", "area", "console_batt")
   #end if
 
   #if $year.ws80_batt.has_data
@@ -806,6 +817,52 @@ new ApexCharts(document.querySelector('#$id'), {
   #if $year.wh31_ch5_rssi.has_data
   $getChartJsCode("wh31_ch5_rssi", "wh31_ch5_rssichart", "area", "wh31_ch5_rssi", "wh31_ch6_rssi", "avg", "wh31_ch7_rssi", "wh31_ch8_rssi")
   #end if
+
+  #if $year.wn34_ch1_rssi.has_data
+  $getChartJsCode("wn34_ch1_rssi", "wn34_ch1_rssichart", "area", "wn34_ch1_rssi", "wn34_ch2_rssi", "avg", "wn34_ch3_rssi", "wn34_ch4_rssi")
+  #end if
+
+  #if $year.wn34_ch5_rssi.has_data
+  $getChartJsCode("wn34_ch5_rssi", "wn34_ch5_rssichart", "area", "wn34_ch5_rssi", "wn34_ch6_rssi", "avg", "wn34_ch7_rssi", "wn34_ch8_rssi")
+  #end if
+
+  #if $year.wn35_ch1_rssi.has_data
+  $getChartJsCode("wn35_ch1_rssi", "wn35_ch1_rssichart", "area", "wn35_ch1_rssi", "wn35_ch2_rssi", "avg", "wn35_ch3_rssi", "wn35_ch4_rssi")
+  #end if
+
+  #if $year.wn35_ch5_rssi.has_data
+  $getChartJsCode("wn35_ch5_rssi", "wn35_ch5_rssichart", "area", "wn35_ch5_rssi", "wn35_ch6_rssi", "avg", "wn35_ch7_rssi", "wn35_ch8_rssi")
+  #end if
+
+  #if $year.wh40_rssi.has_data
+  $getChartJsCode("wh40_rssi", "wh40_rssichart", "area", "wh40_rssi", "wh45_rssi")
+  #end if
+
+  #if $year.wh41_ch1_rssi.has_data
+  $getChartJsCode("wh41_ch1_rssi", "wh41_ch1_rssichart", "area", "wh41_ch1_rssi", "wh41_ch2_rssi", "avg", "wh41_ch3_rssi", "wh41_ch4_rssi")
+  #end if
+
+  #if $year.wh51_ch1_rssi.has_data
+  $getChartJsCode("wh51_ch1_rssi", "wh51_ch1_rssichart", "area", "wh51_ch1_rssi", "wh51_ch2_rssi", "avg", "wh51_ch3_rssi", "wh51_ch4_rssi")
+  #end if
+
+  #if $year.wh51_ch5_rssi.has_data
+  $getChartJsCode("wh51_ch5_rssi", "wh51_ch5_rssichart", "area", "wh51_ch5_rssi", "wh51_ch6_rssi", "avg", "wh51_ch7_rssi", "wh51_ch8_rssi")
+  #end if
+
+  #if $year.wh51_ch9_rssi.has_data
+  $getChartJsCode("wh51_ch9_rssi", "wh51_ch9_rssichart", "area", "wh51_ch9_rssi", "wh51_ch10_rssi", "avg", "wh51_ch11_rssi", "wh51_ch12_rssi")
+  #end if
+
+  #if $year.wh55_ch1_rssi.has_data
+  $getChartJsCode("wh55_ch1_rssi", "wh55_ch1_rssichart", "area", "wh55_ch1_rssi", "wh55_ch2_rssi", "avg", "wh55_ch3_rssi", "wh55_ch4_rssi")
+  #end if
+
+  #if $year.wn38_rssi.has_data
+  $getChartJsCode("wn38_rssi", "wn38_rssichart", "area", "wn38_rssi", "wh57_rssi", "avg", "wh54_ch1_rssi")
+  #end if
+
+
 
 </script>
 

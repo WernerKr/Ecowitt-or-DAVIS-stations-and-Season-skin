@@ -110,8 +110,7 @@
 
 #def getChartJsCode($name, $series, $column = "avg")
 
-##if $getVar('day.' + name + '.has_data') and ($getVar('day.' + name + '.max.raw') > 0)
-#if $getVar('day.' + name + '.has_data')
+#if $getVar('day.' + name + '.has_data') and $getVar('day.' + name + '.max.raw') > 0
 
 new ApexCharts(document.querySelector('#$name-chart'), {
   ...graph_area_config,
