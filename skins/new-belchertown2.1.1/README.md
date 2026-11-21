@@ -1,3 +1,15 @@
+### New Belchertown Skin 2.1.1_20261116 (meine interne Namensgebung):
+##### Änderung 16.11.2026
+- Anzeige "An diesem Tag: xx. Monat" auf Startseite und Min./Max
+<img width="972" height="257" alt="Onthisday1" src="https://github.com/user-attachments/assets/16abcc08-d058-45d2-ace3-a56fcbaa5fce" />
+<img width="806" height="495" alt="Onthisday2" src="https://github.com/user-attachments/assets/3c01e40b-61b7-4fcd-b577-d9b57abc38eb" />
+
+- Alarme werden mit Beginn/Endzeit angezeigt
+<img width="613" height="58" alt="Alarm" src="https://github.com/user-attachments/assets/b2c39526-f871-40eb-8fc6-f2ff6c384622" />
+
+
+
+
 ### New Belchertown Skin 2.1.1_20261010 (meine interne Namensgebung):
 
 ##### Änderung 10.10.2026
