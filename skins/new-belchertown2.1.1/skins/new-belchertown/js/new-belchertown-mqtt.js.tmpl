@@ -940,6 +940,7 @@ var mqtt_weewx_refresh_delay_ms = 10000;
 var mqtt_weewx_refresh_retry_delay_ms = 15000;
 var mqtt_archive_chart_refresh_timer = null;
 var mqtt_archive_forecast_refresh_timer = null;
+var mqtt_display_refresh_timer = null;
 var mqtt_visibility_refresh_bound = false;
 var mqtt_tab_was_hidden = typeof document !== "undefined" && document.hidden;
 var mqttStatusElements = null;
@@ -1041,6 +1042,28 @@ function mqtt_weewx_data_epoch(data) {
     return isFinite(epoch) ? epoch : null;
 }
 
+function mqtt_weewx_report_version(data) {
+    var epoch = parseFloat(data && data["current"] && data["current"]["epoch"]);
+    return isFinite(epoch) ? epoch : mqtt_weewx_data_epoch(data);
+}
+
+function mqtt_schedule_display_refresh() {
+    if (mqtt_display_refresh_timer !== null) {
+        clearTimeout(mqtt_display_refresh_timer);
+    }
+
+    var intervalMs = parseFloat("$archive_interval_ms");
+    if (!isFinite(intervalMs) || intervalMs <= 0) {
+        intervalMs = 300000;
+    }
+    // Archive packets are not guaranteed to reach every live page.
+    // Refresh the report JSON independently, allowing time for publication.
+    mqtt_display_refresh_timer = setTimeout(function() {
+        mqtt_display_refresh_timer = null;
+        mqtt_refresh_weewx_data("periodic display refresh");
+    }, intervalMs + mqtt_weewx_refresh_delay_ms);
+}
+
 function mqtt_update_required_weewx_epoch(epoch) {
     var requiredEpoch = parseFloat(epoch);
     if (!isFinite(requiredEpoch)) {
@@ -1106,7 +1129,7 @@ function mqtt_refresh_weewx_data(reason) {
         mqtt_schedule_weewx_refresh(1000, null, false, reason || "refresh already in progress");
         return;
     }
-    if (typeof ajaxweewx !== "function" || typeof update_weewx_data !== "function") {
+    if (typeof ajaxweewx !== "function" || typeof update_report_statistics !== "function") {
         belchertown_debug("MQTT: WeeWX data refresh functions are unavailable");
         return;
     }
@@ -1118,26 +1141,40 @@ function mqtt_refresh_weewx_data(reason) {
         }
 
         var dataEpoch = mqtt_weewx_data_epoch(data);
+        var previousVersion = mqtt_weewx_report_version(weewx_data);
         var requiredEpoch = mqtt_weewx_refresh_required_epoch;
-        if (requiredEpoch !== null && (dataEpoch === null || dataEpoch < requiredEpoch)) {
+        var awaitingArchive = requiredEpoch !== null && (dataEpoch === null || dataEpoch < requiredEpoch);
+        if (awaitingArchive) {
             belchertown_debug(
                 "MQTT: weewx_data.json is older than the archive packet" +
                 " (JSON " + (dataEpoch === null ? "unknown" : dataEpoch) +
                 ", required " + requiredEpoch + ")"
             );
-            mqtt_schedule_weewx_retry("stale WeeWX data");
-            return;
         }
 
-        update_weewx_data(data);
+        // Render report-owned values even while waiting for archive publication.
+        // Live observations remain owned by MQTT and are not reapplied here.
+        if (update_report_statistics(data) === false) {
+            mqtt_schedule_weewx_retry("older WeeWX report");
+            return;
+        }
         belchertown_debug(data);
-        mqtt_weewx_refresh_required_epoch = null;
-        mqtt_weewx_refresh_retry_count = 0;
+        if (awaitingArchive) {
+            mqtt_schedule_weewx_retry("waiting for archive publication");
+        } else {
+            mqtt_weewx_refresh_required_epoch = null;
+            mqtt_weewx_refresh_retry_count = 0;
+        }
+        var reportVersion = mqtt_weewx_report_version(data);
+        if (reportVersion !== null && (previousVersion === null || reportVersion > previousVersion)) {
+            mqtt_schedule_report_views();
+        }
     }).catch(function(e) {
         console.log(e);
         mqtt_schedule_weewx_retry("WeeWX data fetch failed");
     }).finally(function() {
         mqtt_weewx_refresh_in_progress = false;
+        mqtt_schedule_display_refresh();
     });
 }
 
@@ -1170,21 +1207,23 @@ function mqtt_handle_archive_packet(data) {
         true,
         "archive interval"
     );
+}
 
+function mqtt_schedule_report_views() {
     if (pageName == "pi" || pageName == "kiosk.html") {
         belchertown_debug("Skipping chart update for page " + pageName + ", no charts to be updated.");
     } else if (mqtt_archive_chart_refresh_timer === null) {
         mqtt_archive_chart_refresh_timer = setTimeout(function() {
             mqtt_archive_chart_refresh_timer = null;
             mqtt_render_archive_charts();
-        }, 30000);
+        }, 0);
     }
 
     if (typeof ajaxforecast === "function" && mqtt_archive_forecast_refresh_timer === null) {
         mqtt_archive_forecast_refresh_timer = setTimeout(function() {
             mqtt_archive_forecast_refresh_timer = null;
             ajaxforecast();
-        }, mqtt_weewx_refresh_delay_ms);
+        }, 0);
     }
 }
 
@@ -1428,9 +1467,14 @@ function update_current_wx(data) {
     }
 
     get_station_observation_cache();
+    var stationObservationMeta = BU_stationObservationUnitMetadata(weewx_data) || {};
     station_mqtt_data.forEach(function(mqttKey) {
         var observationKey = resolve_station_observation_key(mqttKey);
         if (!observationKey) {
+            return;
+        }
+
+        if (stationObservationMeta[observationKey] && stationObservationMeta[observationKey].kind === "time") {
             return;
         }
 
@@ -1454,6 +1498,7 @@ function update_current_wx(data) {
         });
     });
     // End dynamic station observation box
+    BU_applyStationObservationTimes(weewx_data, data);
 
     // Temperature F
     if (data.hasOwnProperty("outTemp_F")) {

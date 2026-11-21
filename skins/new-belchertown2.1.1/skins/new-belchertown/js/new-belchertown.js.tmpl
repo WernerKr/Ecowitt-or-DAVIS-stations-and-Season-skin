@@ -1246,6 +1246,18 @@ const TEMP_GRADIENT_COLORS = [
 ];
 
 function new_gradient_temp(value, min, max) {
+    // Missing observations and invalid chart bounds must not index the palette.
+    const inputs = [value, min, max];
+    if (inputs.some(input => (typeof input !== "number" && typeof input !== "string") ||
+                            (typeof input === "string" && input.trim() === ""))) {
+        return "#808080";
+    }
+    value = Number(value);
+    min = Number(min);
+    max = Number(max);
+    if (!Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
+        return "#808080";
+    }
     if (value < min) { value = min; }
     if (value >= max) { value = max; }
     const position = (value - min) / (max - min) * 9; // position on 0–9 scale
@@ -1339,11 +1351,11 @@ function refresh_aqi_color() {
 }
 
 function get_outTemp_color(unit, outTemp, returnColor = false) {
-    if (outTemp != null) {
-        outTemp = parseFloat(outTemp).toFixed(0); // Convert back to decimal literal
-    } else {
-        return // No temperature value provided
+    outTemp = parseFloat(outTemp);
+    if (!Number.isFinite(outTemp)) {
+        return; // No usable temperature observation provided
     }
+    outTemp = outTemp.toFixed(0); // Preserve rounding for valid observations
 
     if (unit == "degree_F") {
         var outTemp_color = new_gradient_temp(outTemp, 10, 120);
@@ -1495,7 +1507,7 @@ if (wind_compass_source !== "windGust") {
     wind_compass_source = "windSpeed";
 }
 
-var wind_compass_calm_threshold_knots = 0.5;
+var wind_compass_calm_threshold_knots = 0.58;
 var wind_compass_default_unit_label = "$unit.label.windSpeed";
 
 function wind_compass_unit_label(obsName) {
@@ -2779,6 +2791,7 @@ async function ajaxweewx() {
 var unit_rounding_array = "";
 var unit_label_array = "";
 var weewx_data = "";
+var belchertown_report_timestamp = null;
 
 function formatAlmanacEpochTime(epoch, formatString, unavailableText) {
     var timestamp = parseFloat(epoch);
@@ -3515,13 +3528,59 @@ function BU_applyStationObservationUnitMetadata(metaByObs, valueResolver) {
     if (!metaByObs) { return; }
     Object.keys(metaByObs).forEach(function(obsName) {
         var meta = metaByObs[obsName];
-        if (!meta || !meta.selector || !meta.kind) { return; }
+        if (!meta || !meta.selector || !meta.kind || meta.kind === "time") { return; }
         var rawValue = valueResolver ? valueResolver(obsName, meta) : meta.raw;
-        var value = meta.kind === "time"
-            ? BU_formatCurrentObservationTime(rawValue)
-            : BU_formatCurrentObservation(rawValue, meta.kind, meta.decimals, meta);
+        var value = BU_formatCurrentObservation(rawValue, meta.kind, meta.decimals, meta);
         if (value !== null) {
             BU_setHtml(meta.selector, value);
+        }
+    });
+}
+
+var BU_liveStationObservationTimes = Object.create(null);
+
+function BU_mqttObservationTime(obsName, packet) {
+    var keys = [
+        [obsName, 1],
+        [obsName + "_unix_epoch", 1],
+        [obsName + "_unix_epoch_ms", 1000],
+        [obsName + "_unix_epoch_ns", 1000000000]
+    ];
+    for (var i = 0; i < keys.length; i++) {
+        var value = packet[keys[i][0]];
+        if (typeof value !== "number" &&
+            (typeof value !== "string" || !/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(value.trim()))) {
+            continue;
+        }
+        var epoch = Number(value) / keys[i][1];
+        if (isFinite(epoch) && Math.abs(epoch) <= 8640000000000) {
+            return epoch;
+        }
+    }
+    return null;
+}
+
+function BU_applyStationObservationTimes(data, packet) {
+    var metaByObs = BU_stationObservationUnitMetadata(data);
+    if (!metaByObs) { return; }
+    var archiveText = data.station_observations.current || {};
+    Object.keys(metaByObs).forEach(function(obsName) {
+        var meta = metaByObs[obsName];
+        if (!meta || !meta.selector || meta.kind !== "time") { return; }
+
+        if (packet) {
+            var epoch = BU_mqttObservationTime(obsName, packet);
+            if (epoch === null) { return; }
+            var time = tzAdjustedMoment(epoch);
+            if (!time.isValid()) { return; }
+            BU_liveStationObservationTimes[obsName] = epoch;
+            BU_setText(meta.selector, epoch === meta.raw && typeof archiveText[obsName] === "string"
+                ? archiveText[obsName] : time.format("L LTS"));
+        } else if (typeof archiveText[obsName] === "string" &&
+            (!(obsName in BU_liveStationObservationTimes) ||
+                (typeof meta.raw === "number" && meta.raw >= BU_liveStationObservationTimes[obsName]))) {
+            delete BU_liveStationObservationTimes[obsName];
+            BU_setText(meta.selector, archiveText[obsName]);
         }
     });
 }
@@ -3534,15 +3593,6 @@ function BU_mqttObservationValue(obsName, meta, packet) {
     }
     var selectorName = meta.selector ? String(meta.selector).replace(/^\./, "") : "";
     var names = [obsName, selectorName];
-    if (meta.kind === "time") {
-        for (var timeIndex = 0; timeIndex < names.length; timeIndex++) {
-            var timeKey = names[timeIndex];
-            if (timeKey && packet[timeKey] !== undefined && packet[timeKey] !== null && packet[timeKey] !== "") {
-                return packet[timeKey];
-            }
-        }
-        return meta.raw;
-    }
     for (var i = 0; i < keys.length; i++) {
         if (packet[keys[i]] !== undefined && packet[keys[i]] !== null && packet[keys[i]] !== "") {
             return packet[keys[i]];
@@ -3604,11 +3654,13 @@ function BU_mqttMetricSuffixes(kind) {
         rain: [
             { suffix: "_mm", toMetricWX: function(mm) { return mm; } },
             { suffix: "_cm", toMetricWX: function(cm) { return cm * 10; } },
+            { suffix: "_in", toMetricWX: function(inch) { return inch * 25.4; } },
             { suffix: "_inch", toMetricWX: function(inch) { return inch / 0.03937; } },
         ],
         rainrate: [
             { suffix: "_mm_per_hour", toMetricWX: function(mm) { return mm; } },
             { suffix: "_cm_per_hour", toMetricWX: function(cm) { return cm * 10; } },
+            { suffix: "_in_per_hour", toMetricWX: function(inch) { return inch * 25.4; } },
             { suffix: "_inch_per_hour", toMetricWX: function(inch) { return inch / 0.03937; } },
         ],
         speed: [
@@ -3764,13 +3816,12 @@ function BU_applyMQTT(data) {
 
 #if $unitSwitcherJsEnabled
 
-// ── Re-render daily high/low and max gust from current weewx_data ──────────
+// Re-render archive observations when initializing or changing display units.
 function BU_applyCurrent(data) {
     if (!data) { return; }
     var sysKey = BU_getSystem();
     var s = BU_SYS[sysKey];
     var cur = data["current"] || {};
-    var day = data["day"] || {};
 
     // ── Current temperature ─────────────────────────────────────────────
     var tC = parseFloat(cur.outTemp_raw);
@@ -3808,16 +3859,21 @@ function BU_applyCurrent(data) {
     if (!isNaN(drMm)) { BU_setHtml(".dayRain",  BU_fmt(s.rain(drMm), BU_obsDecimals("dayRain", 2)) + "\u00a0" + s.rl);  }
     if (!isNaN(rrMm)) { BU_setHtml(".rainRate", BU_fmt(s.rain(rrMm), BU_obsDecimals("rainRate", 2)) + "\u00a0" + s.rrl); }
 
-    // ── Daily high/low/gust ──────────────────────────────────────────────
+    BU_applyStationObservationUnitMetadata(BU_stationObservationUnitMetadata(data));
+}
+
+function BU_applyReportStatistics(data) {
+    var s = BU_SYS[BU_getSystem()];
+    var day = data["day"] || {};
+
+    // Daily high/low/gust have no live MQTT counterpart.
     var hiC = parseFloat((day.outTemp || {}).max_raw);
     var loC = parseFloat((day.outTemp || {}).min_raw);
     if (!isNaN(hiC)) { BU_setHtml(".high", BU_fmt(s.temp(hiC), BU_obsDecimals("outTemp", 1)) + "\u00a0" + s.tl); }
     if (!isNaN(loC)) { BU_setHtml(".low",  BU_fmt(s.temp(loC), BU_obsDecimals("outTemp", 1)) + "\u00a0" + s.tl); }
 
     var gustMs = parseFloat((day.wind || {}).max_raw);
-    if (!isNaN(gustMs)) { BU_setHtml(".dailymaxgust", BU_fmt(s.speed(gustMs), BU_obsDecimals("windGust", 0))); }
-
-    BU_applyStationObservationUnitMetadata(BU_stationObservationUnitMetadata(data));
+    if (!isNaN(gustMs)) { BU_setHtml(".dailymaxgust", BU_fmt(s.speed(gustMs), BU_obsDecimals("windGust", 0)) + "\u00a0" + s.sl); }
 }
 
 // ── Re-render the daily/weekly/yesterday snapshot grid ─────────────────────
@@ -3851,6 +3907,7 @@ function BU_applyMonthlySnapshot(data, key) { BU_applySnapshot(data, key, "month
 function BU_reapplyAll() {
     if (typeof weewx_data === "object" && weewx_data) {
         BU_applyCurrent(weewx_data);
+        BU_applyReportStatistics(weewx_data);
         var daySelectEl = document.getElementById("snapshot-day-select");
         var dayKey = (daySelectEl && daySelectEl.value) || "day";
         BU_applyDailySnapshot(weewx_data, dayKey);
@@ -3904,7 +3961,26 @@ if (typeof ajaxweewx === "function") {
 #end if
 
 function update_weewx_data(data) {
-    belchertown_debug("Updating WeeWX data");
+    if (update_report_statistics(data) === false) {
+        return;
+    }
+    if (typeof BU_applyCurrent === "function") {
+        BU_applyCurrent(data);
+    }
+}
+
+function update_report_statistics(data) {
+    var reportTimestamp = parseFloat(data && data["current"] && data["current"]["datetime_raw"]);
+    // Compare reports with reports, never with newer live MQTT timestamps.
+    // Equal timestamps are allowed: statistics can be corrected or regenerated.
+    if (isFinite(reportTimestamp) && belchertown_report_timestamp !== null && reportTimestamp < belchertown_report_timestamp) {
+        belchertown_debug("Skipping report older than the displayed report");
+        return false;
+    }
+    if (isFinite(reportTimestamp)) {
+        belchertown_report_timestamp = reportTimestamp;
+    }
+    belchertown_debug("Updating report statistics");
     weewx_data = data;
 
     // Auto theme if enabled. The stored mode decides whether this follows the
@@ -3914,14 +3990,14 @@ function update_weewx_data(data) {
     //station_obs_array = data["station_observations"];
     unit_rounding_array = data["unit_rounding"];
     unit_label_array = data["unit_label"];
+    BU_applyStationObservationTimes(data);
 
     // Daily High Low
-    high = data["day"]["outTemp"]["max"];
-    low = data["day"]["outTemp"]["min"];
-    belchertown_set_html(".high", high);
-    belchertown_set_html(".low", low);
-    if (typeof BU_applyCurrent === "function") {
-        BU_applyCurrent(data); // Unit Switcher: overwrite with chosen-unit values
+    belchertown_set_html(".high", data["day"]["outTemp"]["max"]);
+    belchertown_set_html(".low", data["day"]["outTemp"]["min"]);
+    belchertown_set_html(".dailymaxgust", data["day"]["wind"]["max"]);
+    if (typeof BU_applyReportStatistics === "function") {
+        BU_applyReportStatistics(data);
     }
 
     try {
@@ -3936,10 +4012,6 @@ function update_weewx_data(data) {
     } else {
         belchertown_set_html(".pressure-trend", '<i class="fa fa-arrow-up barometer-up"></i>');
     }
-
-    // Daily max gust span
-    belchertown_set_html(".dailymaxgust", parseFloat(data["day"]["wind"]["max"]).toFixed(1));
-    // (dailymaxgust unit-corrected by BU_applyCurrent above)
 
     // Daily Snapshot Stats Section — use current dropdown selection (default: "day")
     var daySelectEl = document.getElementById("snapshot-day-select");
@@ -3985,6 +4057,10 @@ function update_weewx_data(data) {
         // Returned "current" data does not have this value
     }
     // #end if
+    if (typeof mqtt_schedule_display_refresh === "function") {
+        mqtt_schedule_display_refresh();
+    }
+    return true;
 }
 
 function to_radians(degrees) {
