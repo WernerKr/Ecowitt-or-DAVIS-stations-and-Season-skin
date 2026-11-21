@@ -2127,7 +2127,7 @@ p.entry-meta {
   font-weight: normal;
   line-height: 1.1;
   text-decoration: none;
-  white-space: nowrap;
+  /* white-space: nowrap; */
 }
 
 .wx-stn-alert a.forecast-alert-badge--active {

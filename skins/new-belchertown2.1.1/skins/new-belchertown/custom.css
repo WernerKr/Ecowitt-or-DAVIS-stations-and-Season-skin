@@ -255,3 +255,299 @@ h3 small {
   font-size: 0.6em;
   margin-left: 0.5em;
 }
+
+
+/* Records page */
+
+.rec-section {
+    margin: 24px 0;
+}
+
+.rec-section h2,
+.wx-section-title {
+    font-size: 24px;
+    margin: 0 0 12px;
+}
+
+.rec-section h2 .wi,
+.rec-section h2 .fa,
+.wx-section-title .wi,
+.wx-section-title .fa {
+    width: 28px;
+    text-align: center;
+    margin-right: 4px;
+    opacity: 0.8;
+}
+
+.rec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.rec-section + .rec-section {
+    border-top: 1px solid var(--wx-line);
+    padding-top: 20px;
+}
+
+.rec-card {
+    border: 1px solid var(--wx-line);
+    border-radius: var(--wx-radius);
+    padding: 12px 15px;
+}
+
+.rec-card.is-new {
+    border-color: #e0a526;
+}
+
+.rec-card .rec-label {
+    font-size: 18px;
+    margin: 0 0 8px;
+}
+
+.rec-card .fa-trophy,
+.rec-new h2 .fa-trophy {
+    color: #e0a526;
+}
+
+.rec-sides {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.rec-side + .rec-side {
+    border-left: 1px solid var(--wx-line);
+    padding-left: 12px;
+}
+
+.rec-when-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.65;
+}
+
+.rec-value {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.rec-date {
+    font-size: 14px;
+}
+
+.rec-note,
+.rec-empty {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.rec-new h2,
+.rec-otd h2,
+.rec-new .rec-empty {
+    text-align: center;
+}
+
+.rec-new-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 24px;
+}
+
+.rec-new-item {
+    flex: 0 1 220px;
+    border-left: 3px solid #e0a526;
+    padding: 4px 0 4px 12px;
+}
+
+.rec-new-item .rec-label {
+    font-size: 15px;
+    opacity: 0.8;
+}
+
+.rec-otd-rows {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.rec-otd-row {
+    display: grid;
+    grid-template-columns: 80px 80px 1fr 80px 80px;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--wx-line);
+}
+
+.rec-otd-row.is-today {
+    font-weight: 700;
+}
+
+.rec-otd-row small {
+    display: block;
+    font-size: 12px;
+    font-weight: normal;
+    opacity: 0.7;
+}
+
+.rec-otd-low,
+.rec-otd-rain {
+    text-align: right;
+}
+
+.rec-otd-bar {
+    position: relative;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(127, 127, 127, 0.15);
+}
+
+.rec-otd-bar span {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #1278c8, #e5554e);
+}
+
+.rec-otd-row .is-record {
+    font-weight: 700;
+    color: #e0a526;
+}
+
+@media only screen and (max-width: 767px) {
+    .rec-otd-row {
+        grid-template-columns: 64px 64px 1fr 64px 60px;
+        gap: 8px;
+        font-size: 15px;
+    }
+
+    .rec-value {
+        font-size: 21px;
+    }
+}
+
+/* Home page "on this day" block */
+
+.wx-onthisday {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--wx-line);
+}
+
+.wx-otd-note {
+    font-size: 20px;
+    margin: 0 0 12px;
+    text-align: center;
+}
+
+.wx-otd-cold_record,
+.wx-otd-warm_record,
+.wx-otd-wet_record {
+    color: #e0a526;
+    font-weight: 700;
+}
+
+.wx-otd-scale {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.wx-otd-end {
+    text-align: center;
+    min-width: 90px;
+}
+
+.wx-otd-label {
+    font-size: 15px;
+}
+
+.wx-otd-year {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* The ends are the records for this date, not today's numbers: colored, and smaller than the legend's today */
+.wx-otd-value {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.wx-otd-cold .wx-otd-value {
+    color: #1278c8;
+}
+
+.wx-otd-warm .wx-otd-value {
+    color: #d8433c;
+}
+
+.dark .wx-otd-cold .wx-otd-value {
+    color: #5aa9e6;
+}
+
+.dark .wx-otd-warm .wx-otd-value {
+    color: #f07a73;
+}
+
+.wx-otd-track {
+    position: relative;
+    height: 28px;
+    border-radius: 14px;
+    background: linear-gradient(90deg, rgba(18, 120, 200, 0.25), rgba(229, 85, 78, 0.25));
+}
+
+.wx-otd-track span {
+    position: absolute;
+    border-radius: 14px;
+}
+
+.wx-otd-average {
+    top: 0;
+    bottom: 0;
+    background: rgba(127, 127, 127, 0.35);
+}
+
+.wx-otd-today {
+    top: 8px;
+    bottom: 8px;
+    background: linear-gradient(90deg, #1278c8, #e5554e);
+}
+
+.wx-otd-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 24px;
+    margin-top: 12px;
+    font-size: 16px;
+}
+
+.wx-otd-key {
+    display: inline-block;
+    width: 22px;
+    height: 10px;
+    border-radius: 5px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.wx-otd-today-line {
+    margin: 0 0 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.wx-otd-key-today {
+    background: linear-gradient(90deg, #1278c8, #e5554e);
+}
+
+.wx-otd-key-average {
+    background: rgba(127, 127, 127, 0.35);
+}
+
