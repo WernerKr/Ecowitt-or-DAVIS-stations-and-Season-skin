@@ -13,6 +13,7 @@ import html
 import json
 import locale
 import logging
+import subprocess
 import math
 import os
 import fnmatch
@@ -45,6 +46,8 @@ from weeutil.weeutil import (
     to_float,
     to_int,
 )
+
+
 from weewx.cheetahgenerator import SearchList
 from weewx.tags import TimespanBinder
 
@@ -55,7 +58,7 @@ if weewx.__version__ < "5":
 
 log = logging.getLogger(__name__)
 
-VERSION = "2.1.1_20261001"
+VERSION = "2.1.1_20261116"
 
 # Print version in syslog for easier troubleshooting
 log.info("version %s", VERSION)
@@ -140,7 +143,7 @@ HTTP_HEADERS = {
     },
     "METEOALARM": {
         "User-Agent": "weewx-belchertown-new/meteoalarm",
-        "Accept": "application/atom+xml, application/xml, text/xml",
+        "Accept": "application/atom+xml, application/xml, text/xml, */*",
         "Connection": "keep-alive",
     },
 }
@@ -252,6 +255,54 @@ OPENMETEO_UNIT_PARAMS = {
     "ca": ("celsius", "kmh", "mm"),
     "uk2": ("celsius", "mph", "mm"),
 }
+
+# ---------------------------------------------------------------------------- Open-Meteo weather codes
+# WMO weather code -> (day icon, night icon, coverage, intensity, Xweather-style weather code).
+# The codes reuse the forecast_*_code labels, so existing translations cover Open-Meteo too.
+# weather = WMO.get(code, ("unknown", "unknown", "", "", "CL"))
+
+# def coded_text(labels, coverage, intensity, weather, with_coverage):
+#    """Condition text from the forecast_*_code labels, e.g. "" + "L" + "R" -> "Light Rain"."""
+#    if weather in ("CL", "FW", "SC", "BK", "OV"):
+#        return labels["forecast_cloud_code_" + weather]
+#    text = ""
+#    if coverage and with_coverage:
+#        text += labels["forecast_coverage_code_" + coverage] + " "
+#    if intensity:
+#        text += labels["forecast_intensity_code_" + intensity] + " "
+#    return text + labels["forecast_weather_code_" + weather]
+
+# WMO = {
+#    0: ("clear-day", "clear-night", "", "", "CL"),
+#    1: ("mostly-clear-day", "mostly-clear-night", "", "", "FW"),
+#    2: ("partly-cloudy-day", "partly-cloudy-night", "", "", "SC"),
+#    3: ("cloudy", "cloudy", "", "", "OV"),
+#    45: ("fog", "fog", "", "", "F"),
+#    48: ("fog", "fog", "", "", "ZF"),
+#    51: ("drizzle", "drizzle", "", "L", "L"),
+#    53: ("drizzle", "drizzle", "", "", "L"),
+#    55: ("drizzle", "drizzle", "", "H", "L"),
+#    56: ("sleet", "sleet", "", "L", "ZL"),
+#    57: ("sleet", "sleet", "", "H", "ZL"),
+#    61: ("rain", "rain", "", "L", "R"),
+#    63: ("rain", "rain", "", "", "R"),
+#    65: ("rain", "rain", "", "H", "R"),
+#    66: ("sleet", "sleet", "", "L", "ZR"),
+#    67: ("sleet", "sleet", "", "H", "ZR"),
+#    71: ("snow", "snow", "", "L", "S"),
+#    73: ("snow", "snow", "", "", "S"),
+#    75: ("snow", "snow", "", "H", "S"),
+#    77: ("snow", "snow", "", "", "S"),
+#    80: ("rain", "rain", "", "L", "RW"),
+#    81: ("rain", "rain", "", "", "RW"),
+#    82: ("rain", "rain", "", "VH", "RW"),
+#    85: ("snow", "snow", "", "L", "SW"),
+#    86: ("snow", "snow", "", "H", "SW"),
+#    95: ("thunderstorm", "thunderstorm", "", "", "T"),
+#    96: ("thunderstorm", "thunderstorm", "", "", "T"),
+#    99: ("thunderstorm", "thunderstorm", "", "H", "T"),
+# }
+
 
 METEOALARM_COUNTRY_SLUG_BY_TIMEZONE = {
     "africa/ceuta": "spain",
@@ -1886,6 +1937,7 @@ def _nws_build_daily(forecast_payload, forecast_units):
                 bucket["windSpeed"] is None or wind_speed > bucket["windSpeed"]
             ):
                 bucket["windSpeed"] = wind_speed
+                bucket["windBearing"] = _nws_parse_wind_direction(p.get("windDirection"))
             if wind_gust is not None and (
                 bucket["windGust"] is None or wind_gust > bucket["windGust"]
             ):
@@ -2066,7 +2118,7 @@ def _unit_switch_station_observation_meta(obs_name, value_helper, decimals=None)
     kind = _unit_switch_kind_for_observation(obs_name, value_helper)
     selector = _unit_switch_selector(obs_name)
     raw_value = _unit_switch_raw_from_value_helper(value_helper)
-    if selector is None or raw_value is None:
+    if selector is None:
         return None
     if obs_group == "group_time":
         return {
@@ -2074,7 +2126,7 @@ def _unit_switch_station_observation_meta(obs_name, value_helper, decimals=None)
             "kind": "time",
             "raw": raw_value,
         }
-    if not kind:
+    if not kind or raw_value is None:
         return None
     meta = {
         "selector": selector,
@@ -2285,11 +2337,15 @@ def _meteoalarm_build_alerts(feed_xml, geocode_filters=None, area_filters=None):
     geocode_filters = set(value.upper() for value in (geocode_filters or []))
     area_filters = [value.lower() for value in (area_filters or [])]
 
+    now = time.time()
     output = []
     for entry in entries:
         if not _meteoalarm_entry_matches(entry, geocode_filters, area_filters):
             continue
-        output.append(_meteoalarm_entry_to_alert(entry))
+        alert = _meteoalarm_entry_to_alert(entry)
+        if alert["expires"] is not None and alert["expires"] <= now:
+            continue
+        output.append(alert)
     return output
 
 
@@ -8796,6 +8852,13 @@ class getData(SearchList):
             "week", weewx.units.DEFAULT_TIME_FORMAT
         )
 
+        otd_cache = []
+
+        def otd_years():
+            if not otd_cache:
+                otd_cache.append(on_this_day(timespan.stop, db_lookup, self.generator.formatter, self.generator.converter))
+            return otd_cache[0]
+
         # Build the search list with the new values
         search_list_extension = {
             "belchertown_version": VERSION,
@@ -8976,6 +9039,11 @@ class getData(SearchList):
             "mqtt_websockets_password_json": json.dumps(
                 str(extras_dict.get("mqtt_websockets_password", ""))
             ),
+            # Called by Cheetah only on the page that uses it
+            "on_this_day": lambda: otd_years(),
+            "on_this_day_summary": lambda: on_this_day_summary(
+                otd_years(),
+                self.generator.formatter, self.generator.converter),
         }
         # TimespanBinder varies by template, while NOAA files can appear as the
         # report generates. Cache everything else for this report run.
@@ -9189,6 +9257,106 @@ class PostRenderMinifyGenerator(weewx.reportengine.ReportGenerator):
 
         return "".join(output).replace(";}", "}").strip()
 
+
+
+def on_this_day(stop_ts, db_lookup, formatter, converter):
+    """Today's calendar date in every year with data: high, low and rain, oldest first."""
+    first = db_lookup().firstGoodStamp()
+    if first is None:
+        return []
+
+    now = datetime.datetime.now()
+    pattern = "%m/%d/%Y %H:%M:%S"
+  
+    date_time = "%s/%s/%s 00:00:00" % (now.month, now.day, now.year)
+    today_start_epoch = int(time.mktime(time.strptime(date_time, pattern)))
+
+    today = datetime.date.fromtimestamp(today_start_epoch)
+    #today = datetime.date.fromtimestamp(stop_ts)
+ 
+    years = []
+    for year in range(datetime.date.fromtimestamp(first).year, today.year + 1):
+        try:
+            day = today.replace(year=year)
+        except ValueError:
+            continue
+        noon = time.mktime(day.timetuple()) + 12 * 3600
+        stats = TimespanBinder(archiveDaySpan(noon), db_lookup, context="day", formatter=formatter, converter=converter)
+        if not stats.outTemp.has_data or stats.outTemp.max.raw is None:
+            continue
+        years.append({"year": year, "today": year == today.year, "high": stats.outTemp.max, "low": stats.outTemp.min,
+                      "rain": stats.rain.sum if stats.rain.has_data else None})
+    if not years:
+        return years
+    highs = [y["high"].raw for y in years]
+    lows = [y["low"].raw for y in years]
+    top, bottom = max(highs), min(lows)
+    span = (top - bottom) or 1
+    rains = [y["rain"].raw for y in years if y["rain"] is not None and y["rain"].raw is not None]
+    wettest = max(rains) if rains and max(rains) > 0 else None
+    for y in years:
+        y["warmest"] = y["high"].raw == top
+        y["coldest"] = y["low"].raw == bottom
+        y["wettest"] = wettest is not None and y["rain"] is not None and y["rain"].raw == wettest
+        y["bar_left"] = round(100 * (y["low"].raw - bottom) / span, 1)
+        y["bar_width"] = max(round(100 * (y["high"].raw - y["low"].raw) / span, 1), 1)
+    return years
+
+
+def on_this_day_summary(years, formatter, converter):
+    """Today against the same date in past years: records, averages and one notable fact."""
+    past = [y for y in years if not y["today"]]
+    today = next((y for y in years if y["today"]), None)
+    if not past:
+        return None
+
+    def mean(vhs):
+        vt = vhs[0].value_t
+        avg = sum(v.raw for v in vhs) / len(vhs)
+        return weewx.units.ValueHelper(weewx.units.ValueTuple(avg, vt[1], vt[2]), "day", formatter, converter)
+
+    def since(key, value, colder):
+        # Most recent past year at least as extreme as today, and whether today beats them all
+        beaten = [y for y in past if (y[key].raw > value if colder else y[key].raw < value)]
+        if len(beaten) == len(past):
+            return "record", None
+        matched = [y["year"] for y in past if y not in beaten]
+        return "since", max(matched)
+
+    high = max(years, key=lambda y: y["high"].raw)
+    low = min(years, key=lambda y: y["low"].raw)
+    summary = {"high": high["high"], "high_year": high["year"], "low": low["low"], "low_year": low["year"],
+               "avg_high": mean([y["high"] for y in past]), "avg_low": mean([y["low"] for y in past]),
+               "today": today, "note": None, "note_year": None}
+
+    if today:
+        this_year = today["year"]
+        checks = [("cold", since("low", today["low"].raw, True)), ("warm", since("high", today["high"].raw, False))]
+        if today["rain"] is not None and today["rain"].raw:
+            past_rain = [y for y in past if y["rain"] is not None and y["rain"].raw is not None]
+            if past_rain:
+                beaten = [y for y in past_rain if y["rain"].raw < today["rain"].raw]
+                checks.append(("wet", ("record", None) if len(beaten) == len(past_rain)
+                                      else ("since", max(y["year"] for y in past_rain if y not in beaten))))
+        for kind, (how, year) in checks:
+            if how == "record":
+                summary["note"] = kind + "_record"
+                break
+        else:
+            for kind, (how, year) in checks:
+                if year is not None and this_year - year >= 3:
+                    summary["note"], summary["note_year"] = kind + "_since", year
+                    break
+
+    bottom, top = summary["low"].raw, summary["high"].raw
+    span = (top - bottom) or 1
+
+    def bar(lo, hi):
+        return {"left": round(100 * (lo - bottom) / span, 1), "width": max(round(100 * (hi - lo) / span, 1), 1)}
+
+    summary["avg_bar"] = bar(summary["avg_low"].raw, summary["avg_high"].raw)
+    summary["today_bar"] = bar(today["low"].raw, today["high"].raw) if today else None
+    return summary
 
 # ======================================================================================
 # HighchartsJsonGenerator
@@ -9493,6 +9661,13 @@ class HighchartsJsonGenerator(weewx.reportengine.ReportGenerator):
                     output[chart_group][plotname]["options"]["exporting"] = "true"
                 else:
                     output[chart_group][plotname]["options"]["exporting"] = "false"
+
+                # Setup markerminmax option
+                markerminmax = plot_options.get("markerminmax", None)
+                if markerminmax is None or to_bool(markerminmax) == True:
+                    output[chart_group][plotname]["options"]["markerminmax"] = "true"
+                else:
+                    output[chart_group][plotname]["options"]["markerminmax"] = "false"
 
                 # Setup zoom option
                 zoom = plot_options.get("zoom", None)
