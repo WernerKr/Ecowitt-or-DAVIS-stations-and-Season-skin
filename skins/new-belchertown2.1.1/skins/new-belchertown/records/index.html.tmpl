@@ -1011,6 +1011,15 @@
             </div>
             #end if
 
+            #if os.path.exists("recordsodt.inc")
+
+            <div id="records-sections" class="records-sections"></div>
+            <div class="records-sections records-custom-sections">
+                #include "recordsodt.inc"
+            </div>
+            #end if
+
+
         </article>
 </div>
 </div>
