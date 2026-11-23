@@ -46,8 +46,6 @@ from weeutil.weeutil import (
     to_float,
     to_int,
 )
-
-
 from weewx.cheetahgenerator import SearchList
 from weewx.tags import TimespanBinder
 
@@ -58,7 +56,7 @@ if weewx.__version__ < "5":
 
 log = logging.getLogger(__name__)
 
-VERSION = "2.1.1_20261116"
+VERSION = "2.1.1_20261122"
 
 # Print version in syslog for easier troubleshooting
 log.info("version %s", VERSION)
@@ -255,54 +253,6 @@ OPENMETEO_UNIT_PARAMS = {
     "ca": ("celsius", "kmh", "mm"),
     "uk2": ("celsius", "mph", "mm"),
 }
-
-# ---------------------------------------------------------------------------- Open-Meteo weather codes
-# WMO weather code -> (day icon, night icon, coverage, intensity, Xweather-style weather code).
-# The codes reuse the forecast_*_code labels, so existing translations cover Open-Meteo too.
-# weather = WMO.get(code, ("unknown", "unknown", "", "", "CL"))
-
-# def coded_text(labels, coverage, intensity, weather, with_coverage):
-#    """Condition text from the forecast_*_code labels, e.g. "" + "L" + "R" -> "Light Rain"."""
-#    if weather in ("CL", "FW", "SC", "BK", "OV"):
-#        return labels["forecast_cloud_code_" + weather]
-#    text = ""
-#    if coverage and with_coverage:
-#        text += labels["forecast_coverage_code_" + coverage] + " "
-#    if intensity:
-#        text += labels["forecast_intensity_code_" + intensity] + " "
-#    return text + labels["forecast_weather_code_" + weather]
-
-# WMO = {
-#    0: ("clear-day", "clear-night", "", "", "CL"),
-#    1: ("mostly-clear-day", "mostly-clear-night", "", "", "FW"),
-#    2: ("partly-cloudy-day", "partly-cloudy-night", "", "", "SC"),
-#    3: ("cloudy", "cloudy", "", "", "OV"),
-#    45: ("fog", "fog", "", "", "F"),
-#    48: ("fog", "fog", "", "", "ZF"),
-#    51: ("drizzle", "drizzle", "", "L", "L"),
-#    53: ("drizzle", "drizzle", "", "", "L"),
-#    55: ("drizzle", "drizzle", "", "H", "L"),
-#    56: ("sleet", "sleet", "", "L", "ZL"),
-#    57: ("sleet", "sleet", "", "H", "ZL"),
-#    61: ("rain", "rain", "", "L", "R"),
-#    63: ("rain", "rain", "", "", "R"),
-#    65: ("rain", "rain", "", "H", "R"),
-#    66: ("sleet", "sleet", "", "L", "ZR"),
-#    67: ("sleet", "sleet", "", "H", "ZR"),
-#    71: ("snow", "snow", "", "L", "S"),
-#    73: ("snow", "snow", "", "", "S"),
-#    75: ("snow", "snow", "", "H", "S"),
-#    77: ("snow", "snow", "", "", "S"),
-#    80: ("rain", "rain", "", "L", "RW"),
-#    81: ("rain", "rain", "", "", "RW"),
-#    82: ("rain", "rain", "", "VH", "RW"),
-#    85: ("snow", "snow", "", "L", "SW"),
-#    86: ("snow", "snow", "", "H", "SW"),
-#    95: ("thunderstorm", "thunderstorm", "", "", "T"),
-#    96: ("thunderstorm", "thunderstorm", "", "", "T"),
-#    99: ("thunderstorm", "thunderstorm", "", "H", "T"),
-# }
-
 
 METEOALARM_COUNTRY_SLUG_BY_TIMEZONE = {
     "africa/ceuta": "spain",
@@ -2126,7 +2076,7 @@ def _unit_switch_station_observation_meta(obs_name, value_helper, decimals=None)
             "kind": "time",
             "raw": raw_value,
         }
-    if not kind or raw_value is None:
+    if not kind:
         return None
     meta = {
         "selector": selector,
@@ -2467,6 +2417,48 @@ def _openmeteo_weather_to_icon_summary(code, is_daytime=True):
         return ("Thunderstorm", "thunderstorm")
 
     return ("Unknown", "unknown")
+
+
+def _localize_openmeteo_summaries(payload, label_dict):
+    """Localize normalized Open-Meteo rows in place; return whether any changed."""
+    if not isinstance(payload, dict) or payload.get("provider") != "open-meteo":
+        return False
+
+    # WMO codes mapped to the existing localized condition/intensity labels.
+    coded_weather = {
+        0: "::CL", 1: "::FW", 2: "::SC", 3: "::OV",
+        45: "::F", 48: "::ZF",
+        51: ":L:L", 53: "::L", 55: ":H:L",
+        56: ":L:ZL", 57: ":H:ZL",
+        61: ":L:R", 63: "::R", 65: ":H:R",
+        66: ":L:ZR", 67: ":H:ZR",
+        71: ":L:S", 73: "::S", 75: ":H:S", 77: "::S",
+        80: ":L:RW", 81: "::RW", 82: ":VH:RW",
+        85: ":L:SW", 86: ":H:SW",
+        95: "::T", 96: "::T", 99: "::T",
+    }
+    summaries = {
+        code: _aeris_coded_weather(coded, label_dict)
+        for code, coded in coded_weather.items()
+    }
+    for code, intensity in ((96, "L"), (99, "H")):
+        summaries[code] += " / " + _aeris_coded_weather(
+            ":%s:A" % intensity, label_dict
+        )
+
+    changed = False
+    for key in ("current", "hourly", "threeHourly", "daily"):
+        rows = payload.get(key) or []
+        if isinstance(rows, dict):
+            rows = [rows]
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            summary = summaries.get(_safe_float(row.get("weatherCode")))
+            if summary and row.get("summary") != summary:
+                row["summary"] = summary
+                changed = True
+    return changed
 
 
 def _aqi_category_from_us_aqi(aqi_value):
@@ -7677,6 +7669,7 @@ class getData(SearchList):
                                 normalized = _openmeteo_transform_to_belch(
                                     om_raw, forecast_units
                                 )
+                                _localize_openmeteo_summaries(normalized, label_dict)
                                 (
                                     normalized["alerts"],
                                     alert_provider,
@@ -7728,6 +7721,13 @@ class getData(SearchList):
 
                     if not openmeteo_forecast_failed:
                         try:
+                            # Apply language/label changes to both caches without
+                            # changing their data timestamps or fetching again.
+                            for cache_file in (forecast_file, current_conditions_file):
+                                with open(cache_file, "r", encoding="utf-8") as rf:
+                                    cached = json.load(rf)
+                                if _localize_openmeteo_summaries(cached, label_dict):
+                                    _write_json_file(cache_file, cached)
                             (
                                 current_obs_icon,
                                 current_obs_summary,
