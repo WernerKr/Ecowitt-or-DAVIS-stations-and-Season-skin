@@ -23,7 +23,7 @@
 		<td width= 7% class="records-header-year-small">$gettext("Rainy_days_ge_010mm")</td>
 		<td width= 7% class="records-header-year-small">$gettext("Rainy_days_ge_100mm")</td>
 		<td width= 7% class="records-header-year-small">$gettext("Heating_days_avg_lt_12C")</td>
-		<td width= 7% class="records-header-year-small">$gettext("Heating_degree_sum_20_12")</td>
+		## <td width= 7% class="records-header-year-small">$gettext("Heating_degree_sum_20_12")</td>
 	    </tr>
 
         #for $year in $alltime.years
@@ -43,7 +43,7 @@
 		<td class="center hist-size-value">$year.rain.sum_ge((1, "mm", "group_rain")).format("%.0f")</td>
 		<td class="center hist-size-value">$year.rain.sum_ge((10, "mm", "group_rain")).format("%.0f")</td>
 		<td class="center hist-size-value">$year.outTemp.avg_le((12, "degree_C", "group_temperature")).format("%.0f")</td>
-		<td class="center hist-size-value">$year.hgs2012.sum.formatted</td>
+		## <td class="center hist-size-value">$year.hgs2012.sum.formatted</td>
 	    </tr>
 	#end for
 	</tbody>
